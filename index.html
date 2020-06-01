@@ -1,0 +1,204 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+
+<body>
+</body>
+
+<script>
+
+    class Table {
+        constructor(name, header, main, depth){
+            this.name = name;
+            this.header = header;
+            this.main = main;
+            this.depth = depth;
+            this.attributes = [];
+            this.attrMaps = [];
+            this.weight = 0;
+        }
+    }
+
+    class Edge {
+        constructor(leftTable, att1, rigthTable, att2){
+            this.leftTable = leftTable;
+            this.att1 = att1;
+            this.rightTable = rigthTable;
+            this.att2 = att2;
+        }
+    }
+
+    class GraphGenerator {
+        constructor(d){
+            this.d = d;
+            this.t = 10;
+            this.a = 10;
+            this.attributeCounter = 0;
+        }
+
+        generate(){
+            g = new Graph()
+
+            for (var i=0; i<this.d; i++){
+                g.newLayer()
+                for (var j=0; j<this.t; j++){
+                    g.addTable(this.generateTable(i, j))
+                }
+            }
+
+            this.generateProjections(g);
+            this.generateJoins(g);
+            
+            g.ensureUniqueEdges();
+
+            return g;
+        }
+
+        generateTable(depth, index){
+            name = "T" + depth + "_" + index
+            var newTable = new Table(name, name, false, depth);
+
+            for (var i=0; i<this.a; i++){
+                newTable.addAttribute("a" + attributeCounter);
+                this.attributeCounter += 1;
+            }
+
+            return newTable
+        }
+
+        generateProjections(){
+            // finish
+        }
+
+        generateJoins(){
+            // finish
+        }
+    }
+
+    class Graph {
+        constructor(){
+            this.edges = []; 
+            this.tables = []; 
+            this.tableIndex = []; 
+            this.edgeIndex = [];
+            this.maxDepth = 0;
+            this.newLayer();
+        }
+
+        newLayer(){
+            this.tableIndex.push([])
+            this.edgeIndex.push([])
+        }
+
+        addTable(table){
+            while(this.maxDepth < table.depth){
+                this.maxDepth+=1;
+                this.newLayer();
+            }
+
+            this.tables.push(table)
+            this.tableIndex[table.depth].push(table)
+        }
+
+        addEdge(edge){
+            this.edges.push(edge)
+            this.edgeIndex[edge.leftTable.depth].push(edge)
+        }
+
+        ensureUniqueEdges(){
+            // finish
+        }
+    }
+
+    //g = new GraphGenerator(3)
+    //g.generate()
+
+    const attr_height = 20
+    const table_width = 50
+    const depth_distance = 100
+    const header_height = 20
+
+    let line = d3.line()
+
+    t1 = new Table("select", "SELECT", true, 0)
+    t1.attributes = ["s1"]
+
+    t2 = new Table("1", "1", false, 1)
+    t2.attributes = ["x2", "y2", "z2"]
+
+    g = new Graph()
+    g.addTable(t1)
+    g.addTable(t2)
+
+    g.addEdge(new Edge(t1, "s1", t2, "y2"))
+
+    // append svg to body
+    svg = d3.select('body').append('svg')
+        .attr('x', 500)
+        .attr('y', 500)
+
+    // draw tables
+    tablegroups = svg.selectAll(".tables")
+        .data(g.tables)
+        .enter()
+        .append('g')
+        .attr('transform', d => "translate(" + (d.depth*depth_distance) + ",0)" )
+
+    tablegroups.append('rect')
+        .attr('width', table_width)
+        .attr('height', d => d.attributes.length * attr_height + header_height)  
+        .attr('fill', 'black')
+        .attr('stroke', 'gray')
+
+    tablegroups.append('text')
+        .attr('x', table_width/2)
+        .attr('y', attr_height/2 + 5)
+        .attr('text-anchor', 'middle')
+        .attr('fill', 'white')
+        .attr('font-size', '0.7em')
+        .attr("font-family", "Arial")
+        .text(d => d.header)
+    
+    attrgroups = tablegroups.selectAll('.attrs')
+        .data(d => d.attributes)
+        .enter()
+        .append('g')
+        .attr('transform', (d, i) => "translate(0, " + (header_height + (i)*attr_height) + ")")
+        
+    attrgroups.append("rect")
+        .attr("width", table_width)
+        .attr("height", attr_height)
+        .attr("fill", "white")
+        .attr("stroke", "black")
+
+    attrgroups.append('text')
+        .attr('x', table_width/2)
+        .attr('y', attr_height/2 + 5)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '0.7em')
+        .attr("font-family", "Arial")
+        .text(d => d)
+
+    // draw edges
+    edges = svg.selectAll('.edges')
+        .data(g.edges)
+        .enter()
+        .append('path')
+        .attr('stroke', 'black')
+        .attr('fill', 'none')
+        .attr('d', d => {
+            return line(
+                [[d.leftTable.depth * depth_distance + table_width, 
+                d.leftTable.attributes.indexOf(d.att1)*attr_height + header_height + attr_height/2], 
+                [d.rightTable.depth * depth_distance, 
+                d.rightTable.attributes.indexOf(d.att2)*attr_height + header_height + attr_height/2]]
+            )
+        })
+
+</script>
+
+</html>
