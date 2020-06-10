@@ -10,274 +10,12 @@
 <body>
 </body>
 
+<script src="./dist/dist.js"></script>
 <script>
-
-    class Table {
-        constructor(name, header, main, depth){
-            this.name = name;
-            this.header = header;
-            this.main = main;
-            this.depth = depth;
-            this.attributes = [];
-            this.attrMaps = [];
-            this.weight = 0;
-        }
-
-        addAttribute(attribute){
-            this.attributes.push(new Attribute(this, attribute))
-        }
-    }
-
-    class Edge {
-        constructor(leftTable, att1, rigthTable, att2){
-            this.leftTable = leftTable;
-            this.att1 = att1;
-            this.rightTable = rigthTable;
-            this.att2 = att2;
-        }
-    }
-
-    class Attribute {
-        constructor(table, name){
-            this.table = table;
-            this.name = name;
-            this.attr = name;
-            this.weight = 0;
-            this.diffEdges = 0;
-            this.randomEdges = 0;
-            this.sameEdges = 0;
-        }
-    }
-
-    class GraphGenerator {
-        constructor(depth=3, seed="hello", tableDistribution = [2,3], attributeDistribution=[1, 5]){
-            this.d = depth;
-            this.s = 3;
-            this.jd = 0.1;
-            this.js = 0.05;
-            this.attributeCounter = 0;
-            this.seed = seed;
-
-            // random number generators
-            this.rng = new Math.seedrandom(this.seed);
-            this.tableDist = () => tableDistribution[0] + Math.round(this.rng() * (tableDistribution[1] - tableDistribution[0]))
-            this.attrDist = () => attributeDistribution[0] + Math.round(this.rng() * (attributeDistribution[1] - attributeDistribution[0]))
-        }
-
-        generate(){
-            g = new Graph()
-
-            for (var i=1; i<this.d; i++){
-                g.newLayer()
-                for (var j=0; j<this.tableDist(); j++){
-                    g.addTable(this.generateTable(i, j))
-                }
-            }
-
-            this.generateProjections(g);
-            this.generateJoins(g);
-            
-            g.ensureUniqueEdges();
-
-            return g;
-        }
-
-        generateTable(depth, index){
-            name = "T" + depth + "_" + index
-            var newTable = new Table(name, name, false, depth);
-
-            for (var i=0; i<this.attrDist(); i++){
-                newTable.addAttribute("a" + this.attributeCounter);
-                this.attributeCounter += 1;
-            }
-
-            return newTable
-        }
-
-        generateProjections(g){
-            let layer1 = g.tableIndex[1];
-            let layer1attrs = [];
-            let selectTable = new Table("select", "SELECT", true, 0)
-            let projectedAttrs = [];
-            let projected = [];
-            let projectedCount = 0;
-
-            for (let t of layer1){
-                let attrs = t.attributes;
-                let strictIndex = Math.floor(this.rng()*attrs.length)
-                let strict = attrs[strictIndex]
-                projectedAttrs.push(strict)
-                projected.push(strict)
-
-                for (let attr of attrs){
-                    if (attr != strict){
-                        layer1attrs.push(new Attribute(t, attr))
-                    }
-                }
-                projectedCount++;
-            }
-
-            let countProjections = this.s * (layer1attrs.length + projectedCount)
-
-            g.addTable(selectTable)
-
-            for (; projectedCount<countProjections; projectedCount++){
-                let attrIndex = Math.floor(this.rng()*layer1attrs.length)
-                let attr = layer1attrs[attrIndex]
-                //console.log(attr)
-                layer1attrs.splice(attrIndex, 1)
-                //projectedAttrs.push(attr)
-                //projected.push(attr)
-            }
-
-            selectTable.attributes = projectedAttrs
-            
-            for (let ta of projectedAttrs){
-                //g.addEdge(new Edge(selectTable, ta, ta.table, ta))
-            }
-
-            // weird. not finished.
-
-        }
-
-        generateInterLayerJoins(g){
-            for (var i = 0; i < this.d; i++){
-                let leftLayer = g.tableIndex[i];
-                let rightLayer = g.tableIndex[i + 1];
-
-                let leftLayerAttrs = [];
-                let rightLayerAttrs = [];
-
-                for (let table of leftLayer){
-                    let attrs = table.attributes;
-                    for (let attr of attrs){
-                        leftLayerAttrs.push(new Attribute(table, attr))
-                    }
-                }
-
-                for (let table of rightLayer){
-                    if (leftLayerAttrs.length == 0) break;
-                    let attrs = table.attributes;
-
-                    let strict = attrs[Math.floor(this.rng()*attrs.length)]
-                    
-                    let leftIndex = Math.floor(this.rng()*leftLayerAttrs.length)
-                    let left = leftLayerAttrs[leftIndex]
-                    leftLayerAttrs.splice(leftIndex, 1)
-
-                    g.addEdge(new Edge(left.table, left.attr, table, strict))
-
-                    left.diffEdges++;
-                    strict.diffEdges++;
-
-                    for (let attr of attrs){
-                        if (attr != strict)
-                            rightLayerAttrs.push(new Attribute(table, attr))
-                    }
-                }
-
-                for (let left of leftLayerAttrs){
-                    if (rightLayerAttrs.length == 0) break;
-                    if (this.rng() < this.jd){
-                        let rightIndex = Math.floor(this.rng()*rightLayerAttrs.length)
-                        let right = rightLayerAttrs[rightIndex]
-                        rightLayerAttrs.splice(rightIndex, 1)
-
-                        g.addEdge(new Edge(left.table, left.attr, right.table, right.attr))
-
-                        left.diffEdges++;
-                        right.diffEdges++;
-                    }
-                }
-            }
-        }
-
-        generateInLayerJoins(){
-            for (var i=1; i<this.d; i++){
-                let layer = g.tableIndex[i];
-
-                for (let t1 of layer){
-                    let attrs1 = [];
-                    let attrs2 = [];
-
-                    for (let attr of t1.attributes){
-                        attrs1.push(new Attribute(t1, attr))
-                    }
-
-                    for (let t2 of layer){
-                        if (t1 == t2) continue;
-                        for (let attr of t2.attributes){
-                            if (attr.sameEdges == 0)
-                                attrs2.push(new Attribute(t2, attr))
-                        }
-                    }
-
-                    for (let attr1 of attrs1){
-                        if (attrs2.length == 0) break;
-                        if (this.rng() < this.js){
-                            let attr2index = Math.floor(this.rng()*attrs2.length)
-                            let attr2 = attrs2[attr2index]
-                            attrs2.splice(attr2index, 1)
-                            
-                            g.addEdge(new Edge(attr1.table, attr1.attr, attr2.table, attr2.attr))
-
-                            attr1.sameEdges++;
-                            attr2.sameEdges++;
-                        }
-                    }
-                }
-            }
-        }
-
-        generateRandomJoins(){
-            // finish
-        }
-
-        generateJoins(g){
-            this.generateInterLayerJoins(g);
-            this.generateInLayerJoins(g);
-            this.generateRandomJoins(g);
-        }
-    }
-
-    class Graph {
-        constructor(){
-            this.edges = []; 
-            this.tables = []; 
-            this.tableIndex = []; 
-            this.edgeIndex = [];
-            this.maxDepth = 0;
-            this.newLayer();
-        }
-
-        newLayer(){
-            this.tableIndex.push([])
-            this.edgeIndex.push([])
-        }
-
-        addTable(table){
-            while(this.maxDepth < table.depth){
-                this.maxDepth+=1;
-                this.newLayer();
-            }
-
-            this.tables.push(table)
-            this.tableIndex[table.depth].push(table)
-        }
-
-        addEdge(edge){
-            this.edges.push(edge)
-            this.edgeIndex[edge.leftTable.depth].push(edge)
-        }
-
-        ensureUniqueEdges(){
-            // finish
-        }
-    }
 
     let drawGraph = (g) => {
         const attr_height = 15
-        const table_width = 50
+        const table_width = 70
         const depth_distance = 150
         const header_height = 20
         const table_vert_space = 100
@@ -289,6 +27,7 @@
         svg = d3.select('body').append('svg')
             .attr('width', 800)
             .attr('height', 500)
+            .attr('class', 'vis-svg')
 
         // draw tables
         tablegroups = svg.selectAll(".tables")
@@ -312,7 +51,7 @@
             .attr('fill', 'white')
             .attr('font-size', '0.7em')
             .attr("font-family", "Arial")
-            .text(d => d.header)
+            .text(d => d.header + " w:" + d.weight)
         
         attrgroups = tablegroups.selectAll('.attrs')
             .data(d => d.attributes)
@@ -333,7 +72,7 @@
             .attr('text-anchor', 'middle')
             .attr('font-size', '0.7em')
             .attr("font-family", "Arial")
-            .text(d => d.attr)
+            .text(d => d.attr + " w:" + d.weight)
 
         let get_1st_coord = (d) => 
             [d.leftTable.depth * depth_distance + table_width,
@@ -366,15 +105,38 @@
             })
     }
 
+    let form = document.createElement("div")
+    let label1 = document.createElement("label")
+    let input = document.createElement("input")
+    let input2 = document.createElement("button")
+    input.id = "fseed"
+    input.type = "text"
+    input.name = "fseed"
+    label1.innerHTML = "seed: "
+    label1.for = "fseed"
+    form.append(label1)
+    form.append(input)
+    input2.innerHTML = "Generate"
+    form.append(input2) 
+    document.body.append(form)
+    form.style.margin = "10px"
+    form.style.fontFamily = "Arial"
+
+
+
     g = new GraphGenerator(4, "hello")
     g.generate()
+    
+    g.setExactWeights()
+    g.sortGraph()
+    console.log("crossings: ", g.getEdgeCrossings())
 
     drawGraph(g)
 
-    g = new GraphGenerator(6, "nel")
-    g.generate()
+    // g = new GraphGenerator(6, "nel")
+    // g.generate()
 
-    drawGraph(g)
+    // drawGraph(g)
 
 </script>
 

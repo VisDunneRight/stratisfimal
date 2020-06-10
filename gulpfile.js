@@ -11,7 +11,7 @@ gulp.task('concat', function() {
     gulp.src(['./js/*.js', './lib/*.js']),
     sourcemaps.init(),
     terser(),
-    concat('sequence_braiding.js'),
+    concat('dist.js'),
     sourcemaps.write(),
     gulp.dest('./dist/')
   )
