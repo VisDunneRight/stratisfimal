@@ -121,6 +121,16 @@
     document.body.append(form)
     form.style.margin = "10px"
     form.style.fontFamily = "Arial"
+    input2.onclick = () => {
+        d3.selectAll(".vis-svg").remove()
+        console.log(input.text)
+        g = new GraphGenerator(4, input.innerHTML)
+        g.generate()
+    
+        g.setExactWeights()
+        g.sortGraph()
+        drawGraph(g)
+    }
 
 
     g = new GraphGenerator(4, "hello")
