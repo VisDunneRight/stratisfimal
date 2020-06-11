@@ -9,29 +9,56 @@ class Edge {
     }
 
     compareTo(otherEdge){
-        if (otherEdge == undefined) return 1;
-        let res = this.compareAttributes(this.leftTable, this.leftAttribute, otherEdge.leftTable, otherEdge.leftAttribute)
-        if (res == 0){
-            res = this.compareAttributes(this.rightTable, this.rightAttribute, otherEdge.leftTable, otherEdge.leftAttribute)
+        if (this.leftTable == otherEdge.leftTable){
+            // edges have the same left table
+            if (this.rightTable == otherEdge.rightTable){
+                // and the same right table
+                if (this.leftAttribute.weight > otherEdge.leftAttribute.weight && this.rightAttribute.weight < otherEdge.rightAttribute.weight)
+                    return true;
+                else if (this.leftAttribute.weight < otherEdge.leftAttribute.weight && this.rightAttribute.weight > otherEdge.rightAttribute.weight)
+                    return true;
+            } else if (this.rightTable.weight < otherEdge.rightTable.weight && this.leftAttribute.weight > otherEdge.leftAttribute.weight)
+                // right table is under but left attribute is over
+                return true;
+            else if (this.rightTable.weight > otherEdge.rightTable.weight && this.leftAttribute.weight < otherEdge.leftAttribute.weight)
+                // right table is over but left attribute is under
+                return true;
+        } else if (this.rightTable == otherEdge.rightTable){
+            // edges have the same right table
+            if (this.leftTable == otherEdge.leftTable){
+                // and the same left table
+                if (this.leftAttribute.weight > otherEdge.leftAttribute.weight && this.rightAttribute.weight < otherEdge.rightAttribute.weight)
+                    return true;
+                else if (this.leftAttribute.weight < otherEdge.leftAttribute.weight && this.rightAttribute.weight > otherEdge.rightAttribute.weight)
+                    return true;
+            } else if (this.leftTable.weight < otherEdge.leftTable.weight && this.rightAttribute.weight > otherEdge.rightAttribute.weight)
+                // left table is under but right attribute is over
+                return true;
+            else if (this.leftTable.weight > otherEdge.leftTable.weight && this.rightAttribute.weight < otherEdge.rightAttribute.weight)
+                // left table is over but right attribute is under
+                return true;
+        } else {
+            // edges have different tables both on the left and on the right
+            if (this.leftTable.weight < otherEdge.leftTable.weight && this.rightTable.weight > otherEdge.rightTable.weight)
+                return true
+            else if (this.leftTable.weight > otherEdge.leftTable.weight && this.rightTable.weight < otherEdge.rightTable.weight){
+                return true
+            }
         }
-        return res;
-    }
-
-    crosses(otherEdge){
-        //console.log(otherEdge.leftAttribute.name, otherEdge.rightAttribute.name)
-
-        if (this.compareTo(otherEdge)){
-            //console.log(this.leftAttribute, otherEdge.leftAttribute)
-            return true;
-        }
-
-        // add part for self edges?
 
         return false;
     }
 
-    compareAttributes(t1, a1, t2, a2){
-        if (t1.weight == t2.weight) return a1.weight < a2.weight
-        else return t1.weight > t2.weight;
+    crosses(otherEdge){
+
+        // change this, it's for self edges
+        if (this.leftTable.depth == this.rightTable.depth || otherEdge.leftTable.depth == otherEdge.rightTable.depth) return false
+
+        if (this.compareTo(otherEdge)){
+            return true;
+        }
+
+        return false;
     }
+
 }

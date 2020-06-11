@@ -39,20 +39,21 @@ class Graph {
     }
 
     getEdgeCrossingsAtDepth(d){
-        let count = 0;
+        let crossings = 0;
         let layerEdges = this.edgeIndex[d];
 
         for (let i in layerEdges){
             let currEdge = layerEdges[i];
             for (let j = parseFloat(i)+1; j < layerEdges.length; j++){
                 let otherEdge = layerEdges[j];
-                if (currEdge.crosses(otherEdge))
+                if (currEdge.crosses(otherEdge)){
                     console.log("Edge " + currEdge.leftAttribute.name + currEdge.rightAttribute.name + " crosses " + otherEdge.leftAttribute.name + otherEdge.rightAttribute.name)
-                    count++;
+                    crossings+=1;
+                }
             }
         }
-
-        return count
+        
+        return crossings
     }
 
     sortGraph(){

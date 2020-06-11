@@ -123,7 +123,7 @@
     form.style.fontFamily = "Arial"
     input2.onclick = () => {
         d3.selectAll(".vis-svg").remove()
-        console.log(input.text)
+        console.log(input.innerHTML)
         g = new GraphGenerator(4, input.innerHTML)
         g.generate()
     
@@ -144,6 +144,10 @@
 
     // g = new GraphGenerator(6, "nel")
     // g.generate()
+
+    // g.setExactWeights()
+    // g.sortGraph()
+    // console.log("crossings: ", g.getEdgeCrossings())
 
     // drawGraph(g)
 
