@@ -7,13 +7,17 @@
   <script src="https://d3js.org/d3.v5.min.js"></script>
 </head>
 
+<script
+    src="https://code.easypz.io/easypz.latest.min.js">
+</script>
+
 <body>
 </body>
 
 <script src="./dist/dist.js"></script>
 <script>
 
-    let drawGraph = (g) => {
+    let drawGraph = (svg, g) => {
         const attr_height = 15
         const table_width = 70
         const depth_distance = 150
@@ -21,13 +25,7 @@
         const table_vert_space = 100
 
         let line = d3.line()
-        .curve(d3.curveBasis);
-
-        // append svg to body
-        svg = d3.select('body').append('svg')
-            .attr('width', 800)
-            .attr('height', 500)
-            .attr('class', 'vis-svg')
+            .curve(d3.curveBasis);
 
         // draw tables
         tablegroups = svg.selectAll(".tables")
@@ -103,6 +101,13 @@
                     second]
                 )
             })
+
+        d3.selectAll('.crossing_count').remove()
+        d3.select('body')
+            .append('div').append('text')
+            .text('crossings: ' + g.getEdgeCrossings())
+            .style('font-family', 'Arial')
+            .attr('class', 'crossing_count')
     }
 
     let form = document.createElement("div")
@@ -122,34 +127,39 @@
     form.style.margin = "10px"
     form.style.fontFamily = "Arial"
     input2.onclick = () => {
-        d3.selectAll(".vis-svg").remove()
-        console.log(input.innerHTML)
-        g = new GraphGenerator(4, input.innerHTML)
-        g.generate()
-    
-        g.setExactWeights()
-        g.sortGraph()
-        drawGraph(g)
+        makeAllGraphs(input.value)
     }
 
+    makeAllGraphs = (seed) => {
+        d3.selectAll(".vis-svg").remove()
 
-    g = new GraphGenerator(4, "hello")
-    g.generate()
-    
-    g.setExactWeights()
-    g.sortGraph()
-    console.log("crossings: ", g.getEdgeCrossings())
+        g = new GraphGenerator(4, seed)
+        g.generate()
+        
+        g.setExactWeights()
+        g.sortGraph()
 
-    drawGraph(g)
+        const svg_height = 300
+        const svg_width = 800
 
-    // g = new GraphGenerator(6, "nel")
-    // g.generate()
+        // append svg to body
+        svg = d3.select('body').append('svg')
+                .attr('width', svg_width)
+                .attr('height', svg_height)
+                .attr('class', 'vis-svg')
+                .attr('easypz', '{"applyTransformTo":"svg > *"}')
 
-    // g.setExactWeights()
-    // g.sortGraph()
-    // console.log("crossings: ", g.getEdgeCrossings())
+        drawGraph(svg, g)
 
-    // drawGraph(g)
+        d3.select('body').append('div').append('text')
+            .text("Dumb heuristic")
+            .style('font-family', 'Arial')
+            .style('font-weight', 'bold')
+            .style('font-size', '2em')
+    }
+
+    makeAllGraphs("fghgh")
+
 
 </script>
 
