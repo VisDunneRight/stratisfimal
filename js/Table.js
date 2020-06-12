@@ -14,8 +14,12 @@ class Table {
     }
 
     compareTo(otherTable){
-        if (this.depth < otherTable.depth) return -1;
-        else if (this.depth > otherTable.depth) return 1;
-        else return this.weight > otherTable.weight;
+        if (this.depth > otherTable.depth) return -1;
+        else if (this.depth < otherTable.depth) return 1;
+        else {
+            if (this.weight < otherTable.weight) return 1;
+            else if (this.weight > otherTable.weight) return -1;
+            else return 0;
+        }
     }
 }

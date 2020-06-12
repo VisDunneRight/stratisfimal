@@ -78,6 +78,7 @@ class GraphGenerator {
 
         for (let attr of projectedAttrs){
             let newAttr = new Attribute(selectTable, "a" + this.attributeCounter++)
+            newAttr.mutable = false;
             selectTable.attributes.push(newAttr)
             g.addEdge(new Edge(selectTable, newAttr, attr.table, attr))
         }

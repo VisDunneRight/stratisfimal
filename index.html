@@ -11,6 +11,23 @@
     src="https://code.easypz.io/easypz.latest.min.js">
 </script>
 
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 5%;
+    }
+
+    svg {
+        margin: 1%;
+    }
+
+    .algorithm_header {
+        font-size: 2em;
+        font-weight: bold;
+        margin-top: 100px;
+    }
+</style>
+
 <body>
 </body>
 
@@ -102,10 +119,9 @@
                 )
             })
 
-        d3.selectAll('.crossing_count').remove()
-        d3.select('body')
+        d3.select(svg.node().parentNode)
             .append('div').append('text')
-            .text('crossings: ' + g.getEdgeCrossings())
+            .text('crossings: ' + g.getEdgeCrossings() + ', tables: ' + g.tables.length + ', edges: ' + g.edges.length)
             .style('font-family', 'Arial')
             .attr('class', 'crossing_count')
     }
@@ -132,6 +148,11 @@
 
     makeAllGraphs = (seed) => {
         d3.selectAll(".vis-svg").remove()
+        d3.selectAll('.crossing_count').remove()
+
+        d3.select('body').append('div')
+            .text("Original")
+            .attr('class', 'algorithm_header')
 
         g = new GraphGenerator(4, seed)
         g.generate()
@@ -140,22 +161,79 @@
         g.sortGraph()
 
         const svg_height = 300
-        const svg_width = 800
+        const svg_width = 600
+
+        rowDiv = d3.select('body').append('div')
+            .style('width', '100%')
+            .style('height', svg_height)
+            .style('display', 'flex')
 
         // append svg to body
-        svg = d3.select('body').append('svg')
-                .attr('width', svg_width)
-                .attr('height', svg_height)
+        svg = rowDiv
+                .append('div')
+                .style('width', '50%')
+                .append('svg')
                 .attr('class', 'vis-svg')
                 .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", "0 0 " + svg_width + " " + svg_height)
 
         drawGraph(svg, g)
 
-        d3.select('body').append('div').append('text')
-            .text("Dumb heuristic")
-            .style('font-family', 'Arial')
-            .style('font-weight', 'bold')
-            .style('font-size', '2em')
+        svg_big = rowDiv
+                .append('div')
+                .style('width', '50%')
+                .append('svg')
+                .attr('class', 'vis-svg')
+                .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", "0 0 " + svg_width + " " + svg_height)
+
+        drawGraph(svg_big, g)
+
+        d3.select('body').append('div')
+            .text("Sweep")
+            .attr('class', 'algorithm_header')
+
+        g = new GraphGenerator(4, seed)
+        g.generate()
+        
+        g.setExactWeights()
+        g.sortGraph()
+
+        let sweep = new Sweep(g)
+        sweep.arrange()
+
+        g.setExactWeights()
+        g.sortGraph()
+
+        rowDiv = d3.select('body').append('div')
+            .style('width', '100%')
+            .style('height', svg_height)
+            .style('display', 'flex')
+
+        // append svg to body
+        svg = rowDiv
+                .append('div')
+                .style('width', '50%')
+                .append('svg')
+                .attr('class', 'vis-svg')
+                .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", "0 0 " + svg_width + " " + svg_height)
+
+        drawGraph(svg, g)
+
+        svg_big = rowDiv
+                .append('div')
+                .style('width', '50%')
+                .append('svg')
+                .attr('class', 'vis-svg')
+                .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", "0 0 " + svg_width + " " + svg_height)
+
+        drawGraph(svg_big, g)
     }
 
     makeAllGraphs("fghgh")

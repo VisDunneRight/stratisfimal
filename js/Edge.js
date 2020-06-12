@@ -167,4 +167,15 @@ class Edge {
         return false;
     }
 
+    compare(arg0){
+        if (arg0 == undefined) return 1;
+        let ret = this.compareAttributes(this.leftTable, this.leftAttribute, arg0.leftTable, arg0.leftAttribute)
+    }
+
+    compareAttributes(t1, a1, t2, a2){
+        let ret = t1.compareTo(t2)
+        if (ret == 0) ret = a1.compareTo(a2);
+        return ret;
+    }
+
 }

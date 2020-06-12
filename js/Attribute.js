@@ -7,5 +7,12 @@ class Attribute {
         this.diffEdges = 0;
         this.randomEdges = 0;
         this.sameEdges = 0;
+        this.mutable = true;
+    }
+
+    compareTo(arg0){
+        if (this.weight > arg0.weight) return -1;
+        else if (this.weight < arg0.weight) return 1;
+        else return 0;
     }
 }
