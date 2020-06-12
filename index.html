@@ -15,16 +15,19 @@
     body {
         font-family: Arial, Helvetica, sans-serif;
         margin: 5%;
+        background-color: beige;
     }
 
     svg {
         margin: 1%;
+        background-color: white;
     }
 
     .algorithm_header {
         font-size: 2em;
         font-weight: bold;
         margin-top: 100px;
+        margin-bottom: 20px;
     }
 </style>
 
@@ -148,7 +151,12 @@
 
     makeAllGraphs = (seed) => {
         d3.selectAll(".vis-svg").remove()
-        d3.selectAll('.crossing_count').remove()
+        d3.selectAll(".crossing_count").remove()
+        d3.selectAll('.algorithm_header').remove()
+        d3.selectAll('.rowDiv').remove()
+
+        const svg_height = 300
+        const svg_width = 600
 
         d3.select('body').append('div')
             .text("Original")
@@ -160,13 +168,11 @@
         g.setExactWeights()
         g.sortGraph()
 
-        const svg_height = 300
-        const svg_width = 600
-
         rowDiv = d3.select('body').append('div')
             .style('width', '100%')
             .style('height', svg_height)
             .style('display', 'flex')
+            .attr('class', 'rowDiv')
 
         // append svg to body
         svg = rowDiv
@@ -180,6 +186,15 @@
 
         drawGraph(svg, g)
 
+        const svg_height_big = 800
+        const svg_width_big = 1600
+
+        g = new GraphGenerator(10, seed, [3, 6])
+        g.generate()
+        
+        g.setExactWeights()
+        g.sortGraph()
+
         svg_big = rowDiv
                 .append('div')
                 .style('width', '50%')
@@ -187,7 +202,7 @@
                 .attr('class', 'vis-svg')
                 .attr('easypz', '{"applyTransformTo":"svg > *"}')
                 .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + svg_width + " " + svg_height)
+                .attr("viewBox", "0 0 " + svg_width_big + " " + svg_height_big)
 
         drawGraph(svg_big, g)
 
@@ -224,6 +239,18 @@
 
         drawGraph(svg, g)
 
+        g = new GraphGenerator(10, seed, [3, 6])
+        g.generate()
+        
+        g.setExactWeights()
+        g.sortGraph()
+
+        sweep = new Sweep(g)
+        sweep.arrange()
+
+        g.setExactWeights()
+        g.sortGraph()
+
         svg_big = rowDiv
                 .append('div')
                 .style('width', '50%')
@@ -231,7 +258,7 @@
                 .attr('class', 'vis-svg')
                 .attr('easypz', '{"applyTransformTo":"svg > *"}')
                 .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + svg_width + " " + svg_height)
+                .attr("viewBox", "0 0 " + svg_width_big + " " + svg_height_big)
 
         drawGraph(svg_big, g)
     }
