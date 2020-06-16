@@ -29,6 +29,11 @@
         margin-top: 100px;
         margin-bottom: 20px;
     }
+
+    .rowDiv {
+        margin-top: 20px;
+    }
+
 </style>
 
 <body>
@@ -165,6 +170,7 @@
         d3.selectAll(".vis-svg").remove()
         d3.selectAll(".crossing_count").remove()
         d3.selectAll('.algorithm_header').remove()
+        d3.selectAll('.algorithm_explanation').remove()
         d3.selectAll('.rowDiv').remove()
 
         const svg_height = 300
@@ -249,6 +255,11 @@
             .text("Sweep")
             .attr('class', 'algorithm_header')
 
+        d3.select('body').append('tspan')
+            .attr('class', 'algorithm_explanation')
+            .html("Simple one-pass sweep, first starting from the left, then from the right. <br>"
+                + "Tries swapping each element with the next in the same column, then checks if the number of crossings is lower. If it is, it keeps going, if not, it reverses the swap and keeps going.")
+
         g = new GraphGenerator(4, seed)
         g.generate()
         
@@ -265,6 +276,7 @@
             .style('width', '150%')
             .style('height', svg_height)
             .style('display', 'flex')
+            .attr('class', 'rowDiv')
 
         // append svg to body
         svg = rowDiv
@@ -332,6 +344,14 @@
             .text("Modified Gansner [1993] (GraphViz's dot)")
             .attr('class', 'algorithm_header')
 
+        d3.select('body').append('tspan')
+            .attr('class', 'algorithm_explanation')
+            .html("This should be the implementation that is closest to what GraphViz was doing to queryvis graphs. <br>"
+                + "Each node is assigned a weight that is the median of the weights of the linked tables. <br>"
+                + "Differently from Gansner (1993), this implementation manages groups of nodes that should be kept adjacent (attributes in a table). "
+                + "I believe GraphViz does this as well, by treating the groups of nodes as subproblems. <br> <br>"
+                + "Note: this implementation does not deal with same-rank edges, as they are not mentioned in Gansner's paper. GraphViz does not manage same-rank edges as well.")
+
         g = new GraphGenerator(4, seed)
         g.generate()
         
@@ -348,6 +368,7 @@
             .style('width', '150%')
             .style('height', svg_height)
             .style('display', 'flex')
+            .attr('class', 'rowDiv')
 
         // append svg to body
         svg = rowDiv
@@ -409,7 +430,6 @@
     }
 
     makeAllGraphs("hello.")
-
 
 </script>
 
