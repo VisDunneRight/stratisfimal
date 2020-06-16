@@ -1,16 +1,21 @@
 class Sweep {
     constructor(g){
         this.g = g;
+        this.elapsedTime = 0;
     }
 
     arrange(){
+        let startTime = new Date().getTime();
+
         this.g.setExactWeights();
         this.sweepRight();
         this.sweepLeft();
+
+        this.elapsedTime = new Date().getTime() - startTime;
     }
 
     sweepRight(){
-        for (let i = 1; i < this.g.maxDepth; i++){
+        for (let i = 1; i <= this.g.maxDepth; i++){
             let layerTables = this.g.tableIndex[i];
             let crosses, curCrosses;
 

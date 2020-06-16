@@ -37,7 +37,7 @@
 <script src="./dist/dist.js"></script>
 <script>
 
-    let drawGraph = (svg, g) => {
+    let drawGraph = (svg, g, algorithm = undefined) => {
         const attr_height = 15
         const table_width = 70
         const depth_distance = 150
@@ -47,8 +47,11 @@
         let line = d3.line()
             .curve(d3.curveBasis);
 
+        visg = svg.append('g')
+            .attr('transform', 'translate(20, 20)')
+
         // draw tables
-        tablegroups = svg.selectAll(".tables")
+        tablegroups = visg.selectAll(".tables")
             .data(g.tables)
             .enter()
             .append('g')
@@ -105,7 +108,7 @@
         }
 
         // draw edges
-        edges = svg.selectAll('.edges')
+        edges = visg.selectAll('.edges')
             .data(g.edges)
             .enter()
             .append('path')
@@ -127,6 +130,15 @@
             .text('crossings: ' + g.getEdgeCrossings() + ', tables: ' + g.tables.length + ', edges: ' + g.edges.length)
             .style('font-family', 'Arial')
             .attr('class', 'crossing_count')
+
+        if (algorithm != undefined && algorithm.elapsedTime != undefined){
+            d3.select(svg.node().parentNode)
+            .append('div').append('text')
+            .text('time: ' + algorithm.elapsedTime + 'ms')
+            .style('font-family', 'Arial')
+            .attr('class', 'crossing_count')
+        }
+        
     }
 
     let form = document.createElement("div")
@@ -158,6 +170,12 @@
         const svg_height = 300
         const svg_width = 600
 
+        const svg_height_big = 800
+        const svg_width_big = 1600
+
+        const svg_height_bigger = 1600
+        const svg_width_bigger = 3200
+
         d3.select('body').append('div')
             .text("Original")
             .attr('class', 'algorithm_header')
@@ -169,7 +187,7 @@
         g.sortGraph()
 
         rowDiv = d3.select('body').append('div')
-            .style('width', '100%')
+            .style('width', '150%')
             .style('height', svg_height)
             .style('display', 'flex')
             .attr('class', 'rowDiv')
@@ -177,7 +195,7 @@
         // append svg to body
         svg = rowDiv
                 .append('div')
-                .style('width', '50%')
+                .style('width', '33%')
                 .append('svg')
                 .attr('class', 'vis-svg')
                 .attr('easypz', '{"applyTransformTo":"svg > *"}')
@@ -185,9 +203,6 @@
                 .attr("viewBox", "0 0 " + svg_width + " " + svg_height)
 
         drawGraph(svg, g)
-
-        const svg_height_big = 800
-        const svg_width_big = 1600
 
         g = new GraphGenerator(10, seed, [3, 6])
         g.generate()
@@ -197,7 +212,7 @@
 
         svg_big = rowDiv
                 .append('div')
-                .style('width', '50%')
+                .style('width', '33%')
                 .append('svg')
                 .attr('class', 'vis-svg')
                 .attr('easypz', '{"applyTransformTo":"svg > *"}')
@@ -205,6 +220,30 @@
                 .attr("viewBox", "0 0 " + svg_width_big + " " + svg_height_big)
 
         drawGraph(svg_big, g)
+
+        g = new GraphGenerator(20, seed, [8, 15])
+        g.generate()
+        
+        g.setExactWeights()
+        g.sortGraph()
+
+        g.setExactWeights()
+        g.sortGraph()
+
+        svg_bigger = rowDiv
+                .append('div')
+                .style('width', '33%')
+                .append('svg')
+                .attr('class', 'vis-svg')
+                .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", "0 0 " + svg_width_bigger + " " + svg_height_bigger)
+
+        drawGraph(svg_bigger, g)
+
+        // ***
+        // SWEEP
+        // ***
 
         d3.select('body').append('div')
             .text("Sweep")
@@ -223,21 +262,21 @@
         g.sortGraph()
 
         rowDiv = d3.select('body').append('div')
-            .style('width', '100%')
+            .style('width', '150%')
             .style('height', svg_height)
             .style('display', 'flex')
 
         // append svg to body
         svg = rowDiv
                 .append('div')
-                .style('width', '50%')
+                .style('width', '33%')
                 .append('svg')
                 .attr('class', 'vis-svg')
                 .attr('easypz', '{"applyTransformTo":"svg > *"}')
                 .attr("preserveAspectRatio", "xMinYMin meet")
                 .attr("viewBox", "0 0 " + svg_width + " " + svg_height)
 
-        drawGraph(svg, g)
+        drawGraph(svg, g, sweep)
 
         g = new GraphGenerator(10, seed, [3, 6])
         g.generate()
@@ -253,17 +292,123 @@
 
         svg_big = rowDiv
                 .append('div')
-                .style('width', '50%')
+                .style('width', '33%')
                 .append('svg')
                 .attr('class', 'vis-svg')
                 .attr('easypz', '{"applyTransformTo":"svg > *"}')
                 .attr("preserveAspectRatio", "xMinYMin meet")
                 .attr("viewBox", "0 0 " + svg_width_big + " " + svg_height_big)
 
-        drawGraph(svg_big, g)
+        drawGraph(svg_big, g, sweep)
+
+        g = new GraphGenerator(20, seed, [8, 15])
+        g.generate()
+        
+        g.setExactWeights()
+        g.sortGraph()
+
+        sweep = new Sweep(g)
+        sweep.arrange()
+
+        g.setExactWeights()
+        g.sortGraph()
+
+        svg_bigger = rowDiv
+                .append('div')
+                .style('width', '33%')
+                .append('svg')
+                .attr('class', 'vis-svg')
+                .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", "0 0 " + svg_width_bigger + " " + svg_height_bigger)
+
+        drawGraph(svg_bigger, g, sweep)
+
+        // ***
+        // GANSNER
+        // ***
+
+        d3.select('body').append('div')
+            .text("Modified Gansner [1993] (GraphViz's dot)")
+            .attr('class', 'algorithm_header')
+
+        g = new GraphGenerator(4, seed)
+        g.generate()
+        
+        g.setExactWeights()
+        g.sortGraph()
+
+        let gansner = new Gansner(g)
+        gansner.arrange()
+
+        g.setExactWeights()
+        g.sortGraph()
+
+        rowDiv = d3.select('body').append('div')
+            .style('width', '150%')
+            .style('height', svg_height)
+            .style('display', 'flex')
+
+        // append svg to body
+        svg = rowDiv
+                .append('div')
+                .style('width', '33%')
+                .append('svg')
+                .attr('class', 'vis-svg')
+                .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", "0 0 " + svg_width + " " + svg_height)
+
+        drawGraph(svg, g, gansner)
+
+        g = new GraphGenerator(10, seed, [3, 6])
+        g.generate()
+        
+        g.setExactWeights()
+        g.sortGraph()
+
+        gansner = new Gansner(g)
+        gansner.arrange()
+
+        g.setExactWeights()
+        g.sortGraph()
+
+        svg_big = rowDiv
+                .append('div')
+                .style('width', '33%')
+                .append('svg')
+                .attr('class', 'vis-svg')
+                .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", "0 0 " + svg_width_big + " " + svg_height_big)
+
+        drawGraph(svg_big, g, gansner)
+
+        g = new GraphGenerator(20, seed, [8, 15])
+        g.generate()
+        
+        g.setExactWeights()
+        g.sortGraph()
+
+        gansner = new Gansner(g)
+        gansner.arrange()
+
+        g.setExactWeights()
+        g.sortGraph()
+
+        svg_bigger = rowDiv
+                .append('div')
+                .style('width', '33%')
+                .append('svg')
+                .attr('class', 'vis-svg')
+                .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", "0 0 " + svg_width_bigger + " " + svg_height_bigger)
+
+        drawGraph(svg_bigger, g, gansner)
     }
 
-    makeAllGraphs("fghgh")
+    makeAllGraphs("hello.")
 
 
 </script>
