@@ -41,14 +41,24 @@
 
 <script src="./dist/dist.js"></script>
 <script>
+    const svg_height = 300
+    const svg_width = 600
+
+    const svg_height_s = 300
+    const svg_width_s = 600
+    const svg_height_m = 800
+    const svg_width_m = 1600
+    const svg_height_l = 1600
+    const svg_width_l = 3200
+
+    const attr_height = 15
+    const table_width = 70
+    const depth_distance = 150
+    const header_height = 20
+    const table_vert_space = 100
+
 
     let drawGraph = (svg, g, algorithm = undefined) => {
-        const attr_height = 15
-        const table_width = 70
-        const depth_distance = 150
-        const header_height = 20
-        const table_vert_space = 100
-
         let line = d3.line()
             .curve(d3.curveBasis);
 
@@ -143,7 +153,64 @@
             .style('font-family', 'Arial')
             .attr('class', 'crossing_count')
         }
+    }
+
+    makeGraphWithAlgorithm = (rowDiv, seed, size, algorithmName = undefined) => {
+        let depth, tableDistribution, cur_svg_width, cur_svg_height, algorithm;
+
+        switch (size) {
+            case 's':
+                depth = 4;
+                tableDistribution = [2, 3];
+                cur_svg_width = svg_width_s;
+                cur_svg_height = svg_height_s;
+                break;
+            case 'm':
+                depth = 10;
+                tableDistribution = [3, 6];
+                cur_svg_width = svg_width_m;
+                cur_svg_height = svg_height_m;
+                break;
+            case 'l':
+                depth = 20;
+                tableDistribution = [8, 15];
+                cur_svg_width = svg_width_l;
+                cur_svg_height = svg_height_l;
+                break;
+        }
+
+        g = new GraphGenerator(depth, seed, tableDistribution)
+        g.generate()
         
+        g.setExactWeights()
+        g.sortGraph()
+
+        switch (algorithmName) {
+            case 'sweep':
+                algorithm = new Sweep(g)
+                algorithm.arrange()
+                break;
+            case 'modified gansner':
+                algorithm = new Gansner(g)
+                algorithm.arrange()
+                break;
+            default:
+                break;
+        }
+
+        g.setExactWeights()
+        g.sortGraph()
+
+        svg = rowDiv
+                .append('div')
+                .style('width', '33%')
+                .append('svg')
+                .attr('class', 'vis-svg')
+                .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
+
+        drawGraph(svg, g, algorithm)
     }
 
     let form = document.createElement("div")
@@ -173,24 +240,9 @@
         d3.selectAll('.algorithm_explanation').remove()
         d3.selectAll('.rowDiv').remove()
 
-        const svg_height = 300
-        const svg_width = 600
-
-        const svg_height_big = 800
-        const svg_width_big = 1600
-
-        const svg_height_bigger = 1600
-        const svg_width_bigger = 3200
-
         d3.select('body').append('div')
             .text("Original")
             .attr('class', 'algorithm_header')
-
-        g = new GraphGenerator(4, seed)
-        g.generate()
-        
-        g.setExactWeights()
-        g.sortGraph()
 
         rowDiv = d3.select('body').append('div')
             .style('width', '150%')
@@ -198,54 +250,9 @@
             .style('display', 'flex')
             .attr('class', 'rowDiv')
 
-        // append svg to body
-        svg = rowDiv
-                .append('div')
-                .style('width', '33%')
-                .append('svg')
-                .attr('class', 'vis-svg')
-                .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + svg_width + " " + svg_height)
-
-        drawGraph(svg, g)
-
-        g = new GraphGenerator(10, seed, [3, 6])
-        g.generate()
-        
-        g.setExactWeights()
-        g.sortGraph()
-
-        svg_big = rowDiv
-                .append('div')
-                .style('width', '33%')
-                .append('svg')
-                .attr('class', 'vis-svg')
-                .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + svg_width_big + " " + svg_height_big)
-
-        drawGraph(svg_big, g)
-
-        g = new GraphGenerator(20, seed, [8, 15])
-        g.generate()
-        
-        g.setExactWeights()
-        g.sortGraph()
-
-        g.setExactWeights()
-        g.sortGraph()
-
-        svg_bigger = rowDiv
-                .append('div')
-                .style('width', '33%')
-                .append('svg')
-                .attr('class', 'vis-svg')
-                .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + svg_width_bigger + " " + svg_height_bigger)
-
-        drawGraph(svg_bigger, g)
+        makeGraphWithAlgorithm(rowDiv, seed, 's')
+        makeGraphWithAlgorithm(rowDiv, seed, 'm')
+        makeGraphWithAlgorithm(rowDiv, seed, 'l')
 
         // ***
         // SWEEP
@@ -259,6 +266,46 @@
             .attr('class', 'algorithm_explanation')
             .html("Simple one-pass sweep, first starting from the left, then from the right. <br>"
                 + "Tries swapping each element with the next in the same column, then checks if the number of crossings is lower. If it is, it keeps going, if not, it reverses the swap and keeps going.")
+
+        rowDiv = d3.select('body').append('div')
+            .style('width', '150%')
+            .style('height', svg_height)
+            .style('display', 'flex')
+            .attr('class', 'rowDiv')
+
+        makeGraphWithAlgorithm(rowDiv, seed, 's', 'sweep')
+        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'sweep')
+        makeGraphWithAlgorithm(rowDiv, seed, 'l', 'sweep')
+
+        // ***
+        // GANSNER
+        // ***
+
+        d3.select('body').append('div')
+            .text("Modified Gansner [1993] (GraphViz's dot)")
+            .attr('class', 'algorithm_header')
+
+        d3.select('body').append('tspan')
+            .attr('class', 'algorithm_explanation')
+            .html("This should be the implementation that is closest to what GraphViz was doing to queryvis graphs. <br>"
+                + "Each node is assigned a weight that is the median of the weights of the linked tables. <br>"
+                + "Differently from Gansner (1993), this implementation manages groups of nodes that should be kept adjacent (attributes in a table). "
+                + "I believe GraphViz does this as well, by treating the groups of nodes as subproblems. <br> <br>"
+                + "Note: this implementation does not deal with same-rank edges, as they are not mentioned in Gansner's paper. GraphViz does not manage same-rank edges as well.")
+
+        rowDiv = d3.select('body').append('div')
+            .style('width', '150%')
+            .style('height', svg_height)
+            .style('display', 'flex')
+            .attr('class', 'rowDiv')
+
+        makeGraphWithAlgorithm(rowDiv, seed, 's', 'modified gansner')
+        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'modified gansner')
+        makeGraphWithAlgorithm(rowDiv, seed, 'l', 'modified gansner')
+    }
+
+    makeAllGraphs2 = (seed) => {
+
 
         g = new GraphGenerator(4, seed)
         g.generate()
@@ -278,79 +325,11 @@
             .style('display', 'flex')
             .attr('class', 'rowDiv')
 
-        // append svg to body
-        svg = rowDiv
-                .append('div')
-                .style('width', '33%')
-                .append('svg')
-                .attr('class', 'vis-svg')
-                .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + svg_width + " " + svg_height)
-
-        drawGraph(svg, g, sweep)
-
-        g = new GraphGenerator(10, seed, [3, 6])
-        g.generate()
         
-        g.setExactWeights()
-        g.sortGraph()
-
-        sweep = new Sweep(g)
-        sweep.arrange()
-
-        g.setExactWeights()
-        g.sortGraph()
-
-        svg_big = rowDiv
-                .append('div')
-                .style('width', '33%')
-                .append('svg')
-                .attr('class', 'vis-svg')
-                .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + svg_width_big + " " + svg_height_big)
-
-        drawGraph(svg_big, g, sweep)
-
-        g = new GraphGenerator(20, seed, [8, 15])
-        g.generate()
-        
-        g.setExactWeights()
-        g.sortGraph()
-
-        sweep = new Sweep(g)
-        sweep.arrange()
-
-        g.setExactWeights()
-        g.sortGraph()
-
-        svg_bigger = rowDiv
-                .append('div')
-                .style('width', '33%')
-                .append('svg')
-                .attr('class', 'vis-svg')
-                .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + svg_width_bigger + " " + svg_height_bigger)
-
-        drawGraph(svg_bigger, g, sweep)
-
         // ***
         // GANSNER
         // ***
 
-        d3.select('body').append('div')
-            .text("Modified Gansner [1993] (GraphViz's dot)")
-            .attr('class', 'algorithm_header')
-
-        d3.select('body').append('tspan')
-            .attr('class', 'algorithm_explanation')
-            .html("This should be the implementation that is closest to what GraphViz was doing to queryvis graphs. <br>"
-                + "Each node is assigned a weight that is the median of the weights of the linked tables. <br>"
-                + "Differently from Gansner (1993), this implementation manages groups of nodes that should be kept adjacent (attributes in a table). "
-                + "I believe GraphViz does this as well, by treating the groups of nodes as subproblems. <br> <br>"
-                + "Note: this implementation does not deal with same-rank edges, as they are not mentioned in Gansner's paper. GraphViz does not manage same-rank edges as well.")
 
         g = new GraphGenerator(4, seed)
         g.generate()
