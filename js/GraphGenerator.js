@@ -32,7 +32,7 @@ class GraphGenerator {
     }
 
     generateTable(depth, index){
-        name = "T" + depth + "_" + index
+        name = "T" + depth + "y" + index
         var newTable = new Table(name, name, false, depth);
 
         for (var i=0; i<this.attrDist(); i++){

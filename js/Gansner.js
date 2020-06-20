@@ -40,7 +40,7 @@ class Gansner {
             this.transpose(cloneGraph);
 
             let cur_crossings = cloneGraph.getEdgeCrossings()
-            console.log('cur crossings: ', cur_crossings)
+            //console.log('cur crossings: ', cur_crossings)
             
             if (cur_crossings <= best_crossings) {
                 this.applyArrangement(cloneGraph)

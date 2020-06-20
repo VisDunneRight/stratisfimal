@@ -178,4 +178,8 @@ class Edge {
         return ret;
     }
 
+    isSameRankEdge(){
+        return this.leftTable.depth == this.rightTable.depth
+    }
+
 }

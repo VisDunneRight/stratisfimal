@@ -10,6 +10,7 @@
 <script
     src="https://code.easypz.io/easypz.latest.min.js">
 </script>
+<script src="https://unpkg.com/javascript-lp-solver/prod/solver.js"></script>
 
 <style>
     body {
@@ -155,6 +156,37 @@
         }
     }
 
+    lpTest = () => {
+        g = new Graph()
+        t = new Table("a", "a", true, 0)
+        b = new Table("b", "b", true, 1)
+
+        g.addTable(t)
+        g.addTable(b)
+
+        a1 = new Attribute(t, "a1")
+        t.attributes.push(a1)
+        a2 = new Attribute(t, "a2")
+        t.attributes.push(a2)
+        b1 = new Attribute(t, "b1")
+        t.attributes.push(b1)
+        b2 = new Attribute(b, "b2")
+        b.attributes.push(b2)
+
+        g.setExactWeights()
+        g.sortGraph()
+
+        e = new Edge(t, a1, t, b1)
+        g.addEdge(e)
+        e = new Edge(t, a2, b, b2)
+        g.addEdge(e)
+
+        let algorithm = new LPFormulation(g)
+        algorithm.arrange()
+
+        return g
+    }
+
     makeGraphWithAlgorithm = (rowDiv, seed, size, algorithmName = undefined) => {
         let depth, tableDistribution, cur_svg_width, cur_svg_height, algorithm;
 
@@ -180,7 +212,7 @@
         }
 
         g = new GraphGenerator(depth, seed, tableDistribution)
-        g.generate()
+        g = g.generate()
         
         g.setExactWeights()
         g.sortGraph()
@@ -193,6 +225,11 @@
             case 'modified gansner':
                 algorithm = new Gansner(g)
                 algorithm.arrange()
+                break;
+            case 'lp':
+                //algorithm = new LPFormulation(g)
+                //algorithm.arrange()
+                g = lpTest()
                 break;
             default:
                 break;
@@ -302,22 +339,14 @@
         makeGraphWithAlgorithm(rowDiv, seed, 's', 'modified gansner')
         makeGraphWithAlgorithm(rowDiv, seed, 'm', 'modified gansner')
         makeGraphWithAlgorithm(rowDiv, seed, 'l', 'modified gansner')
-    }
 
-    makeAllGraphs2 = (seed) => {
+        // ***
+        // LINEAR PROGRAMMING
+        // ***
 
-
-        g = new GraphGenerator(4, seed)
-        g.generate()
-        
-        g.setExactWeights()
-        g.sortGraph()
-
-        let sweep = new Sweep(g)
-        sweep.arrange()
-
-        g.setExactWeights()
-        g.sortGraph()
+        d3.select('body').append('div')
+            .text("Linear programming formulation")
+            .attr('class', 'algorithm_header')
 
         rowDiv = d3.select('body').append('div')
             .style('width', '150%')
@@ -325,87 +354,7 @@
             .style('display', 'flex')
             .attr('class', 'rowDiv')
 
-        
-        // ***
-        // GANSNER
-        // ***
-
-
-        g = new GraphGenerator(4, seed)
-        g.generate()
-        
-        g.setExactWeights()
-        g.sortGraph()
-
-        let gansner = new Gansner(g)
-        gansner.arrange()
-
-        g.setExactWeights()
-        g.sortGraph()
-
-        rowDiv = d3.select('body').append('div')
-            .style('width', '150%')
-            .style('height', svg_height)
-            .style('display', 'flex')
-            .attr('class', 'rowDiv')
-
-        // append svg to body
-        svg = rowDiv
-                .append('div')
-                .style('width', '33%')
-                .append('svg')
-                .attr('class', 'vis-svg')
-                .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + svg_width + " " + svg_height)
-
-        drawGraph(svg, g, gansner)
-
-        g = new GraphGenerator(10, seed, [3, 6])
-        g.generate()
-        
-        g.setExactWeights()
-        g.sortGraph()
-
-        gansner = new Gansner(g)
-        gansner.arrange()
-
-        g.setExactWeights()
-        g.sortGraph()
-
-        svg_big = rowDiv
-                .append('div')
-                .style('width', '33%')
-                .append('svg')
-                .attr('class', 'vis-svg')
-                .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + svg_width_big + " " + svg_height_big)
-
-        drawGraph(svg_big, g, gansner)
-
-        g = new GraphGenerator(20, seed, [8, 15])
-        g.generate()
-        
-        g.setExactWeights()
-        g.sortGraph()
-
-        gansner = new Gansner(g)
-        gansner.arrange()
-
-        g.setExactWeights()
-        g.sortGraph()
-
-        svg_bigger = rowDiv
-                .append('div')
-                .style('width', '33%')
-                .append('svg')
-                .attr('class', 'vis-svg')
-                .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + svg_width_bigger + " " + svg_height_bigger)
-
-        drawGraph(svg_bigger, g, gansner)
+        makeGraphWithAlgorithm(rowDiv, seed, 's', 'lp')
     }
 
     makeAllGraphs("hello.")
