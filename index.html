@@ -160,9 +160,11 @@
         g = new Graph()
         t = new Table("a", "a", true, 0)
         b = new Table("b", "b", true, 1)
+        c = new Table("c", "c", true, 1)
 
         g.addTable(t)
         g.addTable(b)
+        g.addTable(c)
 
         a1 = new Attribute(t, "a1")
         t.attributes.push(a1)
@@ -227,9 +229,9 @@
                 algorithm.arrange()
                 break;
             case 'lp':
-                //algorithm = new LPFormulation(g)
-                //algorithm.arrange()
-                g = lpTest()
+                algorithm = new LPFormulation(g)
+                algorithm.arrange()
+                //g = lpTest()
                 break;
             default:
                 break;
@@ -355,6 +357,8 @@
             .attr('class', 'rowDiv')
 
         makeGraphWithAlgorithm(rowDiv, seed, 's', 'lp')
+        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'lp')
+        makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp')
     }
 
     makeAllGraphs("hello.")
