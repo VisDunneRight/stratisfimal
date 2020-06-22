@@ -1,11 +1,16 @@
 class Graph {
-    constructor(){
-        this.edges = []; 
-        this.tables = []; 
-        this.tableIndex = []; 
-        this.edgeIndex = [];
-        this.maxDepth = 0;
-        this.newLayer();
+    constructor(obj){
+        if (obj == undefined){
+            this.edges = []; 
+            this.tables = []; 
+            this.tableIndex = []; 
+            this.edgeIndex = [];
+            this.maxDepth = 0;
+            this.newLayer();
+        } else {
+            obj && Object.assign(this, obj);
+        }
+        
     }
 
     newLayer(){

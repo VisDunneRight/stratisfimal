@@ -189,7 +189,7 @@
         return g
     }
 
-    makeGraphWithAlgorithm = (rowDiv, seed, size, algorithmName = undefined) => {
+    async function makeGraphWithAlgorithm(rowDiv, seed, size, algorithmName = undefined) {
         let depth, tableDistribution, cur_svg_width, cur_svg_height, algorithm;
 
         switch (size) {
@@ -229,27 +229,31 @@
                 algorithm.arrange()
                 break;
             case 'lp':
-                algorithm = new LPFormulation(g)
-                algorithm.arrange()
+                //algorithm = new LPFormulation(g)
+                //algorithm.arrange()
                 //g = lpTest()
+                runLpWorker(g, rowDiv, cur_svg_width, cur_svg_height)
                 break;
             default:
                 break;
         }
 
-        g.setExactWeights()
-        g.sortGraph()
+        if (algorithmName != 'lp'){
+            g.setExactWeights()
+            g.sortGraph()
 
-        svg = rowDiv
-                .append('div')
-                .style('width', '33%')
-                .append('svg')
-                .attr('class', 'vis-svg')
-                .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
+            svg = rowDiv
+                    .append('div')
+                    .style('width', '33%')
+                    .append('svg')
+                    .attr('class', 'vis-svg')
+                    .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                    .attr("preserveAspectRatio", "xMinYMin meet")
+                    .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
 
-        drawGraph(svg, g, algorithm)
+            drawGraph(svg, g, algorithm)
+        }
+        
     }
 
     let form = document.createElement("div")
@@ -361,10 +365,41 @@
         //makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp')
     }
 
-    makeAllGraphs("hello.")
+    async function runLpWorker(g, rowDiv, cur_svg_width, cur_svg_height) {
+        myWorker = new Worker('./js/worker.js')
+        myWorker.postMessage({'cmd': 'lp', 'graph': g});
 
-    //myWorker = new Worker('./js/worker.js')
-    //myWorker.postMessage('a');
+        let algorithm;
+
+        myWorker.addEventListener('message', (msg) => {
+            algorithm = msg.data.algorithm;
+            for (table of msg.data.graph.tables){
+                t1 = g.tables.find(t => t.name == table.name)
+                t1.weight = table.weight
+
+                for (attribute of table.attributes){
+                    a1 = t1.attributes.find(a => a.name == attribute.name)
+                    a1.weight = attribute.weight
+                }
+            }
+
+            g.setExactWeights()
+            g.sortGraph()
+
+            svg = rowDiv
+                    .append('div')
+                    .style('width', '33%')
+                    .append('svg')
+                    .attr('class', 'vis-svg')
+                    .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                    .attr("preserveAspectRatio", "xMinYMin meet")
+                    .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
+
+            drawGraph(svg, g, algorithm)
+        });
+    }
+
+    makeAllGraphs("hello.")
 
 </script>
 

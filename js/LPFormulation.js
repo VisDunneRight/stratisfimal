@@ -7,10 +7,9 @@ class LPFormulation {
     }
 
     async arrange(){
-
-        var script = document.createElement('script');
-        script.src = "./lib/glpk.min.js";
-        document.head.appendChild(script);
+        // var script = document.createElement('script');
+        // script.src = "./lib/glpk.min.js";
+        // document.head.appendChild(script);
 
         let startTime = new Date().getTime()
 
@@ -244,7 +243,7 @@ class LPFormulation {
                             + " >= 1\n"
 
                     // if u1v1 is the same rank edge and the other is not
-                    } else if (u1v1.isSameRankEdge() && !u2v2.isSameRankEdge()){
+                    } else if (this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)){
                         let u1 = u1v1.leftAttribute.name 
                         let v1 = u1v1.rightAttribute.name
                         let u2 = u2v2.leftAttribute.name
@@ -262,12 +261,16 @@ class LPFormulation {
 
     }
 
+    isSameRankEdge(edge){
+        return edge.leftTable.depth == edge.rightTable.depth
+    }
+
     modelToString(model){
         return model.minimize + model.subjectTo + model.bounds + '\nEnd\n'
     }
 
     apply_solution(solution){
-        window.solution = solution
+        //window.solution = solution
         for (let i=0; i<this.g.maxDepth + 1; i++){
             let layerTables = this.g.tableIndex[i];
 
@@ -275,10 +278,10 @@ class LPFormulation {
                 if (solution["x_T" + a.name + "_T" + b.name] == 1) return 1
             })
 
-            if (i==1) {
-                window.layerTables = layerTables
-                window.solution = solution
-            }
+            // if (i==1) {
+            //     window.layerTables = layerTables
+            //     window.solution = solution
+            // }
 
             for (let k in layerTables){
                 layerTables[k].weight = k;
