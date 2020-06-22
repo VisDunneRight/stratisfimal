@@ -6,7 +6,11 @@ class LPFormulation {
         this.elapsedTime = 0
     }
 
-    arrange(){
+    async arrange(){
+
+        var script = document.createElement('script');
+        script.src = "./lib/glpk.min.js";
+        document.head.appendChild(script);
 
         let startTime = new Date().getTime()
 
@@ -49,6 +53,7 @@ class LPFormulation {
         this.apply_solution(result)
 
         this.elapsedTime = new Date().getTime() - startTime
+        
     }
 
     fillModel(model){

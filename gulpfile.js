@@ -8,7 +8,7 @@ var terser        = require('gulp-terser');
 // concatenate all the files
 gulp.task('concat', function() {
   return pipeline(
-    gulp.src(['./js/*.js', './lib/*.js']),
+    gulp.src(['./js/*.js', './lib/*.js', '!lib/glpk.min.js', '!js/worker.js']),
     sourcemaps.init(),
     terser(),
     concat('dist.js'),
