@@ -199,11 +199,23 @@
                 cur_svg_width = svg_width_s;
                 cur_svg_height = svg_height_s;
                 break;
+            case 'sm':
+                depth = 7;
+                tableDistribution = [3, 5];
+                cur_svg_width = svg_width_m*0.7;
+                cur_svg_height = svg_height_m*0.7;
+                break;
             case 'm':
                 depth = 10;
                 tableDistribution = [3, 6];
                 cur_svg_width = svg_width_m;
                 cur_svg_height = svg_height_m;
+                break;
+            case 'ml':
+                depth = 12;
+                tableDistribution = [4, 7];
+                cur_svg_width = svg_width_l*0.6;
+                cur_svg_height = svg_height_l*0.6;
                 break;
             case 'l':
                 depth = 20;
@@ -244,7 +256,7 @@
 
             svg = rowDiv
                     .append('div')
-                    .style('width', '33%')
+                    .style('width', '20%')
                     .append('svg')
                     .attr('class', 'vis-svg')
                     .attr('easypz', '{"applyTransformTo":"svg > *"}')
@@ -288,13 +300,15 @@
             .attr('class', 'algorithm_header')
 
         rowDiv = d3.select('body').append('div')
-            .style('width', '150%')
+            .style('width', '200%')
             .style('height', svg_height)
             .style('display', 'flex')
             .attr('class', 'rowDiv')
 
         makeGraphWithAlgorithm(rowDiv, seed, 's')
+        makeGraphWithAlgorithm(rowDiv, seed, 'sm')
         makeGraphWithAlgorithm(rowDiv, seed, 'm')
+        makeGraphWithAlgorithm(rowDiv, seed, 'ml')
         makeGraphWithAlgorithm(rowDiv, seed, 'l')
 
         // ***
@@ -311,13 +325,15 @@
                 + "Tries swapping each element with the next in the same column, then checks if the number of crossings is lower. If it is, it keeps going, if not, it reverses the swap and keeps going.")
 
         rowDiv = d3.select('body').append('div')
-            .style('width', '150%')
+            .style('width', '200%')
             .style('height', svg_height)
             .style('display', 'flex')
             .attr('class', 'rowDiv')
 
         makeGraphWithAlgorithm(rowDiv, seed, 's', 'sweep')
+        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'sweep')
         makeGraphWithAlgorithm(rowDiv, seed, 'm', 'sweep')
+        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'sweep')
         makeGraphWithAlgorithm(rowDiv, seed, 'l', 'sweep')
 
         // ***
@@ -337,13 +353,15 @@
                 + "Note: this implementation does not deal with same-rank edges, as they are not mentioned in Gansner's paper. GraphViz does not manage same-rank edges as well.")
 
         rowDiv = d3.select('body').append('div')
-            .style('width', '150%')
+            .style('width', '200%')
             .style('height', svg_height)
             .style('display', 'flex')
             .attr('class', 'rowDiv')
 
         makeGraphWithAlgorithm(rowDiv, seed, 's', 'modified gansner')
+        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'modified gansner')
         makeGraphWithAlgorithm(rowDiv, seed, 'm', 'modified gansner')
+        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'modified gansner')
         makeGraphWithAlgorithm(rowDiv, seed, 'l', 'modified gansner')
 
         // ***
@@ -355,23 +373,27 @@
             .attr('class', 'algorithm_header')
 
         rowDiv = d3.select('body').append('div')
-            .style('width', '150%')
+            .style('width', '200%')
             .style('height', svg_height)
             .style('display', 'flex')
             .attr('class', 'rowDiv')
 
         makeGraphWithAlgorithm(rowDiv, seed, 's', 'lp')
+        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'lp')
         makeGraphWithAlgorithm(rowDiv, seed, 'm', 'lp')
-        //makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp')
+        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'lp')
+        makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp')
     }
 
     async function runLpWorker(g, rowDiv, cur_svg_width, cur_svg_height) {
-        myWorker = new Worker('./js/worker.js')
+        let myWorker = new Worker('./js/worker.js')
         myWorker.postMessage({'cmd': 'lp', 'graph': g});
+        let finished = false;
 
         let algorithm;
 
         myWorker.addEventListener('message', (msg) => {
+            finished = true;
             algorithm = msg.data.algorithm;
             for (table of msg.data.graph.tables){
                 t1 = g.tables.find(t => t.name == table.name)
@@ -388,7 +410,7 @@
 
             svg = rowDiv
                     .append('div')
-                    .style('width', '33%')
+                    .style('width', '20%')
                     .append('svg')
                     .attr('class', 'vis-svg')
                     .attr('easypz', '{"applyTransformTo":"svg > *"}')
@@ -397,6 +419,11 @@
 
             drawGraph(svg, g, algorithm)
         });
+
+        setTimeout(() => {
+            myWorker.terminate()
+            if (!finished) console.log('worker terminated')
+        }, 50000);
     }
 
     makeAllGraphs("hello.")

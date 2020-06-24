@@ -1,0 +1,442 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+
+<script
+    src="https://code.easypz.io/easypz.latest.min.js">
+</script>
+<script src="https://unpkg.com/javascript-lp-solver/prod/solver.js"></script>
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 5%;
+    }
+
+    svg {
+        margin: 1%;
+        background-color: white;
+    }
+
+    .algorithm_header {
+        font-size: 2em;
+        font-weight: bold;
+        margin-top: 100px;
+        margin-bottom: 20px;
+    }
+
+    .rowDiv {
+        margin-top: 20px;
+    }
+
+</style>
+
+<body>
+</body>
+
+<script src="./dist/dist.js"></script>
+<script>
+
+    let threadRunning = 0;
+    let maxIterations = 20;
+    let maxIterationsPerVariation = 1;
+    let maxVariations = 20;
+    let curIterationNum = 0;
+    let curVariation = 0; 
+    let gansnerResults = [];
+    let sweepResults = [];
+    let lpResults = [];
+    let workersTerminated = 0;
+
+    const gansner_color = 'blue'
+    const sweep_color = 'orange'
+    const lp_color = 'red'
+
+    let depth = 2
+    let tableDistribution = [2, 3]
+
+    let gansnerpath;
+    for (i=0; i<=maxVariations + 1; i++){gansnerResults.push([])}
+    for (i=0; i<=maxVariations + 1; i++){sweepResults.push([])}
+    for (i=0; i<=maxVariations + 1; i++){lpResults.push([])}
+
+    let path_width = 3
+
+    processing_div = d3.select('body')
+        .attr('width', window.innerWidth)
+        .append('div')
+
+    processing_gif = processing_div.append('img')
+        .attr('src', './images/Spinner-1s-200px.gif')
+        .attr('width', 70)
+        .attr('height', 70)
+
+    current_processing_text = processing_div
+        .append('div')
+        .style('font-size', 'x-large')
+        .style('font-weight', 'bold')
+        .style('display', 'inline-block')
+        .style('transform', 'translate(0, -100%)')
+        .html('processing')
+
+    current_processing_small_text = processing_div
+        .append('div')
+        .style('margin', '10px')
+        .html('Additional info')
+
+    init_timing_chart = () => {
+        const width = 600
+        const height = 600
+        const padding = 50
+
+        timing_svg = d3.select('body').append('svg')
+            .attr('width', 600)
+            .attr('height', 600)
+
+        timing_yScale = d3.scaleLinear()
+            .domain([0, 2000])
+            .range([500, 0]);
+
+        timing_xScale = d3.scaleLinear()
+            .domain([0, 100])
+            .range([0, 500]);
+
+        timing_svg.append("g")
+            .attr('transform', "translate(50, 50)")
+            .call(d3.axisLeft(timing_yScale));
+
+        timing_svg.append("g")
+            .attr("transform", "translate(50," + 550 + ")")
+            .call(d3.axisBottom(timing_xScale));
+
+        timing_p = timing_svg.append("g")
+            .attr('transform', "translate(50, 50)")
+
+        timing_gansnerpath = timing_p
+            .append('path')
+            .attr('fill', 'none')
+            .attr('stroke', 'blue')
+            .attr('id', 'timing_gansnerpath')
+            .attr('stroke-width', path_width)
+
+        timing_sweeppath = timing_p
+            .append('path')
+            .attr('fill', 'none')
+            .attr('stroke', 'orange')
+            .attr('id', 'timing_sweeppath')
+            .attr('stroke-width', path_width)
+
+        timing_lppath = timing_p
+            .append('path')
+            .attr('fill', 'none')
+            .attr('stroke', 'red')
+            .attr('id', 'timing_lppath')
+            .attr('stroke-width', path_width)
+
+        timing_svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('x', timing_svg.attr('width')/2)
+            .attr('y', 50)
+            .text('Time')
+
+        timing_svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('x', width/2)
+            .attr('y', height - padding/2 + 10)
+            .attr('font-size', 'small')
+            .text('Number of tables')
+
+        timing_svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('x', -height/2)
+            .attr('y', 10)
+            .attr('transform', 'rotate(-90)')
+            .attr('font-size', 'small')
+            .text('time in ms')
+    }
+
+    init_crossings_chart = () => {
+        const width = 600
+        const height = 600
+        const padding = 50
+
+        crossings_svg = d3.select('body').append('svg')
+            .attr('width', width)
+            .attr('height', height)
+
+        crossings_yScale = d3.scaleLinear()
+            .domain([0, 400])
+            .range([500, 0]);
+
+        crossings_xScale = d3.scaleLinear()
+            .domain([0, 100])
+            .range([0, 500]);
+
+        crossings_svg.append("g")
+            .attr('transform', "translate(" + padding + ", " + padding + ")")
+            .call(d3.axisLeft(crossings_yScale));
+
+        crossings_svg.append("g")
+            .attr("transform", "translate(50," + (height-padding) + ")")
+            .call(d3.axisBottom(crossings_xScale));
+
+        crossings_p = crossings_svg.append("g")
+        .attr('transform', "translate(" + padding + ", " + padding + ")")
+
+        crossings_gansnerpath = crossings_p
+            .append('path')
+            .attr('fill', 'none')
+            .attr('stroke', 'blue')
+            .attr('id', 'crossings_gansnerpath')
+            .attr('stroke-width', path_width)
+
+        crossings_sweeppath = crossings_p
+            .append('path')
+            .attr('fill', 'none')
+            .attr('stroke', 'orange')
+            .attr('id', 'crossings_sweeppath')
+            .attr('stroke-width', path_width)
+
+        crossings_lppath = crossings_p
+            .append('path')
+            .attr('fill', 'none')
+            .attr('stroke', 'red')
+            .attr('id', 'crossings_lppath')
+            .attr('stroke-width', path_width)
+        
+        crossings_svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('x', width/2)
+            .attr('y', padding)
+            .text('Crossings')
+
+        crossings_svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('x', width/2)
+            .attr('y', height - padding/2 + 10)
+            .attr('font-size', 'small')
+            .text('Number of tables')
+
+        crossings_svg.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('x', -height/2)
+            .attr('y', 10)
+            .attr('transform', 'rotate(-90)')
+            .attr('font-size', 'small')
+            .text('Number of crossings')
+    }
+
+
+    update_path = (p, val, resArr, xscale, yscale) => {
+        p.attr('d', () => {
+            let res = []
+
+            for (v in resArr){
+                let tmpresx = 0
+                let tmpresy = 0
+                
+                for (elem of resArr[v]){
+                    tmpresx += elem.tables
+                    tmpresy += elem[val]
+                }
+
+                tmpresx = tmpresx/resArr[v].length
+                tmpresy = tmpresy/resArr[v].length
+
+                res.push([xscale(tmpresx), yscale(tmpresy)])
+            }
+
+            return d3.line()(res)
+        })
+    }
+
+
+    runFuncGansner = () => {
+        current_processing_text.html("Computing Gansner")
+
+        if (threadRunning == 0) {
+            g = new GraphGenerator(depth, Math.random(), tableDistribution)
+            g = g.generate()
+                
+            g.setExactWeights()
+            g.sortGraph()
+
+            runWorker(g, 'gansner', gansnerResults)
+
+            current_processing_small_text.html(
+                'Computing graph with ' + g.tables.length + ' tables, ' + g.edges.length + ' edges <br>' +
+                'Iteration ' + curIterationNum + ', variation ' + curVariation + '<br>' +
+                'Workers terminated: ' + workersTerminated 
+            )
+
+            curIterationNum += 1
+            
+            if (curIterationNum > maxIterationsPerVariation){
+                curIterationNum = 0
+                curVariation += 1
+                if (curVariation%3 == 0) depth += 1
+                if (curVariation % 2 == 0) tableDistribution[0] += 1
+                else tableDistribution[1] += 1
+
+                update_path(timing_gansnerpath, 'time', gansnerResults,timing_xScale, timing_yScale)
+                update_path(crossings_gansnerpath, 'crossings', gansnerResults, crossings_xScale, crossings_yScale)
+            }
+
+        }
+
+        setTimeout(() => {
+            if (curVariation < maxVariations) {
+                runFuncGansner()
+            } else {
+                curVariation = 0
+                curIterationNum = 0
+                depth = 2
+                tableDistribution = [2, 3]
+                workersTerminated = 0
+                runFuncSweep()
+            }
+        }, 10)
+    }
+
+    runFuncSweep = () => {
+        current_processing_text.html("Computing Sweep")
+
+        if (threadRunning == 0) {
+            g = new GraphGenerator(depth, Math.random(), tableDistribution)
+            g = g.generate()
+                
+            g.setExactWeights()
+            g.sortGraph()
+
+            runWorker(g, 'sweep', sweepResults)
+
+            current_processing_small_text.html(
+                'Computing graph with ' + g.tables.length + ' tables, ' + g.edges.length + ' edges <br>' +
+                'Iteration ' + curIterationNum + ', variation ' + curVariation + '<br>' +
+                'Workers terminated: ' + workersTerminated 
+            )
+
+            curIterationNum += 1
+
+            if (curIterationNum > maxIterationsPerVariation){
+                curIterationNum = 0
+                curVariation += 1
+                if (curVariation%3 == 0) depth += 1
+                if (curVariation%2 == 0) tableDistribution[0] += 1
+                else tableDistribution[1] += 1
+
+                update_path(timing_sweeppath, 'time', sweepResults, timing_xScale, timing_yScale)
+                update_path(crossings_sweeppath, 'crossings', sweepResults, crossings_xScale, crossings_yScale)
+            }
+        }
+
+        setTimeout(() => {
+            if (curVariation < maxVariations) {
+                runFuncSweep()
+            } else {
+                curVariation = 0
+                curIterationNum = 0
+                depth = 2
+                tableDistribution = [2, 3]
+                workersTerminated = 0
+                runFuncLp()
+            }
+        }, 10)
+    }
+
+    runFuncLp = () => {
+        current_processing_text.html("Computing LP")
+
+        if (threadRunning == 0) {
+            g = new GraphGenerator(depth, Math.random(), tableDistribution)
+            g = g.generate()
+                
+            g.setExactWeights()
+            g.sortGraph()
+
+            runWorker(g, 'lp', lpResults)
+
+            current_processing_small_text.html(
+                'Computing graph with ' + g.tables.length + ' tables, ' + g.edges.length + ' edges <br>' +
+                'Iteration ' + curIterationNum + ', variation ' + curVariation + '<br>' +
+                'Workers terminated: ' + workersTerminated 
+            )
+
+            curIterationNum += 1
+
+            if (curIterationNum > maxIterationsPerVariation){
+                curIterationNum = 0
+                curVariation += 1
+                if (curVariation%3 == 0) depth += 1
+                if (curVariation % 2 == 0) tableDistribution[0] += 1
+                else tableDistribution[1] += 1
+
+                update_path(timing_lppath, 'time', lpResults, timing_xScale, timing_yScale)
+                update_path(crossings_lppath, 'crossings', lpResults, crossings_xScale, crossings_yScale)
+            }
+        }
+
+        setTimeout(() => {
+            if (curVariation < maxVariations) {
+                runFuncLp()
+            } else {
+                processing_gif.remove()
+                current_processing_text.html('Complete')
+            }
+        }, 10)
+    }
+
+    init_timing_chart()
+    init_crossings_chart()
+    runFuncGansner()   
+
+
+    async function runWorker(g, cmd, resultArr){
+        let myWorker = new Worker('./js/worker.js')
+        myWorker.postMessage({'cmd': cmd, 'graph': g});
+        let finished = false;
+        threadRunning += 1;
+
+        let algorithm;
+
+        myWorker.addEventListener('message', (msg) => {
+            finished = true;
+            threadRunning -= 1;
+            algorithm = msg.data.algorithm;
+            for (table of msg.data.graph.tables){
+                t1 = g.tables.find(t => t.name == table.name)
+                t1.weight = table.weight
+
+                for (attribute of table.attributes){
+                    a1 = t1.attributes.find(a => a.name == attribute.name)
+                    a1.weight = attribute.weight
+                }
+            }
+
+            g.setExactWeights()
+            g.sortGraph()
+
+            resultArr[curVariation].push({
+                'tables': g.tables.length, 
+                'edges': g.edges.length, 
+                'crossings': g.getEdgeCrossings(), 
+                'time': algorithm.elapsedTime
+            })
+        });
+
+        setTimeout(() => {
+            myWorker.terminate()
+            if (!finished) {
+                console.log('worker terminated')
+                threadRunning -= 1;
+                workersTerminated += 1
+            }
+        }, 5000);
+    }
+</script>
+</html>

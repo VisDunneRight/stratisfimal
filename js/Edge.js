@@ -1,9 +1,9 @@
 class Edge {
-    constructor(leftTable, att1, rigthTable, att2){
+    constructor(leftTable, att1, rightTable, att2){
         this.leftTable = leftTable;
         this.att1 = att1;
         this.leftAttribute = att1;
-        this.rightTable = rigthTable;
+        this.rightTable = rightTable;
         this.att2 = att2;
         this.rightAttribute = att2;
     }

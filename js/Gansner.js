@@ -1,6 +1,6 @@
 class Gansner {
     constructor(graph){
-        this.g = g;
+        this.g = graph;
         this.max_iterations = 11;
         this.elapsedTime = 0;
     }
