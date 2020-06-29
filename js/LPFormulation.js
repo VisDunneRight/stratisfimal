@@ -254,6 +254,12 @@ class LPFormulation {
                             + " + x_" + u2 + "_" + u1 
                             + " + x_" + v1 + "_" + u2 
                             + " >= 1\n"
+
+                        model.subjectTo += "c_" + u1 + v1  
+                            + "_" + u2 + v2 
+                            + " + x_" + u2 + "_" + v1 
+                            + " + x_" + u1 + "_" + u2 
+                            + " >= 1\n"
                     }
                 }
             }
@@ -275,7 +281,7 @@ class LPFormulation {
             let layerTables = this.g.tableIndex[i];
 
             layerTables.sort((a, b) => {
-                if (solution["x_T" + a.name + "_T" + b.name] == 1) return 1
+                if (solution["x_T" + a.name + "_T" + b.name] == 0) return 1
             })
 
             // if (i==1) {
@@ -289,7 +295,7 @@ class LPFormulation {
 
             for (let table of layerTables){
                 table.attributes.sort((a, b) => {
-                    if (solution["x_" + a.name + "_" + b.name] == 1) return 1
+                    if (solution["x_" + a.name + "_" + b.name] == 0) return 1
                 })
 
                 for (let j=0; j<table.attributes.length; j++){
