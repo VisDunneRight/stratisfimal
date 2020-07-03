@@ -10,7 +10,7 @@
 <script
     src="https://code.easypz.io/easypz.latest.min.js">
 </script>
-<script src="https://unpkg.com/javascript-lp-solver/prod/solver.js"></script>
+<script src="./lib/glpk.min.js"></script>
 
 <style>
     body {
@@ -170,17 +170,29 @@
         t.attributes.push(a1)
         a2 = new Attribute(t, "a2")
         t.attributes.push(a2)
-        b1 = new Attribute(t, "b1")
-        t.attributes.push(b1)
+        b1 = new Attribute(b, "b1")
+        b.attributes.push(b1)
         b2 = new Attribute(b, "b2")
         b.attributes.push(b2)
+        b21 = new Attribute(b, "b3")
+        b.attributes.push(b21)
+        b4 = new Attribute(b, "b4")
+        b.attributes.push(b4)
+
+        c1 = new Attribute(c, "c1")
+        c.attributes.push(c1)
 
         g.setExactWeights()
         g.sortGraph()
 
-        e = new Edge(t, a1, t, b1)
+        e = new Edge(t, a1, b, b2)
         g.addEdge(e)
-        e = new Edge(t, a2, b, b2)
+        e = new Edge(t, a2, b, b1)
+        g.addEdge(e)
+        e = new Edge(t, a1, b, b4)
+        g.addEdge(e)
+
+        e = new Edge(t, a1, c, c1)
         g.addEdge(e)
 
         let algorithm = new LPFormulation(g)
@@ -218,8 +230,8 @@
                 cur_svg_height = svg_height_l*0.6;
                 break;
             case 'l':
-                depth = 20;
-                tableDistribution = [8, 15];
+                depth = 14;
+                tableDistribution = [5, 8];
                 cur_svg_width = svg_width_l;
                 cur_svg_height = svg_height_l;
                 break;
@@ -423,7 +435,7 @@
         setTimeout(() => {
             myWorker.terminate()
             if (!finished) console.log('worker terminated')
-        }, 50000);
+        }, 1000000);
     }
 
     makeAllGraphs("hello.")
