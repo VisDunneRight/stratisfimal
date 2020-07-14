@@ -74,13 +74,18 @@ class Graph {
     setExactWeights(){
         for (let i in this.tableIndex){
             let layerTables = this.tableIndex[i];
-            layerTables = layerTables.sort((a, b) => a.weight > b.weight? 1 : -1)
+            layerTables = layerTables.sort((a, b) => {
+                return a.weight > b.weight? 1 : -1
+            })
+            
             for (let j in layerTables){
                 let table = layerTables[j]
                 table.weight = parseFloat(j)
 
                 let attrs = table.attributes;
-                attrs = attrs.sort((a, b) => a.weight > b.weight? 1 : -1)
+                attrs = attrs.sort((a, b) => {
+                    return a.weight > b.weight? 1 : -1
+                })
                 
                 for (let k in attrs){
                     attrs[k].weight = parseFloat(k)

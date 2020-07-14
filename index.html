@@ -102,6 +102,7 @@
             .attr("fill", "#ccc")
             .attr("stroke", "white")
             .attr("stroke-width", 2)
+            .on('click', d => console.log(d))
 
         attrgroups.append('text')
             .attr('x', table_width/2)
@@ -109,7 +110,7 @@
             .attr('text-anchor', 'middle')
             .attr('font-size', '0.7em')
             .attr("font-family", "Arial")
-            .text(d => d.attr + " w:" + d.weight)
+            .text(d => d.attr + " w:" + d.weight) 
 
         let get_1st_coord = (d) => 
             [d.leftTable.depth * depth_distance + table_width,
@@ -252,6 +253,10 @@
                 algorithm = new Gansner(g)
                 algorithm.arrange()
                 break;
+            case 'gansner same rank':
+                algorithm = new GansnerSameRank(g)
+                algorithm.arrange()
+                break;
             case 'lp':
                 //algorithm = new LPFormulation(g)
                 //algorithm.arrange()
@@ -271,7 +276,7 @@
                     .style('width', '20%')
                     .append('svg')
                     .attr('class', 'vis-svg')
-                    .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                    //.attr('easypz', '{"applyTransformTo":"svg > *"}')
                     .attr("preserveAspectRatio", "xMinYMin meet")
                     .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
 
@@ -375,6 +380,30 @@
         makeGraphWithAlgorithm(rowDiv, seed, 'm', 'modified gansner')
         makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'modified gansner')
         makeGraphWithAlgorithm(rowDiv, seed, 'l', 'modified gansner')
+
+        // ***
+        // GANSNER WITH SAME RANK EDGES
+        // ***
+
+        d3.select('body').append('div')
+            .text("Modified Gansner including same-rank edges")
+            .attr('class', 'algorithm_header')
+
+        d3.select('body').append('tspan')
+            .attr('class', 'algorithm_explanation')
+            .html("Here, the median is computed by taking into account same-rank edges.")
+            
+        rowDiv = d3.select('body').append('div')
+            .style('width', '200%')
+            .style('height', svg_height)
+            .style('display', 'flex')
+            .attr('class', 'rowDiv')
+
+        makeGraphWithAlgorithm(rowDiv, seed, 's', 'gansner same rank')
+        // makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'gansner same rank')
+        // makeGraphWithAlgorithm(rowDiv, seed, 'm', 'gansner same rank')
+        //makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'modified gansner')
+        //makeGraphWithAlgorithm(rowDiv, seed, 'l', 'modified gansner')
 
         // ***
         // LINEAR PROGRAMMING
