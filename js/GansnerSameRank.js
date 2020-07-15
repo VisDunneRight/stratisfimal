@@ -1,9 +1,34 @@
 class GansnerSameRank {
     constructor(graph){
         this.g = graph;
-        this.max_iterations = 2;
+        this.max_iterations = 6;
         this.elapsedTime = 0;
+
+        this.iterations = [];
+        this.cur_iteration = 0;
     }
+
+    apply_iteration(iter_num){
+        console.log(this.iterations)
+        this.applyArrangement(this.iterations[iter_num]);
+    }
+
+    quicksort(array) {
+        if (array.length <= 1) {
+          return array;
+        }
+      
+        var pivot = array[0];
+        
+        var left = []; 
+        var right = [];
+      
+        for (var i = 1; i < array.length; i++) {
+          array[i] < pivot ? left.push(array[i]) : right.push(array[i]);
+        }
+      
+        return quicksort(left).concat(pivot, quicksort(right));
+      };
 
     median(array) {
         array = array.sort();
@@ -17,6 +42,7 @@ class GansnerSameRank {
         for (let table of cloneGraph.tables){
             let table2 = this.g.tables.find(t => t.name == table.name)
             table2.weight = table.weight;
+            table2.assignedWeight = table.assignedWeight;
 
             for (let attribute of table.attributes){
                 let attribute2 = table2.attributes.find(a => a.name == attribute.name)
@@ -34,13 +60,14 @@ class GansnerSameRank {
         let best_crossings = this.g.getEdgeCrossings()
 
         for (let i=0; i<this.max_iterations; i++){
+            this.cur_iteration = i;
             let cloneGraph = _.cloneDeep(this.g)
             
             if (i%2 == 0) {
                 this.arrangeLeft(cloneGraph)
             } else this.arrangeRight(cloneGraph)
 
-            //this.transpose(cloneGraph);
+            this.transpose(cloneGraph);
 
             let cur_crossings = cloneGraph.getEdgeCrossings()
             
@@ -48,66 +75,32 @@ class GansnerSameRank {
                 this.applyArrangement(cloneGraph)
                 best_crossings = cur_crossings
             }
+
+            this.iterations[this.cur_iteration] = _.cloneDeep(cloneGraph);
         }
 
         this.elapsedTime = new Date().getTime() - startTime;
     }
 
-    // arrangeLeft(g){
-    //     for (let i=1; i<=g.maxDepth + 1; i++){
-    //         let layerTables = g.tableIndex[i];
-    //         let layerEdges = g.edgeIndex[i-1];
-    //         let thisLayerEdges = g.edgeIndex[i];
-
-    //         for (let table of layerTables){
-    //             let weights = layerEdges
-    //                 .filter(e => e.rightTable == table && e.leftTable.depth != e.rightTable.depth)
-    //                 .map(e => parseFloat(e.leftTable.weight))
-    //             table.weight = this.median(weights)
-
-    //             for (let attribute of table.attributes){
-    //                 let tableWeights = layerEdges
-    //                     .filter(e => e.rightAttribute == attribute  && e.leftTable.depth != e.rightTable.depth)
-    //                     .map(e => parseFloat(e.leftTable.weight))
-
-    //                 let attributeWeights = layerEdges
-    //                     .filter(e => e.rightAttribute == attribute  && e.leftTable.depth != e.rightTable.depth)
-    //                     .map(e => parseFloat(e.leftAttribute.weight))
-
-    //                 //console.log(attributeWeights, tableWeights)
-    //                 //console.log(this.median(tableWeights), this.median(attributeWeights))
-
-    //                 //if (tableWeights.length != 0){
-    //                     attribute.weight = parseFloat(this.median(tableWeights)) + parseFloat(this.median(attributeWeights)/table.attributes.length)
-    //                     attribute.assignedWeight = parseFloat(this.median(tableWeights)) + parseFloat(this.median(attributeWeights)/table.attributes.length)
-    //                 //}
-
-    //                 //console.log(isNaN(attribute.weight))
-    //             }
-    //         }
-
-    //         g.setExactWeights()
-    //     }
-    // }
-
     arrangeLeft(g){
-
-        let tmpWeightsTables = [];
+        console.log('Left')
+        let tmpWeightsTables = {};
         let tmpAttributeWeights = {};
 
         for (let i=1; i<=g.maxDepth + 1; i++){
             let layerTables = g.tableIndex[i];
             let layerEdges = g.edgeIndex[i-1];
-            tmpWeightsTables[i] = [];
 
             for (let t in layerTables){
                 let table = layerTables[t];
 
                 let weights = layerEdges
                     .filter(e => e.rightTable == table && !this.isSameRankEdge(e))
-                    .map(e => e.leftTable.weight)
+                    .map(e => parseFloat(e.leftTable.weight))
        
-                tmpWeightsTables[i].push(this.median(weights))
+                let val = this.median(weights);
+                if (!isNaN(val)) tmpWeightsTables[table.name] = val;
+                tmpAttributeWeights[table.name] = {};
 
                 for (let attribute of table.attributes){
                     let tableWeights = layerEdges
@@ -118,26 +111,22 @@ class GansnerSameRank {
                         .filter(e => e.rightAttribute == attribute  && !this.isSameRankEdge(e))
                         .map(e => parseFloat(e.leftAttribute.weight))
 
-                    // complete here
+                    let val = parseFloat(this.median(tableWeights)) + parseFloat(this.median(attributeWeights)/table.attributes.length);
+
+                    if (!isNaN(val)) tmpAttributeWeights[table.name][attribute.name] = val;
                 }
             }
         }
 
-        for (let i in tmpWeightsTables){
-            for (let j in tmpWeightsTables[i]){
-                g.tableIndex[i][j].weight = tmpWeightsTables[i][j];
-            }
-        }
-
-        g.setExactWeights()
+        this.reorder(g, tmpWeightsTables, tmpAttributeWeights);
     }
 
     arrangeRight(g){
-
+        console.log('Right')
         let tmpWeightsTables = {};
         let tmpAttributeWeights = {};
 
-        for (let i=g.maxDepth; i>=0; i--){
+        for (let i = g.maxDepth - 1; i>0; i--){
             let layerTables = g.tableIndex[i];
             let layerEdges = g.edgeIndex[i];
 
@@ -146,7 +135,9 @@ class GansnerSameRank {
                     .filter(e => e.leftTable == table)
                     .map(e => parseFloat(e.rightTable.weight))
 
-                tmpWeightsTables[table.name] = this.median(weights)
+                let val = parseFloat(this.median(weights));
+
+                if (!isNaN(val)) tmpWeightsTables[table.name] = val;
                 tmpAttributeWeights[table.name] = {};
 
                 for (let attribute of table.attributes){
@@ -158,15 +149,14 @@ class GansnerSameRank {
                         .filter(e => e.leftAttribute == attribute)
                         .map(e => parseFloat(e.rightAttribute.weight))
 
-                    if (table.name == "T1y1") console.log(attributeWeights, tableWeights)
+                    let val = parseFloat(this.median(tableWeights)) + parseFloat(this.median(attributeWeights)/table.attributes.length);
 
-                    tmpAttributeWeights[table.name][attribute.name] = parseFloat(this.median(tableWeights)) + parseFloat(this.median(attributeWeights)/table.attributes.length);
+                    if (!isNaN(val)) tmpAttributeWeights[table.name][attribute.name] = val;
                 }
             }
         }
 
         this.reorder(g, tmpWeightsTables, tmpAttributeWeights)
-        //g.setExactWeights()
     }
 
     isSameRankEdge(e){
@@ -175,59 +165,47 @@ class GansnerSameRank {
 
     reorder(g, tmpWeightsTables, tmpAttributeWeights){
         for (let i in g.tableIndex){
+
+            // is this correct?
+            if (i == 0) continue;
+
             for (let j in g.tableIndex[i]){
-                let tabl = g.tableIndex[i][j]
+                let tabl = g.tableIndex[i][j];
+
+                // is this correct?
+                if (tmpWeightsTables[tabl.name] == undefined) continue;
+
                 tabl.weight = tmpWeightsTables[tabl.name];
+                tabl.assignedWeight = tmpWeightsTables[tabl.name];
 
                 for (let k in tabl.attributes){
                     let attr = tabl.attributes[k]
                     attr.weight = tmpAttributeWeights[tabl.name][attr.name]
+                    attr.assignedWeight = tmpAttributeWeights[tabl.name][attr.name]
                 }
 
                 tabl.attributes.sort((a, b) => {
                     if (isNaN(a.weight) || isNaN(b.weight)) return 0;
                     else return a.weight > b.weight ? 1 : -1;
                 })
+
+                for (let k in tabl.attributes){
+                    let attr = tabl.attributes[k]
+                    attr.weight = k;
+                }
             }
 
             g.tableIndex[i].sort((a, b) => {
                 if (isNaN(a.weight) || isNaN(b.weight)) return 0;
                 else return a.weight > b.weight ? 1 : -1;
             })
+
+            for (let j in g.tableIndex[i]){
+                let tabl = g.tableIndex[i][j];
+                tabl.weight = j;
+            }
         }
     }
-
-    // arrangeRight(g){
-    //     for (let i=g.maxDepth; i>0; i--){
-    //         let layerTables = g.tableIndex[i];
-    //         let layerEdges = g.edgeIndex[i];
-
-    //         for (let table of layerTables){
-    //             let weights = layerEdges
-    //                 .filter(e => e.leftTable == table)
-    //                 .map(e => parseFloat(e.rightTable.weight))
-
-    //             table.weight = this.median(weights)
-
-    //             for (let attribute of table.attributes){
-    //                 let tableWeights = layerEdges
-    //                     .filter(e => e.leftAttribute == attribute)
-    //                     .map(e => parseFloat(e.rightTable.weight))
-
-    //                 let attributeWeights = layerEdges
-    //                     .filter(e => e.leftAttribute == attribute)
-    //                     .map(e => parseFloat(e.rightAttribute.weight))
-
-    //                 //if (tableWeights.length != 0) {
-    //                     attribute.weight = parseFloat(this.median(tableWeights)) + parseFloat(this.median(attributeWeights)/table.attributes.length)
-    //                     attribute.assignedWeight = parseFloat(this.median(tableWeights)) + parseFloat(this.median(attributeWeights)/table.attributes.length)
-    //                 //}
-    //             }
-    //         }
-
-    //         g.setExactWeights()
-    //     }
-    // }
 
     transpose(g){
         let improved = true;

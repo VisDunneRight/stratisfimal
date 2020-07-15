@@ -71,6 +71,8 @@
             .data(g.tables)
             .enter()
             .append('g')
+            .attr('class', 'tablegroup')
+            .attr('id', d => 'tablegroup_' + d.name)
             .attr('transform', d => 
                 "translate(" + (d.depth*depth_distance) + "," 
                 + g.tableIndex[d.depth].indexOf(d) * table_vert_space + ")" )
@@ -80,6 +82,7 @@
             .attr('height', d => d.attributes.length * attr_height + header_height)  
             .attr('fill', 'black')
             .attr('stroke', 'gray')
+            .on('click', d => console.log(d))
 
         tablegroups.append('text')
             .attr('x', table_width/2)
@@ -150,10 +153,53 @@
 
         if (algorithm != undefined && algorithm.elapsedTime != undefined){
             d3.select(svg.node().parentNode)
-            .append('div').append('text')
-            .text('time: ' + algorithm.elapsedTime + 'ms')
-            .style('font-family', 'Arial')
-            .attr('class', 'crossing_count')
+                .append('div').append('text')
+                .text('time: ' + algorithm.elapsedTime + 'ms')
+                .style('font-family', 'Arial')
+                .attr('class', 'crossing_count')
+
+            if (algorithm.iterations != undefined){
+
+                d3.select(svg.node().parentNode)
+                    .append('text')
+                    .text('⏹️')
+
+                d3.select(svg.node().parentNode)
+                    .append('text')
+                    .text('⏪')
+                    .on('click', () => {
+                        algorithm.cur_iteration--;
+                        algorithm.apply_iteration(algorithm.cur_iteration);
+
+                        svg.selectAll('.tablegroup')
+                            .transition()
+                            .duration(750)
+                            .attr('transform', d => 
+                            'translate(' + (d.depth*depth_distance) + ' ,  ' + (algorithm.g.tableIndex[d.depth].indexOf(d) * table_vert_space)  + ' )')
+
+                        // d3.selectAll
+                        // .attr('transform', d => 
+                        //     // "translate(" + (d.depth*depth_distance) + "," 
+                        //     // + algorithm.g.tableIndex[d.depth].indexOf(d) * table_vert_space + ")" )
+                        //     "translate(0, 0)"
+                        //     )
+                    })
+
+                d3.select(svg.node().parentNode)
+                    .append('text')
+                    .text(algorithm.cur_iteration)
+                
+                d3.select(svg.node().parentNode)
+                    .append('text')
+                    .text('⏩')
+                    .on('click', () => {
+
+                    })
+
+                d3.select(svg.node().parentNode)
+                    .append('text')
+                    .text('▶️')
+            }
         }
     }
 
@@ -276,7 +322,7 @@
                     .style('width', '20%')
                     .append('svg')
                     .attr('class', 'vis-svg')
-                    //.attr('easypz', '{"applyTransformTo":"svg > *"}')
+                    .attr('easypz', '{"applyTransformTo":"svg > *"}')
                     .attr("preserveAspectRatio", "xMinYMin meet")
                     .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
 
@@ -399,8 +445,8 @@
             .style('display', 'flex')
             .attr('class', 'rowDiv')
 
-        makeGraphWithAlgorithm(rowDiv, seed, 's', 'gansner same rank')
-        // makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'gansner same rank')
+        //makeGraphWithAlgorithm(rowDiv, seed, 's', 'gansner same rank')
+        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'gansner same rank')
         // makeGraphWithAlgorithm(rowDiv, seed, 'm', 'gansner same rank')
         //makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'modified gansner')
         //makeGraphWithAlgorithm(rowDiv, seed, 'l', 'modified gansner')
