@@ -9,7 +9,6 @@ class GansnerSameRank {
     }
 
     apply_iteration(iter_num){
-        console.log(this.iterations)
         this.applyArrangement(this.iterations[iter_num]);
     }
 
@@ -39,6 +38,7 @@ class GansnerSameRank {
       }
 
     applyArrangement(cloneGraph){
+        //console.log(cloneGraph);
         for (let table of cloneGraph.tables){
             let table2 = this.g.tables.find(t => t.name == table.name)
             table2.weight = table.weight;

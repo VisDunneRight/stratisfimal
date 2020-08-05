@@ -6,11 +6,22 @@ class Graph {
             this.tableIndex = []; 
             this.edgeIndex = [];
             this.maxDepth = 0;
+            this.groups = [];
             this.newLayer();
         } else {
             obj && Object.assign(this, obj);
         }
         
+    }
+
+    addGroup(group){
+        this.groups.push(group);
+    }
+
+    updateGroupCoords(){
+        for (let group of this.groups){
+            group.updateCoords();
+        }
     }
 
     newLayer(){
@@ -92,5 +103,8 @@ class Graph {
                 }
             }
         }
+    
+        this.updateGroupCoords()
+
     }
 }

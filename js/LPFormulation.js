@@ -111,26 +111,6 @@ class LPFormulation {
             let layerTables = this.g.tableIndex[k];
             let layerAttributes = layerTables.map(t => t.attributes).flat()
             
-            // global ordering of tables
-        //     for (let i = 0; i < layerTables.length; i++){
-        //         let t1 = layerTables[i].name;
-                
-        //         for (let j = i+1; j < layerTables.length; j++){
-        //            let t2 = layerTables[j].name;
-
-        //            for (let m = j + 1; m < layerTables.length; m++){
-        //                let t3 = layerTables[m].name;
-
-        //             model.subjectTo += ""
-        //                + mkx(t3, t1, 'T')[0] 
-        //                + mkx(t2, t3, 'T')[0] 
-        //                + mkx(t2, t1, 'T')[0] 
-        //                + " >= " + (1 + mkx(t3, t1, 'T')[1] + mkx(t2, t3, 'T')[1] + mkx(t2, t1, 'T')[1]) + "\n"
-
-        //            }
-        //         }
-        //    }
-
             // global ordering of tables 
             for (let i=0; i<layerTables.length; i++){
                 let t1 = layerTables[i].name;
@@ -174,12 +154,6 @@ class LPFormulation {
 
                         let t3 = layerAttributes[m].name;
 
-                        // model.subjectTo += ""
-                        //     + mkx(t3, t1)[0] 
-                        //     + mkx(t2, t3)[0] 
-                        //     + mkx(t2, t1)[0] 
-                        //     + " >= " + (1 + mkx(t3, t1)[1] + mkx(t2, t3)[1] + mkx(t2, t1)[1]) + "\n"
-
                         model.subjectTo += ""
                             + mkxBase(t1, t2)
                             + " + " + mkxBase(t2, t3)
@@ -205,6 +179,14 @@ class LPFormulation {
 
                 for (let j=i+1; j<layerEdges.length; j++){
                     let u2v2 = layerEdges[j];
+
+                    // new: managing groups
+                    // edges that are outside of groups should never cross with edges that are inside of groups
+                    if (u1v1.leftTable.group != undefined){
+                        if (u2v2.leftTable.group != u2v2.leftTable.group) {
+                            model.subjectTo += mkc(u1, v1, u2, v2) + " = 0\n";
+                        }
+                    }
 
                     if (!this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)){
                         let u1 = u1v1.leftAttribute.name

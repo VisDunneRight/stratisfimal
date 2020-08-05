@@ -7,6 +7,7 @@ class Table {
         this.attributes = [];
         this.attrMaps = [];
         this.weight = 0;
+        this.group = undefined;
     }
 
     addAttribute(attribute){
