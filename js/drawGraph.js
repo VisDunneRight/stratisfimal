@@ -2,6 +2,8 @@ let drawGraph = (svg, g, algorithm = undefined) => {
     let line = d3.line()
         .curve(d3.curveBasis);
 
+    let straightline = d3.line()
+
     visg = svg.append('g')
         .attr('transform', 'translate(20, 20)')
 
@@ -76,21 +78,33 @@ let drawGraph = (svg, g, algorithm = undefined) => {
     // *****
     // groups
     // *****
+    // visg.selectAll('.grouprects') 
+    //     .data(g.groups)
+    //     .enter()
+    //     .append('rect')
+    //     .attr('class', 'grouplines')
+    //     .attr('stroke-width', 3)
+    //     .attr('stroke', 'black')
+    //     .attr('fill', 'none')
+    //     .style("stroke-dasharray", ("5, 3"))
+    //     .attr("rx", 6)
+    //     .attr("ry", 6)
+    //     .attr('x', d => d.x_coord * depth_distance - 10)
+    //     .attr('y', d => d.y_coord * table_vert_space - 10)
+    //     .attr('width', d => d.width_coord * depth_distance + table_width + 20)
+    //     .attr('height', d => d.height_coord*table_vert_space + table_vert_space - 20)
+
     visg.selectAll('.grouprects') 
         .data(g.groups)
         .enter()
-        .append('rect')
+        .append('path')
         .attr('class', 'grouplines')
         .attr('stroke-width', 3)
         .attr('stroke', 'black')
         .attr('fill', 'none')
         .style("stroke-dasharray", ("5, 3"))
-        .attr("rx", 6)
-        .attr("ry", 6)
-        .attr('x', d => d.x_coord * depth_distance - 10)
-        .attr('y', d => d.y_coord * table_vert_space - 10)
-        .attr('width', d => d.width_coord * depth_distance + table_width + 20)
-        .attr('height', d => d.height_coord + table_vert_space - 20)
+        .attr('d', d => { return straightline(d.coords) })
+
 
     // *****
     // edges

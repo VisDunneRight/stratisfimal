@@ -6,6 +6,8 @@ class Group {
         this.y_coord = 0;
         this.width_coord = 0;
         this.height_coord = 0;
+
+        this.coords = [];
     }
 
     addTable(table){
@@ -15,6 +17,7 @@ class Group {
     }
 
     updateCoords(){
+        this.coords = [];
         // this will need to be changed in case we decide to use a vertical positioning that is not fixed
 
         let leftMaxDepth = Math.min.apply(0, this.tables.map(t => t.depth));
@@ -31,6 +34,30 @@ class Group {
         
         let bottomMax = Math.max.apply(0, this.tables.map(t => t.weight));
         let bottomTable = this.tables.find(t => t.weight == bottomMax);
-        this.height_coord = bottomTable.depth - topTable.depth;
+        this.height_coord = bottomTable.weight - topTable.weight;
+
+        let depthrange = [leftTable.depth, rightTable.depth];
+        
+        for (let i=0; i<depthrange.length; i++){
+            let cur_d = depthrange[i];
+            let numthisDepth = Math.min.apply(0, this.tables.filter(t => t.depth == cur_d).map(d => d.weight));
+            let topTable = this.tables.find(t => t.depth == cur_d && t.weight == numthisDepth);
+
+            this.coords.push([topTable.depth*depth_distance - 10, topTable.weight*table_vert_space - 10])
+            this.coords.push([topTable.depth*depth_distance + table_width + 10, topTable.weight*table_vert_space - 10])
+        }
+
+        for (let i=depthrange.length - 1; i>=0; i--){
+            let cur_d = depthrange[i];
+            let numthisDepth = Math.max.apply(0, this.tables.filter(t => t.depth == cur_d).map(d => d.weight));
+            let bottomTable = this.tables.find(t => t.depth == cur_d && t.weight == numthisDepth);
+
+            this.coords.push([bottomTable.depth*depth_distance + table_width + 10, bottomTable.weight*table_vert_space + table_vert_space - 40])
+            this.coords.push([bottomTable.depth*depth_distance - 10, bottomTable.weight*table_vert_space + table_vert_space - 40])
+        }
+
+        this.coords.push(this.coords[0]);
+
+        console.log(this.coords)
     }
 }

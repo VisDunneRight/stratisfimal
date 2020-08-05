@@ -182,7 +182,7 @@ class LPFormulation {
 
                     // new: managing groups
                     // edges that are outside of groups should never cross with edges that are inside of groups
-                    if (u1v1.leftTable.group != undefined){
+                    if (u1v1.leftTable.group != undefined && u1v1.rightTable.group != undefined){
                         if (u2v2.leftTable.group != u2v2.leftTable.group) {
                             model.subjectTo += mkc(u1, v1, u2, v2) + " = 0\n";
                         }
