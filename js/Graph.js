@@ -7,6 +7,7 @@ class Graph {
             this.edgeIndex = [];
             this.maxDepth = 0;
             this.groups = [];
+            this.baseRowDistance = 6;
             this.newLayer();
         } else {
             obj && Object.assign(this, obj);
@@ -35,8 +36,8 @@ class Graph {
             this.newLayer();
         }
 
-        this.tables.push(table)
-        this.tableIndex[table.depth].push(table)
+        this.tables.push(table);
+        this.tableIndex[table.depth].push(table);
     }
 
     addEdge(edge){
@@ -145,8 +146,7 @@ class Graph {
                 
                 for (let j=0; j<initColLength; j++){
                     let temptable = new Table('blank_' + i + "_" + j, 'blank_' + i + "_" + j, false, i);
-                    temptable.weight = j - 0.5
-                    temptable.visibility = 'hidden';
+                    temptable.weight = j - 0.5;
     
                     this.addTable(temptable);
                     this.setExactWeights();
@@ -160,23 +160,59 @@ class Graph {
                     this.tables.splice(this.tables.indexOf(temptable), 1);
                     tableCol.splice(tableCol.indexOf(temptable), 1);
                     this.setExactWeights();
-    
-                    // // if inserting the new table didn't straighten any edges
-                    // if (this.getNumStraightEdges() <= curStraightEdges){
-                    //     this.tables.splice(this.tables.indexOf(temptable), 1);
-                    //     tableCol.splice(tableCol.indexOf(temptable), 1);
-    
-                    //     this.setExactWeights();
-                    // } else {
-                    //     console.log("added blank in col " + i);
-                    //     improved = true;
-                    // }
-                    
-                    
                 }
 
-                this.updateGroupCoords();
+                if (bestPosition != undefined){
+                    let temptable = new Table('blank_' + i + "_" + bestPosition, 'blank_' + i + "_" + bestPosition, false, i);
+                    temptable.weight = bestPosition - 0.5;
+                    temptable.visibility = 'hidden';
+
+                    this.addTable(temptable);
+                    this.setExactWeights();
+                    this.updateGroupCoords();
+                }  
             }
+        }
+
+        this.adjustAttrOffset()
+    }
+
+    adjustAttrOffset(){
+        console.log('adjust offset')
+        //this.baseRowDistance = Math.max.apply(0, this.tables.map(t => t.attributes.length))
+
+        for (let i=1; i<this.tableIndex.length; i++){
+            let tableCol = this.tableIndex[i];
+            let edgeCol = this.edgeIndex[i-1];
+
+            for (let table of tableCol){
+                let tableEdges = edgeCol.filter(e => e.rightTable == table);
+                if (tableEdges.length == 0) continue;
+
+                let currBendinessSum = Math.abs(tableEdges.map(e => e.getBendiness()).reduce((a, b) => a + b));
+                let currBestOffset = 0;
+                console.log('original:', table.name, currBendinessSum)
+
+                let upperBound = -2;
+                if (table.weight == 0) upperBound = 0;
+                else { upperBound = tableCol[i-1].verticalAttrOffset - this.baseRowDistance + tableCol[i-1].attributes.length + 2 }
+                console.log('upper bound: ', upperBound)
+
+                for (let j = upperBound; j <= 2; j++){
+                    table.verticalAttrOffset = j;
+                    let tempBendinessSum = Math.abs(tableEdges.map(e => e.getBendiness()).reduce((a, b) => a + b))
+                    console.log('change proposal', table.name, j, tempBendinessSum)
+                    
+                    if (tempBendinessSum < currBendinessSum){
+                        currBestOffset = j;
+                        currBendinessSum = tempBendinessSum;
+                        console.log('change', table.name, tempBendinessSum)
+                    }
+                }
+
+                table.verticalAttrOffset = currBestOffset;
+            }
+            
         }
     }
 }

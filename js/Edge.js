@@ -182,4 +182,10 @@ class Edge {
         return this.leftTable.depth == this.rightTable.depth
     }
 
+    getBendiness(){
+        let res = 0;
+        res = (this.rightTable.weight + this.rightAttribute.weight * 0.1 + this.rightTable.verticalAttrOffset*0.1) - (this.leftTable.weight + this.leftAttribute.weight * 0.1 + this.leftTable.verticalAttrOffset*0.1);
+        res = Math.round(res*100)/100
+        return res;
+    }
 }

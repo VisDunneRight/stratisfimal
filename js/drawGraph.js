@@ -4,8 +4,21 @@ let drawGraph = (svg, g, algorithm = undefined) => {
 
     let straightline = d3.line()
 
+    table_vert_space = g.baseRowDistance * attr_height
+
     visg = svg.append('g')
         .attr('transform', 'translate(20, 20)')
+
+    // temp grid indicator
+    for (let i in [ ... Array(10).keys()]){
+        visg.append('path')
+            .attr('stroke-width', 1)
+            .attr('stroke', '#ccc')
+            .attr('fill', 'none')
+            .style("stroke-dasharray", ("5, 3"))
+            .attr('d', straightline([[0, attr_height*g.baseRowDistance*i], [1000, attr_height*g.baseRowDistance*i]]))
+    }
+    
 
     // *****
     // tables
@@ -19,7 +32,7 @@ let drawGraph = (svg, g, algorithm = undefined) => {
         .style('visibility', d => d.visibility)
         .attr('transform', d => 
             "translate(" + (d.depth*depth_distance) + "," 
-            + g.tableIndex[d.depth].indexOf(d) * table_vert_space + ")" )
+            + (g.tableIndex[d.depth].indexOf(d) * table_vert_space + d.verticalAttrOffset * attr_height) + ")" )
 
     tablegroups.append('rect')
         .attr('width', table_width)
@@ -64,14 +77,14 @@ let drawGraph = (svg, g, algorithm = undefined) => {
 
     let get_1st_coord = (d) => 
         [d.leftTable.depth * depth_distance + table_width,
-        d.leftTable.attributes.indexOf(d.att1)*attr_height + header_height + attr_height/2 + g.tableIndex[d.leftTable.depth].indexOf(d.leftTable)*table_vert_space]
+        d.leftTable.attributes.indexOf(d.att1)*attr_height + header_height + attr_height/2 + g.tableIndex[d.leftTable.depth].indexOf(d.leftTable)*table_vert_space + d.leftTable.verticalAttrOffset*attr_height]
    
     let get_2nd_coord = (d) => {
         if (d.leftTable.depth != d.rightTable.depth)
             return [d.rightTable.depth * depth_distance, 
-                d.rightTable.attributes.indexOf(d.att2)*attr_height + header_height + attr_height/2 + g.tableIndex[d.rightTable.depth].indexOf(d.rightTable)*table_vert_space]
+                d.rightTable.attributes.indexOf(d.att2)*attr_height + header_height + attr_height/2 + g.tableIndex[d.rightTable.depth].indexOf(d.rightTable)*table_vert_space + d.rightTable.verticalAttrOffset*attr_height]
         else return [d.leftTable.depth * depth_distance + table_width,
-            d.rightTable.attributes.indexOf(d.att2)*attr_height + header_height + attr_height/2 + g.tableIndex[d.rightTable.depth].indexOf(d.rightTable)*table_vert_space]    
+            d.rightTable.attributes.indexOf(d.att2)*attr_height + header_height + attr_height/2 + g.tableIndex[d.rightTable.depth].indexOf(d.rightTable)*table_vert_space + d.rightTable.verticalAttrOffset*attr_height]    
     }
 
 

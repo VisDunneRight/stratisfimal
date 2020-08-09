@@ -9,6 +9,7 @@ class Table {
         this.weight = 0;
         this.group = undefined;
         this.visibility = 'visible';
+        this.verticalAttrOffset = 0;
     }
 
     addAttribute(attribute){
