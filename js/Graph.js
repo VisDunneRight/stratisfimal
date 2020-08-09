@@ -137,6 +137,9 @@ class Graph {
             for (let i=1; i<this.tableIndex.length; i++){
                 let tableCol = this.tableIndex[i];
                 let initColLength = tableCol.length;
+
+                let bestPosition = undefined;
+                let bestNumOfStraightEdges = this.getNumStraightEdges();
     
                 let curStraightEdges = this.getNumStraightEdges();
                 
@@ -147,20 +150,32 @@ class Graph {
     
                     this.addTable(temptable);
                     this.setExactWeights();
-    
-                    // if inserting the new table didn't straighten any edges
-                    if (this.getNumStraightEdges() <= curStraightEdges){
-                        this.tables.splice(this.tables.indexOf(temptable), 1);
-                        tableCol.splice(tableCol.indexOf(temptable), 1);
-    
-                        this.setExactWeights();
-                    } else {
-                        console.log("added blank in col " + i);
+
+                    if (this.getNumStraightEdges() > bestNumOfStraightEdges){
+                        bestPosition = j;
+                        bestNumOfStraightEdges = this.getNumStraightEdges();
                         improved = true;
                     }
+
+                    this.tables.splice(this.tables.indexOf(temptable), 1);
+                    tableCol.splice(tableCol.indexOf(temptable), 1);
+                    this.setExactWeights();
+    
+                    // // if inserting the new table didn't straighten any edges
+                    // if (this.getNumStraightEdges() <= curStraightEdges){
+                    //     this.tables.splice(this.tables.indexOf(temptable), 1);
+                    //     tableCol.splice(tableCol.indexOf(temptable), 1);
+    
+                    //     this.setExactWeights();
+                    // } else {
+                    //     console.log("added blank in col " + i);
+                    //     improved = true;
+                    // }
                     
-                    this.updateGroupCoords();
+                    
                 }
+
+                this.updateGroupCoords();
             }
         }
     }
