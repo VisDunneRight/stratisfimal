@@ -80,6 +80,10 @@ class Graph {
         }
 
         this.tables = this.tables.sort((a, b) => a.weight > b.weight? 1 : -1)
+
+        for (let t_ind of this.tableIndex){
+            t_ind.sort((a, b) => a.weight > b.weight? 1 : -1)
+        }
     }
 
     setExactWeights(){
@@ -106,5 +110,58 @@ class Graph {
     
         this.updateGroupCoords()
 
+    }
+
+    getNumStraightEdges(){
+        let res = 0;
+        for (let i in this.edgeIndex){
+            res += this.getNumStraightEdgesAtDepth(i)
+        }
+        return res;
+    }
+
+    getNumStraightEdgesAtDepth(i){
+        let res = 0
+        for (let e of this.edgeIndex[i]){
+            if (e.leftTable.weight == e.rightTable.weight) res += 1
+        }
+        return res;
+    }
+
+    adjustTableYPosition(){
+        let improved = true;
+        
+        while (improved){
+            improved = false;     
+
+            for (let i=1; i<this.tableIndex.length; i++){
+                let tableCol = this.tableIndex[i];
+                let initColLength = tableCol.length;
+    
+                let curStraightEdges = this.getNumStraightEdges();
+                
+                for (let j=0; j<initColLength; j++){
+                    let temptable = new Table('blank_' + i + "_" + j, 'blank_' + i + "_" + j, false, i);
+                    temptable.weight = j - 0.5
+                    temptable.visibility = 'hidden';
+    
+                    this.addTable(temptable);
+                    this.setExactWeights();
+    
+                    // if inserting the new table didn't straighten any edges
+                    if (this.getNumStraightEdges() <= curStraightEdges){
+                        this.tables.splice(this.tables.indexOf(temptable), 1);
+                        tableCol.splice(tableCol.indexOf(temptable), 1);
+    
+                        this.setExactWeights();
+                    } else {
+                        console.log("added blank in col " + i);
+                        improved = true;
+                    }
+                    
+                    this.updateGroupCoords();
+                }
+            }
+        }
     }
 }

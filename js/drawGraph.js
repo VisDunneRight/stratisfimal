@@ -16,6 +16,7 @@ let drawGraph = (svg, g, algorithm = undefined) => {
         .append('g')
         .attr('class', 'tablegroup')
         .attr('id', d => 'tablegroup_' + d.name)
+        .style('visibility', d => d.visibility)
         .attr('transform', d => 
             "translate(" + (d.depth*depth_distance) + "," 
             + g.tableIndex[d.depth].indexOf(d) * table_vert_space + ")" )
@@ -78,22 +79,6 @@ let drawGraph = (svg, g, algorithm = undefined) => {
     // *****
     // groups
     // *****
-    // visg.selectAll('.grouprects') 
-    //     .data(g.groups)
-    //     .enter()
-    //     .append('rect')
-    //     .attr('class', 'grouplines')
-    //     .attr('stroke-width', 3)
-    //     .attr('stroke', 'black')
-    //     .attr('fill', 'none')
-    //     .style("stroke-dasharray", ("5, 3"))
-    //     .attr("rx", 6)
-    //     .attr("ry", 6)
-    //     .attr('x', d => d.x_coord * depth_distance - 10)
-    //     .attr('y', d => d.y_coord * table_vert_space - 10)
-    //     .attr('width', d => d.width_coord * depth_distance + table_width + 20)
-    //     .attr('height', d => d.height_coord*table_vert_space + table_vert_space - 20)
-
     visg.selectAll('.grouprects') 
         .data(g.groups)
         .enter()

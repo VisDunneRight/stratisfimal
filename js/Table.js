@@ -8,6 +8,7 @@ class Table {
         this.attrMaps = [];
         this.weight = 0;
         this.group = undefined;
+        this.visibility = 'visible';
     }
 
     addAttribute(attribute){

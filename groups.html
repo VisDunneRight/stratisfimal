@@ -85,6 +85,10 @@ rdiv = d3.select('body')
 
 runLpWorker(g, rdiv, svg_width_s, svg_height_s)
 
+d3.select('body')
+    .append('div')
+    .html("<br><br><br><br>**************************<br>**************************<br>**************************<br><br><br>")
+
 g2 = new Graph();
 a = new Table("a", "a", true, 0)
 b = new Table("b", "b", true, 1)
@@ -101,7 +105,7 @@ g2.addTable(b)
 g2.addTable(c)
 g2.addTable(d)
 g2.addTable(e)
-g2.addTable(f)
+// g2.addTable(f)
 g2.addTable(g)
 g2.addTable(h)
 g2.addTable(i)
@@ -118,8 +122,8 @@ d1 = new Attribute(d, "d1")
 d.attributes.push(d1)
 e1 = new Attribute(e, "e1")
 e.attributes.push(e1)
-f1 = new Attribute(f, "f1")
-f.attributes.push(f1)
+// f1 = new Attribute(f, "f1")
+// f.attributes.push(f1)
 g1 = new Attribute(g, "g1")
 g.attributes.push(g1)
 h1 = new Attribute(h, "h1")
@@ -167,7 +171,43 @@ rdiv2 = d3.select('body')
     .append('div')
     .text("solution:")
 
-runLpWorker(g2, rdiv2, svg_width_s*1.4, svg_height_s*1.4)
+runLpWorker(g2, rdiv2, svg_width_s*2, svg_height_s*2)
+
+d3.select('body')
+    .append('div')
+    .html("<br><br><br><br>**************************<br>**************************<br>**************************<br><br><br>")
+
+var depth = 5;
+var seed = "aaa."
+var tableDistribution = [4, 5];
+
+g3 = new GraphGenerator(depth, seed, tableDistribution)
+g3 = g3.generate()
+
+g3.setExactWeights()
+g3.sortGraph()
+
+// group = new Group()
+// table1 = g3.tables.find(t => t.name == "T1y0")
+// group.addTable(table1)
+
+// table1 = g.tables.find(t => t.name == "T2y0")
+// group.addTable(table1)
+
+// g.addGroup(group)
+
+svg = d3.select('body')
+    .append('svg')
+    .attr('width', svg_width_s*2)
+    .attr('height', svg_height_s*2)
+
+drawGraph(svg, g3)
+
+rdiv3 = d3.select('body')
+    .append('div')
+    .text("solution:")
+
+runLpWorker(g3, rdiv3, svg_width_s*3, svg_height_s*3)
 
 async function runLpWorker(g, rowDiv, cur_svg_width, cur_svg_height) {
         let myWorker = new Worker('./js/worker.js')
@@ -191,6 +231,7 @@ async function runLpWorker(g, rowDiv, cur_svg_width, cur_svg_height) {
 
             g.setExactWeights()
             g.sortGraph()
+            g.adjustTableYPosition()
 
             svg = rowDiv
                     .append('div')

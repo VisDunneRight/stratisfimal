@@ -57,7 +57,5 @@ class Group {
         }
 
         this.coords.push(this.coords[0]);
-
-        console.log(this.coords)
     }
 }
