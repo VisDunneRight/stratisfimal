@@ -7,6 +7,9 @@ class GraphGenerator {
         this.attributeCounter = 0;
         this.seed = seed;
 
+        this.tableDistribution = tableDistribution;
+        this.attributeDistribution = attributeDistribution;
+
         // random number generators
         this.rng = new Math.seedrandom(this.seed);
         this.tableDist = () => tableDistribution[0] + Math.round(this.rng() * (tableDistribution[1] - tableDistribution[0]))
@@ -15,6 +18,7 @@ class GraphGenerator {
 
     generate(){
         g = new Graph()
+        g.baseRowDistance = this.attributeDistribution[1] + 2;
 
         for (var i=1; i<this.d; i++){
             g.newLayer()
