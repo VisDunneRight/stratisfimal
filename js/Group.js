@@ -43,8 +43,8 @@ class Group {
             let numthisDepth = Math.min.apply(0, this.tables.filter(t => t.depth == cur_d).map(d => d.weight));
             let topTable = this.tables.find(t => t.depth == cur_d && t.weight == numthisDepth);
 
-            this.coords.push([topTable.depth*depth_distance - 10, topTable.weight*table_vert_space - 10])
-            this.coords.push([topTable.depth*depth_distance + table_width + 10, topTable.weight*table_vert_space - 10])
+            this.coords.push([topTable.depth*depth_distance - 10, topTable.weight*table_vert_space + topTable.verticalAttrOffset*attr_height - 10])
+            this.coords.push([topTable.depth*depth_distance + table_width + 10, topTable.weight*table_vert_space + topTable.verticalAttrOffset*attr_height - 10])
         }
 
         for (let i=depthrange.length - 1; i>=0; i--){
@@ -52,8 +52,8 @@ class Group {
             let numthisDepth = Math.max.apply(0, this.tables.filter(t => t.depth == cur_d).map(d => d.weight));
             let bottomTable = this.tables.find(t => t.depth == cur_d && t.weight == numthisDepth);
 
-            this.coords.push([bottomTable.depth*depth_distance + table_width + 10, bottomTable.weight*table_vert_space + table_vert_space - 40])
-            this.coords.push([bottomTable.depth*depth_distance - 10, bottomTable.weight*table_vert_space + table_vert_space - 40])
+            this.coords.push([bottomTable.depth*depth_distance + table_width + 10, bottomTable.weight*table_vert_space + (1 + bottomTable.attributes.length)*attr_height + bottomTable.verticalAttrOffset*attr_height + 10])
+            this.coords.push([bottomTable.depth*depth_distance - 10, bottomTable.weight*table_vert_space + (1 + bottomTable.attributes.length)*attr_height + bottomTable.verticalAttrOffset*attr_height + 10])
         }
 
         this.coords.push(this.coords[0]);

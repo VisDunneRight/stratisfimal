@@ -262,8 +262,6 @@ class Graph {
     
                     table.verticalAttrOffset = currBestOffset;
                 }
-
-                if (i == 3) break
             }
         }
 
@@ -301,7 +299,7 @@ class Graph {
             }
         }
 
-        while (cycleIndex < 2){
+        while (cycleIndex < 10){
             improved = false;
             console.log(cycleIndex, (cycleIndex % 2 == 0? 'right' : 'left'), this.getGraphTotalEdgeBendiness());
             cycleIndex++;
@@ -346,5 +344,46 @@ class Graph {
             // }
         }
 
+        this.updateGroupCoords();
     }
 }
+
+
+
+
+// while (cycleIndex < maxIterations){
+//     if (cycleIndex % 2 == 0) swipeRight()
+//     else swipeLeft()
+//     cycleIndex++
+// }
+
+// let swipeRight = () => {
+//     for (let i=0; i<this.tableIndex.length; i++){ // swipeLeft has i going from tableindex.length to 0
+//         let tableCol = this.tableIndex[i];
+
+//         for (let k=0; k<tableCol.length; k++){ // swipeLeft goes from bottom to top instead
+//             let table = tableCol[k];
+//             let currBendinessSum = this.getTableBendiness(table); // computes bendiness caused by this table in particular
+//             let currBestOffset = table.verticalAttrOffset; // assign previous vertical offset as current best
+
+//             // compute the boundaries of how high and how low the table can go without colliding with other tables
+//             let upperBound = getUpperBound(tableCol, k);
+//             let lowerBound = getLowerBound(tableCol, k);
+
+//             // try each position within the boundaries
+//             for (let j = upperBound; j <= lowerBound; j++){
+//                 table.verticalAttrOffset = j;
+//                 let tempBendinessSum = this.getTableBendiness(table);
+                
+//                 // if the new position causes less bendiness, assign it as current best
+//                 if (tempBendinessSum <= currBendinessSum){
+//                     currBestOffset = j;
+//                     currBendinessSum = tempBendinessSum;
+//                 }
+//             }
+
+//             // assign best offset
+//             table.verticalAttrOffset = currBestOffset;
+//         }
+//     }
+// }
