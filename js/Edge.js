@@ -184,8 +184,9 @@ class Edge {
 
     getBendiness(){
         let res = 0;
-        res = (this.rightTable.weight + this.rightAttribute.weight * 0.1 + this.rightTable.verticalAttrOffset*0.1) - (this.leftTable.weight + this.leftAttribute.weight * 0.1 + this.leftTable.verticalAttrOffset*0.1);
-        res = Math.round(res*100)/100
-        return res;
+        let factor = 10/60;
+        res = (this.rightTable.weight + this.rightAttribute.weight * factor + this.rightTable.verticalAttrOffset * factor) - (this.leftTable.weight + this.leftAttribute.weight * factor + this.leftTable.verticalAttrOffset * factor);
+        res = Math.round(res*1000)/1000
+        return Math.abs(res);
     }
 }

@@ -132,87 +132,219 @@ class Graph {
     adjustTableYPosition(){
         let improved = true;
         
-        while (improved){
-            improved = false;     
+        // while (improved){
+        //     improved = false;     
 
-            for (let i=1; i<this.tableIndex.length; i++){
-                let tableCol = this.tableIndex[i];
-                let initColLength = tableCol.length;
+        //     for (let i=1; i<this.tableIndex.length; i++){
+        //         let tableCol = this.tableIndex[i];
+        //         let initColLength = tableCol.length;
 
-                let bestPosition = undefined;
-                let bestNumOfStraightEdges = this.getNumStraightEdges();
+        //         let bestPosition = undefined;
+        //         let bestNumOfStraightEdges = this.getNumStraightEdges();
     
-                let curStraightEdges = this.getNumStraightEdges();
+        //         let curStraightEdges = this.getNumStraightEdges();
                 
-                for (let j=0; j<initColLength; j++){
-                    let temptable = new Table('blank_' + i + "_" + j, 'blank_' + i + "_" + j, false, i);
-                    temptable.weight = j - 0.5;
+        //         for (let j=0; j<initColLength; j++){
+        //             let temptable = new Table('blank_' + i + "_" + j, 'blank_' + i + "_" + j, false, i);
+        //             temptable.weight = j - 0.5;
     
-                    this.addTable(temptable);
-                    this.setExactWeights();
+        //             this.addTable(temptable);
+        //             this.setExactWeights();
 
-                    if (this.getNumStraightEdges() > bestNumOfStraightEdges){
-                        bestPosition = j;
-                        bestNumOfStraightEdges = this.getNumStraightEdges();
-                        improved = true;
-                    }
+        //             if (this.getNumStraightEdges() > bestNumOfStraightEdges){
+        //                 bestPosition = j;
+        //                 bestNumOfStraightEdges = this.getNumStraightEdges();
+        //                 improved = true;
+        //             }
 
-                    this.tables.splice(this.tables.indexOf(temptable), 1);
-                    tableCol.splice(tableCol.indexOf(temptable), 1);
-                    this.setExactWeights();
-                }
+        //             this.tables.splice(this.tables.indexOf(temptable), 1);
+        //             tableCol.splice(tableCol.indexOf(temptable), 1);
+        //             this.setExactWeights();
+        //         }
 
-                if (bestPosition != undefined){
-                    let temptable = new Table('blank_' + i + "_" + bestPosition, 'blank_' + i + "_" + bestPosition, false, i);
-                    temptable.weight = bestPosition - 0.5;
-                    temptable.visibility = 'hidden';
+        //         if (bestPosition != undefined){
+        //             let temptable = new Table('blank_' + i + "_" + bestPosition, 'blank_' + i + "_" + bestPosition, false, i);
+        //             temptable.weight = bestPosition - 0.5;
+        //             temptable.visibility = 'hidden';
 
-                    this.addTable(temptable);
-                    this.setExactWeights();
-                    this.updateGroupCoords();
-                }  
-            }
-        }
+        //             this.addTable(temptable);
+        //             this.setExactWeights();
+        //             this.updateGroupCoords();
+        //         }  
+        //     }
+        // }
 
         this.adjustAttrOffset()
     }
 
+    getBendLeft(table){
+        let depth = table.depth;
+
+        let edgeColLeft = this.edgeIndex[depth-1];
+        let edgesLeft = edgeColLeft.filter(e => e.rightTable == table && !e.isSameRankEdge());
+
+        if (edgesLeft.length == 0) return 0
+        else return Math.abs(edgesLeft.map(e => e.getBendiness()).reduce((a, b) => {
+            return Math.round(a*1000 + b*1000)/1000;
+        }));
+    }
+
+    getBendRight(table){
+        let depth = table.depth;
+        let edgeColRight = this.edgeIndex[depth];
+        let edgesRight = edgeColRight.filter(e => e.leftTable == table && !e.isSameRankEdge());
+
+        if (edgesRight.length == 0) return 0;
+        else return Math.abs(edgesRight.map(e => e.getBendiness()).reduce((a, b) => {
+            return Math.round(a*1000 + b*1000)/1000;
+        }));
+    }
+
+    getTableBendiness(table){
+        let depth = table.depth;
+
+        if (depth == 0) return Math.round(this.getBendRight(table)*100)/100;
+        else return Math.round(this.getBendLeft(table)*100 + this.getBendRight(table)*100)/100;
+    }
+
+    getGraphTotalEdgeBendiness(){
+        return this.tables.map(t => this.getTableBendiness(t)).reduce((a, b) => a + b);
+    }
+
     adjustAttrOffset(){
-        console.log('adjust offset')
-        //this.baseRowDistance = Math.max.apply(0, this.tables.map(t => t.attributes.length))
+        let improved = true;
+        let cycleIndex = 0;
 
-        for (let i=1; i<this.tableIndex.length; i++){
-            let tableCol = this.tableIndex[i];
-            let edgeCol = this.edgeIndex[i-1];
+        let getUpperBound = (tableCol, k) => {
+            let upperBound = -2;
+            if (k == 0) upperBound = 0;
+            else upperBound = tableCol[k-1].verticalAttrOffset - this.baseRowDistance + tableCol[k-1].attributes.length + 2; 
+            return upperBound;
+        }
 
-            for (let table of tableCol){
-                let tableEdges = edgeCol.filter(e => e.rightTable == table);
-                if (tableEdges.length == 0) continue;
+        let getLowerBound = (tableCol, k) => {
+            let lowerBound = 2;
+            if (tableCol.length == 1 || tableCol[k+1] == undefined) lowerBound = 20; // random big number
+            else lowerBound = tableCol[k+1].verticalAttrOffset + this.baseRowDistance - tableCol[k].attributes.length - 2; 
+            //if (tableCol[k+1] != undefined) console.log(tableCol[k+1], tableCol[k+1].verticalAttrOffset, this.baseRowDistance, table.attributes.length)
+            return lowerBound
+        }
 
-                let currBendinessSum = Math.abs(tableEdges.map(e => e.getBendiness()).reduce((a, b) => a + b));
-                let currBestOffset = 0;
-                console.log('original:', table.name, currBendinessSum)
+        let swipeRight = () => {
+            for (let i=0; i<this.tableIndex.length; i++){
+                let tableCol = this.tableIndex[i];
+                for (let k=0; k<tableCol.length; k++){
+                    let table = tableCol[k];
+                    let currBendinessSum = this.getTableBendiness(table);
+                    //let currBendinessSum = this.getBendRight(table);
+                    let currBestOffset = table.verticalAttrOffset;
 
-                let upperBound = -2;
-                if (table.weight == 0) upperBound = 0;
-                else { upperBound = tableCol[i-1].verticalAttrOffset - this.baseRowDistance + tableCol[i-1].attributes.length + 2 }
-                console.log('upper bound: ', upperBound)
+                    let upperBound = getUpperBound(tableCol, k);
+                    let lowerBound = getLowerBound(tableCol, k);
 
-                for (let j = upperBound; j <= 2; j++){
-                    table.verticalAttrOffset = j;
-                    let tempBendinessSum = Math.abs(tableEdges.map(e => e.getBendiness()).reduce((a, b) => a + b))
-                    console.log('change proposal', table.name, j, tempBendinessSum)
-                    
-                    if (tempBendinessSum < currBendinessSum){
-                        currBestOffset = j;
-                        currBendinessSum = tempBendinessSum;
-                        console.log('change', table.name, tempBendinessSum)
+                    if (i == 3 && tableCol[k+1] != undefined) console.log(table.name, 'lower bound', lowerBound,
+                        'next offset', tableCol[k+1].verticalAttrOffset, 'attributes', tableCol[k].attributes.length)
+
+                    for (let j = upperBound; j <= lowerBound; j++){
+                        table.verticalAttrOffset = j;
+                        let tempBendinessSum = this.getTableBendiness(table);
+                        //let tempBendinessSum = this.getBendRight(table);
+
+                        if (i == 3) console.log(table.name, 'change proposal', j, 'bends' ,tempBendinessSum)
+                        
+                        if (tempBendinessSum <= currBendinessSum){
+                            currBestOffset = j;
+                            currBendinessSum = tempBendinessSum;
+                            improved = true;
+                            if (i == 3) console.log(table.name, 'change accepted')
+                        }
                     }
+    
+                    table.verticalAttrOffset = currBestOffset;
                 }
 
-                table.verticalAttrOffset = currBestOffset;
+                if (i == 3) break
             }
-            
         }
+
+        let swipeLeft = () => {
+            for (let i = this.tableIndex.length - 1; i>0; i--){
+                let tableCol = this.tableIndex[i];
+
+                for (let k=tableCol.length - 1; k >= 0; k--){
+                    let table = tableCol[k];
+                    let currBendinessSum = this.getTableBendiness(table);
+                    //let currBendinessSum = this.getBendLeft(table);
+                    let currBestOffset = table.verticalAttrOffset;
+
+                    let upperBound = getUpperBound(tableCol, k);
+                    let lowerBound = getLowerBound(tableCol, k);
+                    //if (tableCol[k+1] != undefined) console.log(table.name, 'lower bound', lowerBound, 'next table offset', tableCol[k+1].verticalAttrOffset, 'base row dist', this.baseRowDistance, 'attribute length', table.attributes.length)
+
+                    for (let j = upperBound; j <= lowerBound; j++){
+                        table.verticalAttrOffset = j;
+                        let tempBendinessSum = this.getTableBendiness(table);
+                        //let tempBendinessSum = this.getBendLeft(table);
+
+                        //console.log(table.name, 'change proposal', j, 'bends' ,tempBendinessSum)
+                        
+                        if (tempBendinessSum < currBendinessSum){
+                            currBestOffset = j;
+                            currBendinessSum = tempBendinessSum;
+                            improved = true;
+                            //console.log(table.name, 'change accepted')
+                        }
+                    }
+    
+                    table.verticalAttrOffset = currBestOffset;
+                }
+            }
+        }
+
+        while (cycleIndex < 2){
+            improved = false;
+            console.log(cycleIndex, (cycleIndex % 2 == 0? 'right' : 'left'), this.getGraphTotalEdgeBendiness());
+            cycleIndex++;
+
+            if (cycleIndex % 2 == 0) swipeRight()
+            else swipeLeft()
+
+            // for (let i=0; i<this.tableIndex.length; i++){
+            //     let tableCol = this.tableIndex[i];
+    
+            //     for (let k=0; k<tableCol.length; k++){
+            //         let table = tableCol[k];
+            //         let currBendinessSum = this.getTableBendiness(table);
+            //         // let currBendinessSum = this.getGraphTotalEdgeBendiness();
+            //         let currBestOffset = 0;
+    
+            //         let upperBound = -2;
+            //         if (table.weight == 0) upperBound = 0;
+            //         else upperBound = tableCol[k-1].verticalAttrOffset - this.baseRowDistance + tableCol[k-1].attributes.length + 2; 
+    
+            //         let lowerBound = 2;
+            //         if (tableCol.length == 1 || tableCol[k+1] == undefined) lowerBound = 20; // random big number
+            //         else {
+            //             lowerBound = tableCol[k+1].verticalAttrOffset + this.baseRowDistance - table.attributes.length - 2; 
+            //         }
+    
+            //         for (let j = upperBound; j <= lowerBound; j++){
+            //             table.verticalAttrOffset = j;
+            //             let tempBendinessSum = this.getTableBendiness(table);
+            //             // let tempBendinessSum = this.getGraphTotalEdgeBendiness();
+                        
+            //             if (tempBendinessSum < currBendinessSum){
+            //                 currBestOffset = j;
+            //                 currBendinessSum = tempBendinessSum;
+            //                 improved = true;
+            //             }
+            //         }
+    
+            //         table.verticalAttrOffset = currBestOffset;
+            //     }
+                
+            // }
+        }
+
     }
 }
