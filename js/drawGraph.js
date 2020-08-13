@@ -87,11 +87,10 @@ let drawGraph = (svg, g, algorithm = undefined) => {
             d.rightTable.attributes.indexOf(d.att2)*attr_height + header_height + attr_height/2 + g.tableIndex[d.rightTable.depth].indexOf(d.rightTable)*table_vert_space + d.rightTable.verticalAttrOffset*attr_height]    
     }
 
-
-
     // *****
     // groups
     // *****
+    g.updateGroupCoords()
     visg.selectAll('.grouprects') 
         .data(g.groups)
         .enter()

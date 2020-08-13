@@ -184,9 +184,12 @@ class Edge {
 
     getBendiness(){
         let res = 0;
-        let factor = 10/60;
+        let factor = 10/(this.leftTable.graph.baseRowDistance*10);
+        //if (this.leftTable.name == "select") console.log(this.rightTable.name, 'selectpos', this.leftTable.weight + this.leftAttribute.weight * factor + this.leftTable.verticalAttrOffset * factor, 'thispos', this.rightTable.weight + this.rightAttribute.weight * factor + this.rightTable.verticalAttrOffset * factor)
         res = (this.rightTable.weight + this.rightAttribute.weight * factor + this.rightTable.verticalAttrOffset * factor) - (this.leftTable.weight + this.leftAttribute.weight * factor + this.leftTable.verticalAttrOffset * factor);
+        //if (this.leftTable.name == "select") console.log(res)
         res = Math.round(res*1000)/1000
+        //if (this.leftTable.name == "select") console.log(res)
         return Math.abs(res);
     }
 }

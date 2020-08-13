@@ -36,6 +36,8 @@ class Graph {
             this.newLayer();
         }
 
+        table.graph = this;
+
         this.tables.push(table);
         this.tableIndex[table.depth].push(table);
     }
@@ -203,8 +205,8 @@ class Graph {
     getTableBendiness(table){
         let depth = table.depth;
 
-        if (depth == 0) return Math.round(this.getBendRight(table)*100)/100;
-        else return Math.round(this.getBendLeft(table)*100 + this.getBendRight(table)*100)/100;
+        if (depth == 0) return Math.round(this.getBendRight(table)*1000)/1000;
+        else return Math.round(this.getBendLeft(table)*1000 + this.getBendRight(table)*1000)/1000;
     }
 
     getGraphTotalEdgeBendiness(){
@@ -242,21 +244,21 @@ class Graph {
                     let upperBound = getUpperBound(tableCol, k);
                     let lowerBound = getLowerBound(tableCol, k);
 
-                    if (i == 3 && tableCol[k+1] != undefined) console.log(table.name, 'lower bound', lowerBound,
-                        'next offset', tableCol[k+1].verticalAttrOffset, 'attributes', tableCol[k].attributes.length)
+                    // if (i == 3 && tableCol[k+1] != undefined) console.log(table.name, 'lower bound', lowerBound,
+                    //     'next offset', tableCol[k+1].verticalAttrOffset, 'attributes', tableCol[k].attributes.length)
 
                     for (let j = upperBound; j <= lowerBound; j++){
                         table.verticalAttrOffset = j;
                         let tempBendinessSum = this.getTableBendiness(table);
                         //let tempBendinessSum = this.getBendRight(table);
 
-                        if (i == 3) console.log(table.name, 'change proposal', j, 'bends' ,tempBendinessSum)
+                        // if (i == 3) console.log(table.name, 'change proposal', j, 'bends' ,tempBendinessSum)
                         
                         if (tempBendinessSum <= currBendinessSum){
                             currBestOffset = j;
                             currBendinessSum = tempBendinessSum;
                             improved = true;
-                            if (i == 3) console.log(table.name, 'change accepted')
+                            // if (i == 3) console.log(table.name, 'change accepted')
                         }
                     }
     
@@ -277,20 +279,18 @@ class Graph {
 
                     let upperBound = getUpperBound(tableCol, k);
                     let lowerBound = getLowerBound(tableCol, k);
-                    //if (tableCol[k+1] != undefined) console.log(table.name, 'lower bound', lowerBound, 'next table offset', tableCol[k+1].verticalAttrOffset, 'base row dist', this.baseRowDistance, 'attribute length', table.attributes.length)
+
+                    
 
                     for (let j = upperBound; j <= lowerBound; j++){
                         table.verticalAttrOffset = j;
                         let tempBendinessSum = this.getTableBendiness(table);
-                        //let tempBendinessSum = this.getBendLeft(table);
 
-                        //console.log(table.name, 'change proposal', j, 'bends' ,tempBendinessSum)
+                        //if (table.name == "T1y0") console.log('proposal', j, 'proposal bend', tempBendinessSum, this.baseRowDistance);
                         
                         if (tempBendinessSum < currBendinessSum){
                             currBestOffset = j;
                             currBendinessSum = tempBendinessSum;
-                            improved = true;
-                            //console.log(table.name, 'change accepted')
                         }
                     }
     
@@ -299,91 +299,15 @@ class Graph {
             }
         }
 
-        while (cycleIndex < 10){
-            improved = false;
+        while (cycleIndex < 1){
             console.log(cycleIndex, (cycleIndex % 2 == 0? 'right' : 'left'), this.getGraphTotalEdgeBendiness());
             cycleIndex++;
 
             if (cycleIndex % 2 == 0) swipeRight()
             else swipeLeft()
-
-            // for (let i=0; i<this.tableIndex.length; i++){
-            //     let tableCol = this.tableIndex[i];
-    
-            //     for (let k=0; k<tableCol.length; k++){
-            //         let table = tableCol[k];
-            //         let currBendinessSum = this.getTableBendiness(table);
-            //         // let currBendinessSum = this.getGraphTotalEdgeBendiness();
-            //         let currBestOffset = 0;
-    
-            //         let upperBound = -2;
-            //         if (table.weight == 0) upperBound = 0;
-            //         else upperBound = tableCol[k-1].verticalAttrOffset - this.baseRowDistance + tableCol[k-1].attributes.length + 2; 
-    
-            //         let lowerBound = 2;
-            //         if (tableCol.length == 1 || tableCol[k+1] == undefined) lowerBound = 20; // random big number
-            //         else {
-            //             lowerBound = tableCol[k+1].verticalAttrOffset + this.baseRowDistance - table.attributes.length - 2; 
-            //         }
-    
-            //         for (let j = upperBound; j <= lowerBound; j++){
-            //             table.verticalAttrOffset = j;
-            //             let tempBendinessSum = this.getTableBendiness(table);
-            //             // let tempBendinessSum = this.getGraphTotalEdgeBendiness();
-                        
-            //             if (tempBendinessSum < currBendinessSum){
-            //                 currBestOffset = j;
-            //                 currBendinessSum = tempBendinessSum;
-            //                 improved = true;
-            //             }
-            //         }
-    
-            //         table.verticalAttrOffset = currBestOffset;
-            //     }
-                
-            // }
         }
 
         this.updateGroupCoords();
     }
 }
 
-
-
-
-// while (cycleIndex < maxIterations){
-//     if (cycleIndex % 2 == 0) swipeRight()
-//     else swipeLeft()
-//     cycleIndex++
-// }
-
-// let swipeRight = () => {
-//     for (let i=0; i<this.tableIndex.length; i++){ // swipeLeft has i going from tableindex.length to 0
-//         let tableCol = this.tableIndex[i];
-
-//         for (let k=0; k<tableCol.length; k++){ // swipeLeft goes from bottom to top instead
-//             let table = tableCol[k];
-//             let currBendinessSum = this.getTableBendiness(table); // computes bendiness caused by this table in particular
-//             let currBestOffset = table.verticalAttrOffset; // assign previous vertical offset as current best
-
-//             // compute the boundaries of how high and how low the table can go without colliding with other tables
-//             let upperBound = getUpperBound(tableCol, k);
-//             let lowerBound = getLowerBound(tableCol, k);
-
-//             // try each position within the boundaries
-//             for (let j = upperBound; j <= lowerBound; j++){
-//                 table.verticalAttrOffset = j;
-//                 let tempBendinessSum = this.getTableBendiness(table);
-                
-//                 // if the new position causes less bendiness, assign it as current best
-//                 if (tempBendinessSum <= currBendinessSum){
-//                     currBestOffset = j;
-//                     currBendinessSum = tempBendinessSum;
-//                 }
-//             }
-
-//             // assign best offset
-//             table.verticalAttrOffset = currBestOffset;
-//         }
-//     }
-// }

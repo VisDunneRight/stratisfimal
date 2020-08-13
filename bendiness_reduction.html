@@ -1,0 +1,109 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="./lib/glpk.min.js"></script>
+</head>
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 5%;
+    }
+
+    svg {
+        margin: 1%;
+        background-color: white;
+    }
+
+    .algorithm_header {
+        font-size: 2em;
+        font-weight: bold;
+        margin-top: 100px;
+        margin-bottom: 20px;
+    }
+
+    .rowDiv {
+        margin-top: 20px;
+    }
+
+</style>
+
+<body>
+</body>
+
+<script src="./dist/dist.js"></script>
+<script>
+
+const svg_height = 300
+const svg_width = 600
+
+const svg_height_s = 300
+const svg_width_s = 600
+const svg_height_m = 800
+const svg_width_m = 1600
+const svg_height_l = 1600
+const svg_width_l = 3200
+
+const attr_height = 15
+const table_width = 70
+const depth_distance = 150
+let  header_height = attr_height
+let table_vert_space = 100
+
+var depth = 5;
+var seed = "aaa."
+var tableDistribution = [4, 5];
+
+g = new GraphGenerator(depth, seed, tableDistribution)
+g = g.generate()
+
+g.setExactWeights()
+g.sortGraph()
+
+// group = new Group()
+// table1 = g3.tables.find(t => t.name == "T1y0")
+// group.addTable(table1)
+
+// table1 = g.tables.find(t => t.name == "T2y0")
+// group.addTable(table1)
+
+// g.addGroup(group)
+
+svg = d3.select('body')
+    .append('svg')
+    .attr('width', svg_width_s*2)
+    .attr('height', svg_height_s*2)
+
+drawGraph(svg, g)
+
+rowDiv = d3.select('body')
+    .append('div')
+    .text("solution:")
+
+let algorithm = new LPFormulation(g)
+algorithm.arrange()
+
+g.setExactWeights()
+g.sortGraph()
+//g.adjustTableYPosition()
+
+let algorithm2 = new LPBendiness(g)
+algorithm2.arrange()
+
+svg = rowDiv
+        .append('div')
+        .style('width', '50%')
+        .append('svg')
+        .attr('class', 'vis-svg')
+        .attr('easypz', '{"applyTransformTo":"svg > *"}')
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", "0 0 " + (2*svg_width) + " " + (2*svg_height))
+
+drawGraph(svg, g, algorithm)
+
+</script>
+</html>

@@ -8,6 +8,7 @@ class Table {
         this.attrMaps = [];
         this.weight = 0;
         this.group = undefined;
+        this.graph = undefined;
         this.visibility = 'visible';
         this.verticalAttrOffset = 0;
     }

@@ -43,6 +43,8 @@ class Group {
             let numthisDepth = Math.min.apply(0, this.tables.filter(t => t.depth == cur_d).map(d => d.weight));
             let topTable = this.tables.find(t => t.depth == cur_d && t.weight == numthisDepth);
 
+            //console.log(topTable.name, topTable.verticalAttrOffset, attr_height, table_vert_space)
+
             this.coords.push([topTable.depth*depth_distance - 10, topTable.weight*table_vert_space + topTable.verticalAttrOffset*attr_height - 10])
             this.coords.push([topTable.depth*depth_distance + table_width + 10, topTable.weight*table_vert_space + topTable.verticalAttrOffset*attr_height - 10])
         }
