@@ -210,7 +210,7 @@ class Graph {
     }
 
     getGraphTotalEdgeBendiness(){
-        return this.tables.map(t => this.getTableBendiness(t)).reduce((a, b) => a + b);
+        return Math.round(1000*this.tables.map(t => this.getTableBendiness(t)).reduce((a, b) => a + b))/1000;
     }
 
     adjustAttrOffset(){
@@ -299,7 +299,7 @@ class Graph {
             }
         }
 
-        while (cycleIndex < 1){
+        while (cycleIndex < 10){
             console.log(cycleIndex, (cycleIndex % 2 == 0? 'right' : 'left'), this.getGraphTotalEdgeBendiness());
             cycleIndex++;
 

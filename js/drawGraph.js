@@ -125,7 +125,7 @@ let drawGraph = (svg, g, algorithm = undefined) => {
 
     d3.select(svg.node().parentNode)
         .append('div').append('text')
-        .text('crossings: ' + g.getEdgeCrossings() + ', tables: ' + g.tables.length + ', edges: ' + g.edges.length)
+        .text('crossings: ' + g.getEdgeCrossings() + ', tables: ' + g.tables.length + ', edges: ' + g.edges.length + ", bendiness: " + g.getGraphTotalEdgeBendiness())
         .style('font-family', 'Arial')
         .attr('class', 'crossing_count')
 
