@@ -54,9 +54,9 @@ const depth_distance = 150
 let  header_height = attr_height
 let table_vert_space = 100
 
-var depth = 4;
-var seed = "aba."
-var tableDistribution = [3, 3];
+var depth = 7;
+var seed = "ha."
+var tableDistribution = [3, 4];
 
 g = new GraphGenerator(depth, seed, tableDistribution)
 g = g.generate()
@@ -132,7 +132,31 @@ svg = rowDiv
         .attr("preserveAspectRatio", "xMinYMin meet")
         .attr("viewBox", "0 0 " + (2*svg_width) + " " + (1.5*svg_height))
 
-drawGraph(svg, g, algorithm)
+drawGraph(svg, g)
+
+// *********
+// *********
+
+g = new GraphGenerator(depth, seed, tableDistribution)
+g = g.generate()
+
+rowDiv = d3.select('body')
+    .append('div')
+    .html("<h1>Bendiness and intersection reduction in a single LP problem</h1>")
+
+algorithm = new LPBendinessCombined(g)
+algorithm.arrange()
+
+svg = rowDiv
+        .append('div')
+        .style('width', '50%')
+        .append('svg')
+        .attr('class', 'vis-svg')
+        .attr('easypz', '{"applyTransformTo":"svg > *"}')
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", "0 0 " + (2*svg_width) + " " + (1.5*svg_height))
+
+drawGraph(svg, g)
 
 </script>
 </html>

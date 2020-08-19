@@ -300,7 +300,7 @@ class Graph {
         }
 
         while (cycleIndex < 10){
-            console.log(cycleIndex, (cycleIndex % 2 == 0? 'right' : 'left'), this.getGraphTotalEdgeBendiness());
+            //console.log(cycleIndex, (cycleIndex % 2 == 0? 'right' : 'left'), this.getGraphTotalEdgeBendiness());
             cycleIndex++;
 
             if (cycleIndex % 2 == 0) swipeRight()

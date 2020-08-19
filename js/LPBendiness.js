@@ -66,7 +66,6 @@ class LPBendiness {
 
         this.fillModel(model)
         let prob = this.modelToString(model)
-        console.log(prob)
 
         // solve
         let result = {}, objective, i;
@@ -95,8 +94,6 @@ class LPBendiness {
             }
         }
 
-        console.log(result)
-
         this.apply_solution(result)
 
         this.elapsedTime = new Date().getTime() - startTime
@@ -113,11 +110,6 @@ class LPBendiness {
             if (this.isSameRankEdge(e)) continue
 
             model.minimize += "bend_" + e.leftAttribute.name + "_" + e.rightAttribute.name + " + "
-                        
-            // model.subjectTo += "bend_" + e.leftAttribute.name + "_" + e.rightAttribute.name + " - "
-            //     + " y_" + e.leftAttribute.name + " + "
-            //     + "y_" + e.rightAttribute.name 
-            //     + " = " + "0" + "\n"
 
             model.subjectTo += 
                 "y_" + e.leftAttribute.name + " - " + 
@@ -130,7 +122,6 @@ class LPBendiness {
                 "y_" + e.leftAttribute.name + " - " + 
                 "bend_" + e.leftAttribute.name + "_" + e.rightAttribute.name +
                 " <= 0\n"
-
         }
 
         for (let i=0; i<this.g.tableIndex.length; i++){
