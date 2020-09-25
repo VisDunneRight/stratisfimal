@@ -1,0 +1,202 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="./lib/glpk.min.js"></script>
+</head>
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 5%;
+    }
+
+    svg {
+        margin: 1%;
+        background-color: white;
+    }
+
+    .algorithm_header {
+        font-size: 2em;
+        font-weight: bold;
+        margin-top: 100px;
+        margin-bottom: 20px;
+    }
+
+    .rowDiv {
+        margin-top: 20px;
+    }
+
+</style>
+
+<body>
+</body>
+
+<script src="./dist/dist.js"></script>
+<script>
+
+const svg_height = 300
+const svg_width = 600
+
+const svg_height_s = 300
+const svg_width_s = 600
+const svg_height_m = 800
+const svg_width_m = 1600
+const svg_height_l = 1600
+const svg_width_l = 3200
+
+const attr_height = 15
+const table_width = 70
+const depth_distance = 150
+let  header_height = attr_height
+let table_vert_space = 100
+
+var depth = 3;
+var seed = "gkjfn."
+var tableDistribution = [2, 3];
+
+g2 = new Graph();
+a = new Table("a", "a", true, 0)
+b = new Table("b", "b", true, 1)
+c = new Table("c", "c", true, 1)
+d = new Table("d", "d", true, 1)
+e = new Table("e", "e", true, 1)
+f = new Table("f", "f", true, 2)
+g = new Table("g", "g", true, 2)
+h = new Table("h", "h", true, 2)
+i = new Table("i", "i", true, 2)
+
+g2.addTable(a)
+g2.addTable(b)
+g2.addTable(c)
+g2.addTable(d)
+g2.addTable(e)
+// g2.addTable(f)
+g2.addTable(g)
+g2.addTable(h)
+g2.addTable(i)
+
+a1 = new Attribute(a, "a1")
+a.attributes.push(a1)
+a2 = new Attribute(a, "a2")
+a.attributes.push(a2)
+b1 = new Attribute(b, "b1")
+b.attributes.push(b1)
+c1 = new Attribute(c, "c1")
+c.attributes.push(c1)
+d1 = new Attribute(d, "d1")
+d.attributes.push(d1)
+e1 = new Attribute(e, "e1")
+e.attributes.push(e1)
+// f1 = new Attribute(f, "f1")
+// f.attributes.push(f1)
+g1 = new Attribute(g, "g1")
+g.attributes.push(g1)
+h1 = new Attribute(h, "h1")
+h.attributes.push(h1)
+i1 = new Attribute(i, "i1")
+i.attributes.push(i1)
+
+g2.setExactWeights()
+g2.sortGraph()
+
+ed = new Edge(a, a1, c, c1)
+g2.addEdge(ed)
+ed = new Edge(a, a1, b, b1)
+g2.addEdge(ed)
+ed = new Edge(a, a1, d, d1)
+g2.addEdge(ed)
+ed = new Edge(a, a1, e, e1)
+g2.addEdge(ed)
+ed = new Edge(b, b1, i, i1)
+g2.addEdge(ed)
+ed = new Edge(c, c1, h, h1)
+g2.addEdge(ed)
+ed = new Edge(d, d1, g, g1)
+g2.addEdge(ed)
+// ed = new Edge(e, e1, i, i1)
+// g2.addEdge(ed)
+
+group = new Group()
+table1 = g2.tables.find(t => t.name == "c")
+group.addTable(table1)
+table1 = g2.tables.find(t => t.name == "h")
+group.addTable(table1)
+table1 = g2.tables.find(t => t.name == "d")
+group.addTable(table1)
+table1 = g2.tables.find(t => t.name == "g")
+group.addTable(table1)
+// // table1 = g2.tables.find(t => t.name == "i")
+// // group.addTable(table1)
+g2.addGroup(group)
+
+randomGroupGenerator = (g) => {
+    group = new Group()
+    rng = new Math.seedrandom(seed);
+    blankCounter = 0;
+
+    // add random tables to group
+    for (let table of g.tables){
+        if (table.depth == 0) continue;
+        if (rng() < 0.5) group.addTable(table)
+    }
+
+    // add blank tables to fill spaces
+    let depthRange = [Math.min.apply(0, group.tables.map(t => t.depth)), Math.max.apply(0, group.tables.map(t => t.depth))];
+    let maxheight = 0;
+    for (i of depthRange){
+        if (group.tables.filter(t => t.depth == i).length > maxheight) maxheight = group.tables.filter(t => t.depth == i).length  
+    }
+    for (i of depthRange){
+        let numTablesDifferences = maxheight - group.tables.filter(t => t.depth == i).length
+        for (j = 0; j<numTablesDifferences; j++){
+            blankTable = new Table("blank" + blankCounter, "blank" + blankCounter, true, i)
+            blankAttribute = new Attribute(blankTable, "bAttr" + blankCounter)
+            blankTable.attributes.push(blankAttribute)
+            group.addTable(blankTable);
+            g.addTable(blankTable);
+            blankCounter += 1
+        }
+    }
+
+    // for (i of depthRange){
+    //     let numTablesDifferences = maxheight - group.tables.filter(t => t.depth == i).length
+        
+    // }
+
+    g.addGroup(group)
+}
+
+//randomGroupGenerator(g2)
+
+svg2 = d3.select('body')
+    .append('svg')
+    .attr('width', svg_width_s*1.4)
+    .attr('height', svg_height_s*1.4)
+
+drawGraph(svg2, g2)
+
+rdiv2 = d3.select('body')
+    .append('div')
+    .text("solution:")
+
+algorithm = new LPBendinessCombinedPlusGroups(g2)
+algorithm.arrange()
+
+svg = rdiv2
+        .append('div')
+        .style('width', '50%')
+        .append('svg')
+        .attr('class', 'vis-svg')
+        .attr('easypz', '{"applyTransformTo":"svg > *"}')
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", "0 0 " + (2*svg_width) + " " + (1.5*svg_height))
+
+drawGraph(svg, g2)
+
+
+</script>
+</html>
