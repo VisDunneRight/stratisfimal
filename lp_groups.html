@@ -54,9 +54,10 @@ const depth_distance = 150
 let  header_height = attr_height
 let table_vert_space = 100
 
-var depth = 3;
-var seed = "gkjfn."
-var tableDistribution = [2, 3];
+var depth = 5;
+var seed = "sds."
+var tableDistribution = [3, 3];
+var attributeDistribution = [1, 2];
 
 g2 = new Graph();
 a = new Table("a", "a", true, 0)
@@ -129,6 +130,8 @@ table1 = g2.tables.find(t => t.name == "d")
 group.addTable(table1)
 table1 = g2.tables.find(t => t.name == "g")
 group.addTable(table1)
+table1 = g2.tables.find(t => t.name == "e")
+group.addTable(table1)
 // // table1 = g2.tables.find(t => t.name == "i")
 // // group.addTable(table1)
 g2.addGroup(group)
@@ -150,17 +153,17 @@ randomGroupGenerator = (g) => {
     for (i of depthRange){
         if (group.tables.filter(t => t.depth == i).length > maxheight) maxheight = group.tables.filter(t => t.depth == i).length  
     }
-    for (i of depthRange){
-        let numTablesDifferences = maxheight - group.tables.filter(t => t.depth == i).length
-        for (j = 0; j<numTablesDifferences; j++){
-            blankTable = new Table("blank" + blankCounter, "blank" + blankCounter, true, i)
-            blankAttribute = new Attribute(blankTable, "bAttr" + blankCounter)
-            blankTable.attributes.push(blankAttribute)
-            group.addTable(blankTable);
-            g.addTable(blankTable);
-            blankCounter += 1
-        }
-    }
+    // for (i of depthRange){
+    //     let numTablesDifferences = maxheight - group.tables.filter(t => t.depth == i).length
+    //     for (j = 0; j<numTablesDifferences; j++){
+    //         blankTable = new Table("blank" + blankCounter, "blank" + blankCounter, true, i)
+    //         blankAttribute = new Attribute(blankTable, "bAttr" + blankCounter)
+    //         blankTable.attributes.push(blankAttribute)
+    //         group.addTable(blankTable);
+    //         g.addTable(blankTable);
+    //         blankCounter += 1
+    //     }
+    // }
 
     // for (i of depthRange){
     //     let numTablesDifferences = maxheight - group.tables.filter(t => t.depth == i).length
@@ -197,6 +200,74 @@ svg = rdiv2
 
 drawGraph(svg, g2)
 
+
+
+
+
+seed = "aau."
+tableDistribution = [4, 5];
+attributeDistribution = [1, 1];
+
+g = new GraphGenerator(depth, seed, tableDistribution, attributeDistribution)
+g = g.generate()
+// randomGroupGenerator(g);
+
+group = new Group();
+group.margin = 10;
+table1 = g.tables.find(t => t.name == "T1y2")
+group.addTable(table1)
+table1 = g.tables.find(t => t.name == "T2y2")
+group.addTable(table1)
+table1 = g.tables.find(t => t.name == "T1y0")
+group.addTable(table1)
+table1 = g.tables.find(t => t.name == "T1y3")
+group.addTable(table1)
+table1 = g.tables.find(t => t.name == "T2y1")
+group.addTable(table1)
+table1 = g.tables.find(t => t.name == "T1y1")
+group.addTable(table1)
+table1 = g.tables.find(t => t.name == "T2y0")
+group.addTable(table1)
+table1 = g.tables.find(t => t.name == "T3y1")
+group.addTable(table1)
+table1 = g.tables.find(t => t.name == "T3y0")
+group.addTable(table1)
+table1 = g.tables.find(t => t.name == "T3y2")
+group.addTable(table1)
+g.addGroup(group)
+
+// group = new Group()
+// group.margin = 5;
+// table1 = g.tables.find(t => t.name == "T2y1")
+// group.addTable(table1)
+// table1 = g.tables.find(t => t.name == "T2y0")
+// group.addTable(table1)
+// g.addGroup(group)
+
+svg = rdiv2
+        .append('div')
+        .style('width', '50%')
+        .append('svg')
+        .attr('class', 'vis-svg')
+        .attr('easypz', '{"applyTransformTo":"svg > *"}')
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", "0 0 " + (2*svg_width) + " " + (1.5*svg_height))
+
+drawGraph(svg, g)
+
+algorithm = new LPBendinessCombinedPlusGroups(g)
+algorithm.arrange()
+
+svg = rdiv2
+        .append('div')
+        .style('width', '50%')
+        .append('svg')
+        .attr('class', 'vis-svg')
+        .attr('easypz', '{"applyTransformTo":"svg > *"}')
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", "0 0 " + (2*svg_width) + " " + (3*svg_height))
+
+drawGraph(svg, g)
 
 </script>
 </html>

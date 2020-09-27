@@ -8,6 +8,7 @@ class Attribute {
         this.randomEdges = 0;
         this.sameEdges = 0;
         this.mutable = true;
+        this.id = name;
     }
 
     compareTo(arg0){

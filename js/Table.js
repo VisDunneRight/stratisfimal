@@ -1,5 +1,5 @@
 class Table {
-    constructor(name, header, main, depth){
+    constructor(name, header, main, depth, type=undefined){
         this.name = name;
         this.header = header;
         this.main = main;
@@ -8,9 +8,12 @@ class Table {
         this.attrMaps = [];
         this.weight = 0;
         this.group = undefined;
+        this.groups = [];
         this.graph = undefined;
         this.visibility = 'visible';
         this.verticalAttrOffset = 0;
+        this.id = name;
+        this.type = type;
     }
 
     addAttribute(attribute){

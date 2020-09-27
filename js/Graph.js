@@ -17,6 +17,9 @@ class Graph {
 
     addGroup(group){
         this.groups.push(group);
+        group.id = "g" + this.groups.indexOf(group);
+        let groupHeaderTable = group.groupHeaderTable;
+        this.addTable(groupHeaderTable);
     }
 
     updateGroupCoords(){

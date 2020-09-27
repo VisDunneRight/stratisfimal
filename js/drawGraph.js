@@ -37,7 +37,7 @@ let drawGraph = (svg, g, algorithm = undefined) => {
     tablegroups.append('rect')
         .attr('width', table_width)
         .attr('height', d => d.attributes.length * attr_height + header_height)  
-        .attr('fill', 'black')
+        .attr('fill', d => d.type == "groupheader"? "#eee" : 'black')
         .attr('stroke', 'gray')
         .on('click', d => console.log(d))
 
@@ -45,7 +45,7 @@ let drawGraph = (svg, g, algorithm = undefined) => {
         .attr('x', table_width/2)
         .attr('y', attr_height/2 + 5)
         .attr('text-anchor', 'middle')
-        .attr('fill', 'white')
+        .attr('fill', d => d.type == "groupheader"? "black" : 'white')
         .attr('font-size', '0.7em')
         .attr("font-family", "Arial")
         .text(d => d.header + " w:" + d.weight)

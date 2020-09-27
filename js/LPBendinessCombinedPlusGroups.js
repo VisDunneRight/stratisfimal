@@ -51,6 +51,11 @@ class LPBendinessCombinedPlusGroups {
     }
 
     fillModel(model){
+
+        let m = 40; // TODO: change this
+        let zcount = 0;
+        let buffer = 2;
+
         model.minimize = "Minimize \n"
         model.subjectTo = "Subject To \n"
         model.bounds = "\nBounds \n"
@@ -92,10 +97,65 @@ class LPBendinessCombinedPlusGroups {
             }
         }
 
+        // all groups should have the same y_start and y_end on every depth
+        for (let group of this.g.groups){
+            for (let table of group.tables){
+                model.subjectTo += "y_groupstart_" + group.id + " - y_" + table.id + " <= 0\n";
+                model.subjectTo += "y_groupend_" + group.id + " - y_" + table.id + " >= " + (table.attributes.length + buffer) + "\n";
+            }
+
+            for (let table of this.g.tables){
+                if (group.tables.indexOf(table) == -1 && group.tables.map(t => t.depth).indexOf(table.depth) != -1){
+                    model.subjectTo += "y_" + table.id + " - " + m + " z_" + zcount + " - y_groupstart_" + group.id + " <= - " + (table.attributes.length + buffer) + "\n";
+                    model.subjectTo += "- y_" + table.id + " + " + m + " z_" + zcount + " + y_groupend_" + group.id + " <= " + m + "\n"
+                    zcount += 1;
+                }
+            }
+
+            
+        }
+
+        for (let i=0; i<=zcount; i++){
+            model.bounds += "binary z_" + i + "\n" 
+        }
+
+        let getFirstLevelContainersInDepth = (depth) => {
+            let layerTables = this.g.tableIndex[depth];
+            let layerTablesOutsideGroups = layerTables.filter(t => t.groups.length == 0);
+            let layerGroups = [...new Set(layerTables.map(t => t.groups).flat())];
+
+            return layerGroups.concat(layerTablesOutsideGroups);
+        }
+
+        let getSecondLevelContainersInDepthInContainer = (depth, container) => {
+
+        }
+
+        let mkxDict = (sign, u1, u2) => {
+            let res = ""
+            let accumulator = 0
+            let oppsign = " - "
+
+            if (sign == " - ") oppsign = " + "
+
+            let p = mkxBase(u1, u2)
+            if (definitions[p] != undefined){
+                res += sign + p
+            } else {
+                p = mkxBase(u2, u1)
+                if (definitions[p] == undefined) console.warn(p + "not defined");
+                accumulator -= 1
+                res += oppsign + p
+            }
+
+            return [res, accumulator];
+        }
         
         for (let k=0; k < this.g.maxDepth + 1; k++){
             let layerTables = this.g.tableIndex[k];
             let layerAttributes = layerTables.map(t => t.attributes).flat()
+
+            // let firstLevelContainers = getFirstLevelContainersInDepth(k);
             
             // global ordering of tables 
             for (let i=0; i<layerTables.length; i++){
@@ -123,6 +183,7 @@ class LPBendinessCombinedPlusGroups {
             }
 
             // global ordering of attributes
+            // constraints generated: O ( num_tables * num_attributes_per_table[variable] )
             for (let i = 0; i < layerAttributes.length; i++){
                 let t1 = layerAttributes[i].name;
                 
@@ -158,56 +219,6 @@ class LPBendinessCombinedPlusGroups {
             }
         }
 
-        // // managing groups
-        // for (let group of this.g.groups){
-        //     let depthRange = [Math.min.apply(0, group.tables.map(t => t.depth)), Math.max.apply(0, group.tables.map(t => t.depth))];
-        //     let maxheight = 0;
-        //     for (i of depthRange){
-        //         let buffer = 1;
-        //         let tableList = group.tables.filter(t => t.depth == i)
-        //         if (tableList.length > maxheight) 
-        //             // console.log(tableList.map(t => t.attributes.length).reduce((a, b) => a + b, 0))
-        //             maxheight = tableList.length + tableList.length*buffer + tableList.map(t => t.attributes.length).reduce((a, b) => a + b, 0) - buffer
-        //     }
-        //     console.log(maxheight)
-
-        //     // max distance of elements in the group at the same depth should be = maxheight
-        //     for (let i=0; i<depthRange.length; i++){
-        //         let depth = depthRange[i];
-        //         let tableList = group.tables.filter(t => t.depth == depth);
-        //         for (let j = 0; j<tableList.length - 1; j++){
-        //             for (let k = j + 1; k<tableList.length; k++){
-        //                 // abs(yt1 - yt2) < maxheight
-        //                 // console.log("y_" + tableList[j].name + " - y_" + tableList[k].name + " < " + 0)
-        //                 model.subjectTo += "y_" + tableList[j].name + " - y_" + tableList[k].name + " <= " + maxheight + "\n";
-        //                 model.subjectTo += "y_" + tableList[k].name + " - y_" + tableList[j].name + " <= " + maxheight + "\n";
-        //             }
-        //         }
-        //     }
-
-        //     // sum of ys across the group should be constant
-        //     if (depthRange[0] - depthRange[1] == 0) continue;
-        //     for (let i = 0; i<depthRange.length -1; i++){
-        //         let depth1 = depthRange[i];
-        //         let depth2 = depthRange[i+1];
-        //         let tableList1 = group.tables.filter(t => t.depth == depth1);
-        //         let tableList2 = group.tables.filter(t => t.depth == depth2);
-                
-        //         let str1 = ""
-        //         for (let table of tableList1){
-        //             str1 += "y_" + table.name + " + "
-        //         }
-        //         str1 = str1.substring(0, str1.length - 3);
-        //         for (let table of tableList2){
-        //             str1 += " - y_" + table.name
-        //         }
-
-        //         model.subjectTo += str1 + " = 0\n"
-        //     }
-
-
-        // }
-
         // determining crossings
         for (let k=0; k < this.g.maxDepth + 1; k++){
             let layerEdges = this.g.edgeIndex[k]
@@ -220,235 +231,67 @@ class LPBendinessCombinedPlusGroups {
 
                     // new: managing groups
                     // edges that are outside of groups should never cross with edges that are inside of groups
-                    if (u1v1.leftTable.group != undefined && u1v1.rightTable.group != undefined){
-                        if (u2v2.leftTable.group != u2v2.leftTable.group) {
-                            model.subjectTo += mkc(u1, v1, u2, v2) + " = 0\n";
-                        }
-                    }
+                    // if (u1v1.leftTable.group != undefined && u1v1.rightTable.group != undefined){
+                    //     if (u2v2.leftTable.group != u2v2.leftTable.group) {
+                    //         model.subjectTo += mkc(u1, v1, u2, v2) + " = 0\n";
+                    //     }
+                    // }
 
+                    let u1 = u1v1.leftAttribute.id
+                    let v1 = u1v1.rightAttribute.id
+                    let u2 = u2v2.leftAttribute.id
+                    let v2 = u2v2.rightAttribute.id
+
+                    // not not
                     if (!this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)){
-                        let u1 = u1v1.leftAttribute.name
-                        let v1 = u1v1.rightAttribute.name
-                        let u2 = u2v2.leftAttribute.name
-                        let v2 = u2v2.rightAttribute.name
-
                         if (u1 == u2 || v1 == v2) continue
 
                         let p1 = mkc(u1, v1, u2, v2)
-                        let finalsum = 1
-                        model.subjectTo += p1 + ""
-                        let p2 = mkxBase(u2, u1)
-                        if (definitions[p2] != undefined){
-                            model.subjectTo += " + " + p2
-                        } else {
-                            p2 = mkxBase(u1, u2)
-                            finalsum -= 1
-                            model.subjectTo += " - " + p2
-                        }
-                        
-                        let p3 = mkxBase(v1, v2)
-                        if (definitions[p3] != undefined){
-                            model.subjectTo += " + " + p3
-                        } else {
-                            p3 = mkxBase(v2, v1)
-                            finalsum -= 1
-                            model.subjectTo += " - " + p3
-                        }
+                        let finalsum = 1 + mkxDict(" + ", u2, u1)[1] + mkxDict(" + ", v1, v2)[1]
+                        model.subjectTo += p1 + "" + mkxDict(" + ", u2, u1)[0] + mkxDict(" + ", v1, v2)[0]
                         model.subjectTo += " >= " + finalsum + "\n"
 
-
                         p1 = mkc(u1, v1, u2, v2)
-                        finalsum = 1
-                        model.subjectTo += p1 + ""
-                        p2 = mkxBase(u1, u2)
-                        if (definitions[p2] != undefined){
-                            model.subjectTo += " + " + p2
-                        } else {
-                            p2 = mkxBase(u2, u1)
-                            finalsum -= 1
-                            model.subjectTo += " - " + p2
-                        }
-                        
-                        p3 = mkxBase(v2, v1)
-                        if (definitions[p3] != undefined){
-                            model.subjectTo += " + " + p3
-                        } else {
-                            p3 = mkxBase(v1, v2)
-                            finalsum -= 1
-                            model.subjectTo += " - " + p3
-                        }
+                        finalsum = 1 + mkxDict(" + ", u1, u2)[1] + mkxDict(" + ", v2, v1)[1]
+                        model.subjectTo += p1 + "" + mkxDict(" + ", u1, u2)[0] + mkxDict(" + ", v2, v1)[0]
                         model.subjectTo += " >= " + finalsum + "\n"
                         
                     // if they are both same rank edges
                     } else if (this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2)) {
-                        let u1 = u1v1.leftAttribute.name
-                        let v1 = u1v1.rightAttribute.name
-                        let u2 = u2v2.leftAttribute.name
-                        let v2 = u2v2.rightAttribute.name
 
                         let p1 = mkc(u1, v1, u2, v2)
-                        let finalsum = 1
-                        model.subjectTo += p1 + ""
-                        let p2 = mkxBase(u1, u2)
-                        if (definitions[p2] != undefined){
-                            model.subjectTo += " + " + p2
-                        } else {
-                            p2 = mkxBase(u2, u1)
-                            finalsum -= 1
-                            model.subjectTo += " - " + p2
-                        }
-
-                        let p3 = mkxBase(v1, v2)
-                        if (definitions[p3] != undefined){
-                            model.subjectTo += " + " + p3
-                        } else {
-                            finalsum -= 1
-                            p3 = mkxBase(v2, v1)
-                            model.subjectTo += " - " + p3
-                        }
-
-                        let p4 = mkxBase(u2, v1)
-                        if (definitions[p4] != undefined){
-                            model.subjectTo += p4
-                        } else {
-                            finalsum -= 1
-                            p4 = mkxBase(v1, u2)
-                            model.subjectTo += " + " + p4
-                        }
+                        let finalsum = 1 + mkxDict(" + ", u1, u2)[1] + mkxDict(" + ", v1, v2)[1] + mkxDict(" + ", u2, v1)[1]
+                        model.subjectTo += p1 + "" + mkxDict(" + ", u1, u2)[0] + mkxDict(" + ", v1, v2)[0] + mkxDict(" + ", u2, v1)[0]
                         model.subjectTo += " >= " + finalsum + "\n"
 
-
                         p1 = mkc(u1, v1, u2, v2)
-                        finalsum = 1
-                        model.subjectTo += p1 + ""
-                        p2 = mkxBase(u1, u2)
-                        if (definitions[p2] != undefined){
-                            model.subjectTo += " + " + p2
-                        } else {
-                            p2 = mkxBase(u2, u1)
-                            finalsum -= 1
-                            model.subjectTo += " - " + p2
-                        }
-
-                        p3 = mkxBase(v1, v2)
-                        if (definitions[p3] != undefined){
-                            model.subjectTo += " + " + p3
-                        } else {
-                            finalsum -= 1
-                            p3 = mkxBase(v2, v1)
-                            model.subjectTo += " - " + p3
-                        }
-
-                        p4 = mkxBase(v2, u1)
-                        if (definitions[p4] != undefined){
-                            model.subjectTo += p4
-                        } else {
-                            finalsum -= 1
-                            p4 = mkxBase(u1, v2)
-                            model.subjectTo += " + " + p4
-                        }
+                        finalsum = 1 + mkxDict(" + ", u1, u2)[1] + mkxDict(" + ", v1, v2)[1] + mkxDict(" + ", v2, u1)[1]
+                        model.subjectTo += p1 + "" + mkxDict(" + ", u1, u2)[0] + mkxDict(" + ", v1, v2)[0] + mkxDict(" + ", v2, u1)[0]
                         model.subjectTo += " >= " + finalsum + "\n"
 
                     } else if (this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)) {
-                        let u1 = u1v1.leftAttribute.name
-                        let v1 = u1v1.rightAttribute.name
-                        let u2 = u2v2.leftAttribute.name
-                        let v2 = u2v2.rightAttribute.name
-
+                        
                         let p1 = mkc(u1, v1, u2, v2)
-                        let finalsum = 1
-                        model.subjectTo += p1 + ""
-                        let p2 = mkxBase(u2, u1)
-                        if (definitions[p2] != undefined){
-                            model.subjectTo += " + " + p2
-                        } else {
-                            p2 = mkxBase(u1, u2)
-                            finalsum -= 1
-                            model.subjectTo += " - " + p2
-                        }
-
-                        let p3 = mkxBase(v1, u2)
-                        if (definitions[p3] != undefined){
-                            model.subjectTo += " + " + p3
-                        } else {
-                            finalsum -= 1
-                            p3 = mkxBase(u2, v1)
-                            model.subjectTo += " - " + p3
-                        }
+                        let finalsum = 1 + mkxDict(" + ", u2, u1)[1] + mkxDict(" + ", v1, u2)[1]
+                        model.subjectTo += p1 + "" + mkxDict(" + ", u2, u1)[0] + mkxDict(" + ", v1, u2)[0]
                         model.subjectTo += " >= " + finalsum + "\n"
 
-
                         p1 = mkc(u1, v1, u2, v2)
-                        finalsum = 1
-                        model.subjectTo += p1 + ""
-                        p2 = mkxBase(u2, v1)
-                        if (definitions[p2] != undefined){
-                            model.subjectTo += " + " + p2
-                        } else {
-                            p2 = mkxBase(v1, u2)
-                            finalsum -= 1
-                            model.subjectTo += " - " + p2
-                        }
-
-                        p3 = mkxBase(u1, u2)
-                        if (definitions[p3] != undefined){
-                            model.subjectTo += " + " + p3
-                        } else {
-                            finalsum -= 1
-                            p3 = mkxBase(u2, u1)
-                            model.subjectTo += " - " + p3
-                        }
+                        finalsum = 1 + mkxDict(" + ", u2, v1)[1] + mkxDict(" + ", u1, u2)[1]
+                        model.subjectTo += p1 + "" + mkxDict(" + ", u2, v1)[0] + mkxDict(" + ", u1, u2)[0]
                         model.subjectTo += " >= " + finalsum + "\n"
 
                     } else if (!this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2)) {
-                        let u1 = u1v1.leftAttribute.name
-                        let v1 = u1v1.rightAttribute.name
-                        let u2 = u2v2.leftAttribute.name
-                        let v2 = u2v2.rightAttribute.name
-
+                        // console.log(u1, v1, u2, v2)
                         let p1 = mkc(u1, v1, u2, v2)
-                        let finalsum = 1
-                        model.subjectTo += p1 + ""
-                        let p2 = mkxBase(u1, u2)
-                        if (definitions[p2] != undefined){
-                            model.subjectTo += " + " + p2
-                        } else {
-                            p2 = mkxBase(u2, u1)
-                            finalsum -= 1
-                            model.subjectTo += " - " + p2
-                        }
-
-                        let p3 = mkxBase(v2, u1)
-                        if (definitions[p3] != undefined){
-                            model.subjectTo += " + " + p3
-                        } else {
-                            finalsum -= 1
-                            p3 = mkxBase(u1, v2)
-                            model.subjectTo += " - " + p3
-                        }
+                        let finalsum = 1 + mkxDict(" + ", u1, u2)[1] + mkxDict(" + ", v2, u1)[1]
+                        model.subjectTo += p1 + "" + mkxDict(" + ", u1, u2)[0] + mkxDict(" + ", v2, u1)[0]
                         model.subjectTo += " >= " + finalsum + "\n"
 
 
                         p1 = mkc(u1, v1, u2, v2)
-                        finalsum = 1
-                        model.subjectTo += p1 + ""
-                        p2 = mkxBase(u1, v2)
-                        if (definitions[p2] != undefined){
-                            model.subjectTo += " + " + p2
-                        } else {
-                            p2 = mkxBase(v2, u1)
-                            finalsum -= 1
-                            model.subjectTo += " - " + p2
-                        }
-
-                        p3 = mkxBase(u2, u1)
-                        if (definitions[p3] != undefined){
-                            model.subjectTo += " + " + p3
-                        } else {
-                            finalsum -= 1
-                            p3 = mkxBase(u1, u2)
-                            model.subjectTo += " - " + p3
-                        }
+                        finalsum = 1 + mkxDict(" + ", u1, v2)[1] + mkxDict(" + ", u2, u1)[1] 
+                        model.subjectTo += p1 + "" + mkxDict(" + ", u1, v2)[0] + mkxDict(" + ", u2, u1)[0]
                         model.subjectTo += " >= " + finalsum + "\n"
                     }
                 }
@@ -457,6 +300,8 @@ class LPBendinessCombinedPlusGroups {
 
 
        // grouping constraint of attributes within tables
+       // this is needed for bendiness
+       // TODO: this is not yet in the paper, right?
        for (let k=0; k<this.g.maxDepth + 1; k++){
             let layerTables = this.g.tableIndex[k];
             let layerAttributes = layerTables.map(t => t.attributes).flat()
@@ -470,9 +315,6 @@ class LPBendinessCombinedPlusGroups {
                     let t2 = layerAttributes[j].table.name
 
                     if (t1 != t2){
-                        // model.subjectTo += "x_" + attr1.name + "_" + attr2.name + " - "
-                        //     + "x_T" + attr1.table.name + "_T" + attr2.table.name + " = 0\n"
-
                         model.subjectTo += mkxBase(attr1, attr2) + ""
                             + " - " + mkxBase(t1, t2, 'T') 
                             + " = 0\n"
@@ -498,75 +340,27 @@ class LPBendinessCombinedPlusGroups {
                 " <= 0\n"
         }
 
-        // for (let i in this.g.tableIndex){
-        //     let tableCol = this.g.tableIndex[i];
-        //     for (let j in tableCol){
-        //         let t1 = tableCol[j];
-        //         let tmpstr = "y_" + t1.name 
-        //         let accumulator = 0
-        //         for (let k in tableCol){
-        //             if (j == k) continue;
-        //             let t2 = tableCol[k];
-        //             let p = mkxBase(t2.name, t1.name, 'T')
-        //             if (definitions[p] != undefined){
-        //                 //console.log(p)
-        //                 tmpstr += " - " + (t2.attributes.length + 2) + " " + p 
-        //             } else {
-        //                 p = mkxBase(t1.name, t2.name, 'T')
-        //                 tmpstr += " + " + (t2.attributes.length + 2) + " " + p
-        //                 accumulator += (t2.attributes.length + 2)
-        //             }
-                     
-        //         }
-        //         tmpstr += " >= " + accumulator + "\n"
-        //         model.subjectTo += tmpstr
-        //     }
-        // }
-        let m = 20;
-        // let bcount = 0;
-        // for (let tableCol of this.g.tableIndex){
-        //     for (let i in tableCol){
-        //         if (tableCol.length == 1) continue
-        //         let p = ""
-        //         let t1 = tableCol[i];
-        //         for (let j in tableCol){
-        //             if (j == i) continue;
-        //             let t2 = tableCol[j];
-        //             let tmpstr = ""
-        //             let accumulator = 2
-        //             tmpstr += "y_" + t1.name + " - y_" + t2.name + " + " + m + " b_" + bcount
-        //             model.subjectTo += tmpstr + " >= " + (accumulator) + "\n"
-
-        //             tmpstr = ""
-        //             tmpstr += "y_" + t1.name + " - y_" + t2.name + " + " + m + " b_" + bcount
-        //             model.subjectTo += tmpstr + " <= " + (m - 2) + "\n"
-        //             definitions["b_" + bcount] = []
-        //             bcount += 1 
-        //         }
-        //     }
-        // }
-
-        let zcount = 0;
         for (let tableCol of this.g.tableIndex){
             for (let i in tableCol){
                 let t1 = tableCol[i];
                 for (let j in tableCol){
                     if (i == j) continue;
                     let t2 = tableCol[j];
+
                     let p = mkxBase(t2.name, t1.name, 'T')
                     if (definitions[p] != undefined){
                         model.subjectTo += "z_" + zcount + " - " + m + " " + p + " <= 0\n" 
                         model.subjectTo += "z_" + zcount + " - " + "y_" + t2.name + " <= 0\n"
                         model.subjectTo += "z_" + zcount + " - " + "y_" + t2.name + " - " + m + " " + p + " >= - " + m + "\n"  
                         model.subjectTo += "z_" + zcount + " >= 0\n"
-                        model.subjectTo += "y_" + t1.name + " - " + "z_" + zcount + " - " + (2 + t2.attributes.length) + " " + p + " >= 0\n"
+                        model.subjectTo += "y_" + t1.name + " - " + "z_" + zcount + " - " + (buffer + t2.attributes.length) + " " + p + " >= 0\n"
                     } else {
                         p = mkxBase(t1.name, t2.name, 'T')
                         model.subjectTo += "z_" + zcount + " + " + m + " " + p + " <= " + m + "\n"
                         model.subjectTo += "z_" + zcount + " - " + "y_" + t2.name + " <= 0\n"
                         model.subjectTo += "z_" + zcount + " - " + "y_" + t2.name + " + " + m + " " + p + " >= 0\n"
                         model.subjectTo += "z_" + zcount + " >= 0\n"
-                        model.subjectTo += "y_" + t1.name + " - " + "z_" + zcount + " + " + (2 + t2.attributes.length) + " " + p + " >= " + (2 + t2.attributes.length) + "\n"
+                        model.subjectTo += "y_" + t1.name + " - " + "z_" + zcount + " + " + (buffer + t2.attributes.length) + " " + p + " >= " + (buffer + t2.attributes.length) + "\n"
                     }
                     
                     zcount += 1
@@ -609,7 +403,13 @@ class LPBendinessCombinedPlusGroups {
         for (let elem in definitions){
             model.bounds += "binary " + elem + "\n"
         }
+        for (let elem in crossing_vars){
+            model.bounds += "binary " + elem + "\n"
+        }
 
+        // for (let i=0; i<=zcount; i++){
+        //     model.bounds += "binary z_" + i + "\n" 
+        // }
     }
 
     isSameRankEdge(edge){
