@@ -80,18 +80,18 @@ class LPBendinessCombinedPlusGroups {
 
             // store tables
             for (let i=0; i<layerTables.length; i++){
-                let t1 = layerTables[i].name;
+                let t1 = layerTables[i].id;
                 for (let j=i+1; j<layerTables.length; j++){
-                    let t2 = layerTables[j].name;
+                    let t2 = layerTables[j].id;
                     definitions[mkxBase(t1, t2, 'T')] = ''
                 }
             }
 
             // store attributes
             for (let i=0; i<layerAttributes.length; i++){
-                let a1 = layerAttributes[i].name;
+                let a1 = layerAttributes[i].id;
                 for (let j=i+1; j<layerAttributes.length; j++){
-                    let a2 = layerAttributes[j].name;
+                    let a2 = layerAttributes[j].id;
                     definitions[mkxBase(a1, a2)] = ''
                 }
             }
@@ -159,13 +159,13 @@ class LPBendinessCombinedPlusGroups {
             
             // global ordering of tables 
             for (let i=0; i<layerTables.length; i++){
-                let t1 = layerTables[i].name;
+                let t1 = layerTables[i].id;
 
                 for (let j = i+1; j < layerTables.length; j++){
-                    let t2 = layerTables[j].name;
+                    let t2 = layerTables[j].id;
 
                     for (let m = j + 1; m < layerTables.length; m++){
-                        let t3 = layerTables[m].name;
+                        let t3 = layerTables[m].id;
 
                         model.subjectTo += ""
                             + mkxBase(t1, t2, 'T')
@@ -185,23 +185,23 @@ class LPBendinessCombinedPlusGroups {
             // global ordering of attributes
             // constraints generated: O ( num_tables * num_attributes_per_table[variable] )
             for (let i = 0; i < layerAttributes.length; i++){
-                let t1 = layerAttributes[i].name;
+                let t1 = layerAttributes[i].id;
                 
                 for (let j = i+1; j < layerAttributes.length; j++){
-                    let t2 = layerAttributes[j].name;
+                    let t2 = layerAttributes[j].id;
                     if (i == j) continue;
 
                     // attrs don't need transitivity if they are not in the same table - it's already given by the table
-                    if (layerAttributes[i].table.name != layerAttributes[j].table.name) continue
+                    if (layerAttributes[i].table.id != layerAttributes[j].table.id) continue
 
                     for (let m = j+1; m < layerAttributes.length; m++){
                         if (m == j || m == i) continue
 
                         // again, all attributes should be in the same table
-                        if (layerAttributes[m].table.name != layerAttributes[i].table.name) continue
-                        if (layerAttributes[m].table.name != layerAttributes[j].table.name) continue
+                        if (layerAttributes[m].table.id != layerAttributes[i].table.id) continue
+                        if (layerAttributes[m].table.id != layerAttributes[j].table.id) continue
 
-                        let t3 = layerAttributes[m].name;
+                        let t3 = layerAttributes[m].id;
 
                         model.subjectTo += ""
                             + mkxBase(t1, t2)
@@ -307,12 +307,12 @@ class LPBendinessCombinedPlusGroups {
             let layerAttributes = layerTables.map(t => t.attributes).flat()
             
             for (let i=0; i<layerAttributes.length; i++){
-                let attr1 = layerAttributes[i].name;
-                let t1 = layerAttributes[i].table.name;
+                let attr1 = layerAttributes[i].id;
+                let t1 = layerAttributes[i].table.id;
 
                 for (let j=i+1; j<layerAttributes.length; j++){
-                    let attr2 = layerAttributes[j].name;
-                    let t2 = layerAttributes[j].table.name
+                    let attr2 = layerAttributes[j].id;
+                    let t2 = layerAttributes[j].table.id
 
                     if (t1 != t2){
                         model.subjectTo += mkxBase(attr1, attr2) + ""
@@ -328,15 +328,15 @@ class LPBendinessCombinedPlusGroups {
         // ************
         for (let e of this.g.edges){
             model.subjectTo += 
-                "y_" + e.leftAttribute.name + " - " + 
-                "y_" + e.rightAttribute.name + " - " + 
-                "bend_" + e.leftAttribute.name + "_" + e.rightAttribute.name +
+                "y_" + e.leftAttribute.id + " - " + 
+                "y_" + e.rightAttribute.id + " - " + 
+                "bend_" + e.leftAttribute.id + "_" + e.rightAttribute.id +
                 " <= 0\n"
 
             model.subjectTo += 
-                "y_" + e.rightAttribute.name + " - " + 
-                "y_" + e.leftAttribute.name + " - " + 
-                "bend_" + e.leftAttribute.name + "_" + e.rightAttribute.name +
+                "y_" + e.rightAttribute.id + " - " + 
+                "y_" + e.leftAttribute.id + " - " + 
+                "bend_" + e.leftAttribute.id + "_" + e.rightAttribute.id +
                 " <= 0\n"
         }
 
@@ -347,20 +347,20 @@ class LPBendinessCombinedPlusGroups {
                     if (i == j) continue;
                     let t2 = tableCol[j];
 
-                    let p = mkxBase(t2.name, t1.name, 'T')
+                    let p = mkxBase(t2.id, t1.id, 'T')
                     if (definitions[p] != undefined){
                         model.subjectTo += "z_" + zcount + " - " + m + " " + p + " <= 0\n" 
-                        model.subjectTo += "z_" + zcount + " - " + "y_" + t2.name + " <= 0\n"
-                        model.subjectTo += "z_" + zcount + " - " + "y_" + t2.name + " - " + m + " " + p + " >= - " + m + "\n"  
+                        model.subjectTo += "z_" + zcount + " - " + "y_" + t2.id + " <= 0\n"
+                        model.subjectTo += "z_" + zcount + " - " + "y_" + t2.id + " - " + m + " " + p + " >= - " + m + "\n"  
                         model.subjectTo += "z_" + zcount + " >= 0\n"
-                        model.subjectTo += "y_" + t1.name + " - " + "z_" + zcount + " - " + (buffer + t2.attributes.length) + " " + p + " >= 0\n"
+                        model.subjectTo += "y_" + t1.id + " - " + "z_" + zcount + " - " + (buffer + t2.attributes.length) + " " + p + " >= 0\n"
                     } else {
-                        p = mkxBase(t1.name, t2.name, 'T')
+                        p = mkxBase(t1.id, t2.id, 'T')
                         model.subjectTo += "z_" + zcount + " + " + m + " " + p + " <= " + m + "\n"
-                        model.subjectTo += "z_" + zcount + " - " + "y_" + t2.name + " <= 0\n"
-                        model.subjectTo += "z_" + zcount + " - " + "y_" + t2.name + " + " + m + " " + p + " >= 0\n"
+                        model.subjectTo += "z_" + zcount + " - " + "y_" + t2.id + " <= 0\n"
+                        model.subjectTo += "z_" + zcount + " - " + "y_" + t2.id + " + " + m + " " + p + " >= 0\n"
                         model.subjectTo += "z_" + zcount + " >= 0\n"
-                        model.subjectTo += "y_" + t1.name + " - " + "z_" + zcount + " + " + (buffer + t2.attributes.length) + " " + p + " >= " + (buffer + t2.attributes.length) + "\n"
+                        model.subjectTo += "y_" + t1.id + " - " + "z_" + zcount + " + " + (buffer + t2.attributes.length) + " " + p + " >= " + (buffer + t2.attributes.length) + "\n"
                     }
                     
                     zcount += 1
@@ -372,15 +372,15 @@ class LPBendinessCombinedPlusGroups {
             for (let i in t.attributes){
                 let a1 = t.attributes[i]
                 let accumulator = 1
-                let tmpstr = "y_" + a1.name + " - " + "y_" + t.name
+                let tmpstr = "y_" + a1.id + " - " + "y_" + t.id
                 for (let j in t.attributes){
                     if (i == j) continue
                     let a2 = t.attributes[j]
-                    let p = mkxBase(a2.name, a1.name)
+                    let p = mkxBase(a2.id, a1.id)
                     if (definitions[p] != undefined){
                         tmpstr += " - " + p
                     } else {
-                        let p = mkxBase(a1.name, a2.name)
+                        let p = mkxBase(a1.id, a2.id)
                         tmpstr += " + " + p
                         accumulator += 1
                     }
@@ -396,7 +396,7 @@ class LPBendinessCombinedPlusGroups {
             model.minimize += elem + " + "
         }
         for (let e of this.g.edges){
-            model.minimize += "0.1 bend_" + e.leftAttribute.name + "_" + e.rightAttribute.name + " + "
+            model.minimize += "0.1 bend_" + e.leftAttribute.id + "_" + e.rightAttribute.id + " + "
         }
         model.minimize = model.minimize.substring(0, model.minimize.length - 2) + "\n\n"
 
@@ -426,11 +426,11 @@ class LPBendinessCombinedPlusGroups {
             let layerTables = this.g.tableIndex[i];
 
             layerTables.sort((a, b) => {
-                //console.log(a.name, b.name, solution["x_T" + a.name + "_T" + b.name], solution["x_T" + b.name + "_T" + a.name])
-                if (solution["x_T" + a.name + "_T" + b.name] == 0) return 1
-                else if (solution["x_T" + a.name + "_T" + b.name] == 1) return -1
-                else if (solution["x_T" + b.name + "_T" + a.name] == 1) return 1
-                else if (solution["x_T" + b.name + "_T" + a.name] == 0) return -1
+                //console.log(a.id, b.id, solution["x_T" + a.id + "_T" + b.id], solution["x_T" + b.id + "_T" + a.id])
+                if (solution["x_T" + a.id + "_T" + b.id] == 0) return 1
+                else if (solution["x_T" + a.id + "_T" + b.id] == 1) return -1
+                else if (solution["x_T" + b.id + "_T" + a.id] == 1) return 1
+                else if (solution["x_T" + b.id + "_T" + a.id] == 0) return -1
             })
 
             for (let k in layerTables){
@@ -439,11 +439,11 @@ class LPBendinessCombinedPlusGroups {
 
             for (let table of layerTables){
                 table.attributes.sort((a, b) => {
-                    //if (b.table.name == "T8y4") console.log(a.name, b.name, solution["x_" + b.name + "_" + a.name])
-                    if (solution["x_" + a.name + "_" + b.name] == 0) return 1
-                    else if (solution["x_" + a.name + "_" + b.name] == 1) return -1
-                    else if (solution["x_" + b.name + "_" + a.name] == 1) return 1
-                    else if (solution["x_" + b.name + "_" + a.name] == 0) return -1
+                    //if (b.table.id == "T8y4") console.log(a.id, b.id, solution["x_" + b.id + "_" + a.id])
+                    if (solution["x_" + a.id + "_" + b.id] == 0) return 1
+                    else if (solution["x_" + a.id + "_" + b.id] == 1) return -1
+                    else if (solution["x_" + b.id + "_" + a.id] == 1) return 1
+                    else if (solution["x_" + b.id + "_" + a.id] == 0) return -1
                 })
 
                 for (let j=0; j<table.attributes.length; j++){
@@ -460,7 +460,7 @@ class LPBendinessCombinedPlusGroups {
             for (let j=0; j<tableCol.length; j++){
                 let t = tableCol[j];
 
-                let val = solution["y_" + t.name]
+                let val = solution["y_" + t.id]
                 if (val == undefined) continue;
                 t.verticalAttrOffset = val - t.weight * this.g.baseRowDistance;
             }
