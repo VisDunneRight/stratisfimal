@@ -1,9 +1,10 @@
 class GraphGenerator {
-    constructor(depth=3, seed="hello", tableDistribution = [2,3], attributeDistribution=[1, 5]){
+    constructor(depth=3, seed="hello", tableDistribution = [2,3], attributeDistribution=[1, 5], sameEdgeDistribution=0.05, randomEdgeDistribution=0.05){
         this.d = depth;
         this.s = 3;
         this.jd = 0.1;
-        this.js = 0.05;
+        this.v = randomEdgeDistribution;
+        this.js = sameEdgeDistribution;
         this.attributeCounter = 0;
         this.seed = seed;
 
@@ -179,8 +180,32 @@ class GraphGenerator {
         }
     }
 
-    generateRandomJoins(){
-        // finish
+    generateRandomJoins(g){
+        let leftAttrs = [];
+
+        for (let i=1; i<this.d; i++){
+            let currAttrs = g.tableIndex[i].map(t => t.attributes).flat().filter(a => g.edges.find(e => e.rightAttribute == a) == undefined)
+            let rightAttrs = g.tableIndex[i + 1].map(t => t.attributes).flat()
+            
+            for (let ta of currAttrs){
+                if (this.rng() < this.v){
+                    let ratio = leftAttrs.length / (leftAttrs.length + rightAttrs.length)
+                    
+                    if (this.rng() < ratio){
+                        let tmpIndex = Math.floor(this.rng()*leftAttrs.length)
+                        let other = leftAttrs[tmpIndex]
+                        leftAttrs.splice(tmpIndex, 1)
+                        g.addEdge(new Edge(other.table, other, ta.table, ta))
+                    } else {
+
+                    }
+                }
+            }
+
+            leftAttrs = currAttrs.filter(a => g.edges.find(e => e.leftAttribute == a) == undefined);
+            currAttrs = [];
+            rightAttrs = [];
+        }
     }
 
     generateJoins(g){

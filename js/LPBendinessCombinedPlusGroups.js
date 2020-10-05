@@ -52,25 +52,21 @@ class LPBendinessCombinedPlusGroups {
 
     fillModel(model){
 
-        let m = 40; // TODO: change this
-        let zcount = 0;
-        let buffer = 2;
+        this.m = 30; // TODO: change this
+        this.zcount = 0;
+        this.buffer = 2;
 
         model.minimize = "Minimize \n"
         model.subjectTo = "Subject To \n"
         model.bounds = "\nBounds \n"
 
-        let definitions = {}
+        this.definitions = {}
         let crossing_vars = {}
 
         let mkc = (u1, v1, u2, v2) => {
             let res = "c_" + u1 + v1 + "_" + u2 + v2;
             crossing_vars[res] = ""
             return res
-        }
-
-        let mkxBase = (u1, u2, pre="") => {
-            return "x_" + pre + u1 + "_" + pre + u2
         }
 
         // store all variable names in order
@@ -83,7 +79,7 @@ class LPBendinessCombinedPlusGroups {
                 let t1 = layerTables[i].id;
                 for (let j=i+1; j<layerTables.length; j++){
                     let t2 = layerTables[j].id;
-                    definitions[mkxBase(t1, t2, 'T')] = ''
+                    this.definitions[this.mkxBase(t1, t2, 'T')] = ''
                 }
             }
 
@@ -92,7 +88,7 @@ class LPBendinessCombinedPlusGroups {
                 let a1 = layerAttributes[i].id;
                 for (let j=i+1; j<layerAttributes.length; j++){
                     let a2 = layerAttributes[j].id;
-                    definitions[mkxBase(a1, a2)] = ''
+                    this.definitions[this.mkxBase(a1, a2)] = ''
                 }
             }
         }
@@ -101,21 +97,21 @@ class LPBendinessCombinedPlusGroups {
         for (let group of this.g.groups){
             for (let table of group.tables){
                 model.subjectTo += "y_groupstart_" + group.id + " - y_" + table.id + " <= 0\n";
-                model.subjectTo += "y_groupend_" + group.id + " - y_" + table.id + " >= " + (table.attributes.length + buffer) + "\n";
+                model.subjectTo += "y_groupend_" + group.id + " - y_" + table.id + " >= " + (table.attributes.length + this.buffer) + "\n";
             }
 
             for (let table of this.g.tables){
                 if (group.tables.indexOf(table) == -1 && group.tables.map(t => t.depth).indexOf(table.depth) != -1){
-                    model.subjectTo += "y_" + table.id + " - " + m + " z_" + zcount + " - y_groupstart_" + group.id + " <= - " + (table.attributes.length + buffer) + "\n";
-                    model.subjectTo += "- y_" + table.id + " + " + m + " z_" + zcount + " + y_groupend_" + group.id + " <= " + m + "\n"
-                    zcount += 1;
+                    model.subjectTo += "y_" + table.id + " - " + m + " z_" + this.zcount + " - y_groupstart_" + group.id + " <= - " + (table.attributes.length + this.buffer) + "\n";
+                    model.subjectTo += "- y_" + table.id + " + " + m + " z_" + this.zcount + " + y_groupend_" + group.id + " <= " + m + "\n"
+                    this.zcount += 1;
                 }
             }
 
             
         }
 
-        for (let i=0; i<=zcount; i++){
+        for (let i=0; i<=this.zcount; i++){
             model.bounds += "binary z_" + i + "\n" 
         }
 
@@ -138,12 +134,12 @@ class LPBendinessCombinedPlusGroups {
 
             if (sign == " - ") oppsign = " + "
 
-            let p = mkxBase(u1, u2)
-            if (definitions[p] != undefined){
+            let p = this.mkxBase(u1, u2)
+            if (this.definitions[p] != undefined){
                 res += sign + p
             } else {
-                p = mkxBase(u2, u1)
-                if (definitions[p] == undefined) console.warn(p + "not defined");
+                p = this.mkxBase(u2, u1)
+                if (this.definitions[p] == undefined) console.warn(p + "not defined");
                 accumulator -= 1
                 res += oppsign + p
             }
@@ -168,15 +164,15 @@ class LPBendinessCombinedPlusGroups {
                         let t3 = layerTables[m].id;
 
                         model.subjectTo += ""
-                            + mkxBase(t1, t2, 'T')
-                            + " + " + mkxBase(t2, t3, 'T')
-                            + " - " + mkxBase(t1, t3, 'T')
+                            + this.mkxBase(t1, t2, 'T')
+                            + " + " + this.mkxBase(t2, t3, 'T')
+                            + " - " + this.mkxBase(t1, t3, 'T')
                             + " >= 0\n"
 
                         model.subjectTo += ""
-                            + "- " + mkxBase(t1, t2, 'T')
-                            + " - " + mkxBase(t2, t3, 'T')
-                            + " + " + mkxBase(t1, t3, 'T')
+                            + "- " + this.mkxBase(t1, t2, 'T')
+                            + " - " + this.mkxBase(t2, t3, 'T')
+                            + " + " + this.mkxBase(t1, t3, 'T')
                             + " >= -1\n"
                     }
                 }
@@ -204,15 +200,15 @@ class LPBendinessCombinedPlusGroups {
                         let t3 = layerAttributes[m].id;
 
                         model.subjectTo += ""
-                            + mkxBase(t1, t2)
-                            + " + " + mkxBase(t2, t3)
-                            + " - " + mkxBase(t1, t3)
+                            + this.mkxBase(t1, t2)
+                            + " + " + this.mkxBase(t2, t3)
+                            + " - " + this.mkxBase(t1, t3)
                             + " >= 0\n"
 
                         model.subjectTo += ""
-                            + "- " + mkxBase(t1, t2)
-                            + " - " + mkxBase(t2, t3)
-                            + " + " + mkxBase(t1, t3)
+                            + "- " + this.mkxBase(t1, t2)
+                            + " - " + this.mkxBase(t2, t3)
+                            + " + " + this.mkxBase(t1, t3)
                             + " >= -1\n"
                     }
                 }
@@ -300,8 +296,6 @@ class LPBendinessCombinedPlusGroups {
 
 
        // grouping constraint of attributes within tables
-       // this is needed for bendiness
-       // TODO: this is not yet in the paper, right?
        for (let k=0; k<this.g.maxDepth + 1; k++){
             let layerTables = this.g.tableIndex[k];
             let layerAttributes = layerTables.map(t => t.attributes).flat()
@@ -315,18 +309,55 @@ class LPBendinessCombinedPlusGroups {
                     let t2 = layerAttributes[j].table.id
 
                     if (t1 != t2){
-                        model.subjectTo += mkxBase(attr1, attr2) + ""
-                            + " - " + mkxBase(t1, t2, 'T') 
+                        model.subjectTo += this.mkxBase(attr1, attr2) + ""
+                            + " - " + this.mkxBase(t1, t2, 'T') 
                             + " = 0\n"
                     }
                 }
             }
         }
 
+        // fill function to minimize
+        for (let elem in crossing_vars){
+            model.minimize += elem + " + "
+        }
+
+        this.addSimpleBendiness(this.g, model)
+
+        for (let elem in this.definitions){
+            model.bounds += "binary " + elem + "\n"
+        }
+        for (let elem in crossing_vars){
+            model.bounds += "binary " + elem + "\n"
+        }
+
+        // console.log(this.modelToString(model))
+        console.log("number of constraints: ", model.subjectTo.split("\n").length)
+    }
+
+    isSameRankEdge(edge){
+        return edge.leftTable.depth == edge.rightTable.depth
+    }
+
+    modelToString(model){
+        return model.minimize + model.subjectTo + model.bounds + '\nEnd\n'
+    }
+
+    mkxBase(u1, u2, pre=""){
+        return "x_" + pre + u1 + "_" + pre + u2
+    }
+
+    addBendinessPlusMaximizeCrossingAngle(g, model){
+
+    }
+
+    addSimpleBendiness(g, model){
         // ************
         // bendiness
         // ************
-        for (let e of this.g.edges){
+        for (let e of g.edges){
+            if (this.isSameRankEdge(e)) continue;
+
             model.subjectTo += 
                 "y_" + e.leftAttribute.id + " - " + 
                 "y_" + e.rightAttribute.id + " - " + 
@@ -340,35 +371,38 @@ class LPBendinessCombinedPlusGroups {
                 " <= 0\n"
         }
 
-        for (let tableCol of this.g.tableIndex){
+        // definition of the vertical position of the tables based on x vars
+        for (let tableCol of g.tableIndex){
             for (let i in tableCol){
                 let t1 = tableCol[i];
                 for (let j in tableCol){
                     if (i == j) continue;
+
                     let t2 = tableCol[j];
 
-                    let p = mkxBase(t2.id, t1.id, 'T')
-                    if (definitions[p] != undefined){
-                        model.subjectTo += "z_" + zcount + " - " + m + " " + p + " <= 0\n" 
-                        model.subjectTo += "z_" + zcount + " - " + "y_" + t2.id + " <= 0\n"
-                        model.subjectTo += "z_" + zcount + " - " + "y_" + t2.id + " - " + m + " " + p + " >= - " + m + "\n"  
-                        model.subjectTo += "z_" + zcount + " >= 0\n"
-                        model.subjectTo += "y_" + t1.id + " - " + "z_" + zcount + " - " + (buffer + t2.attributes.length) + " " + p + " >= 0\n"
+                    let p = this.mkxBase(t2.id, t1.id, 'T')
+                    if (this.definitions[p] != undefined){
+                        model.subjectTo += "z_" + this.zcount + " - " + this.m + " " + p + " <= 0\n" 
+                        model.subjectTo += "z_" + this.zcount + " - " + "y_" + t2.id + " <= 0\n"
+                        model.subjectTo += "z_" + this.zcount + " - " + "y_" + t2.id + " - " + this.m + " " + p + " >= - " + this.m + "\n"  
+                        model.subjectTo += "z_" + this.zcount + " >= 0\n"
+                        model.subjectTo += "y_" + t1.id + " - " + "z_" + this.zcount + " - " + (this.buffer + t2.attributes.length) + " " + p + " >= 0\n"
                     } else {
-                        p = mkxBase(t1.id, t2.id, 'T')
-                        model.subjectTo += "z_" + zcount + " + " + m + " " + p + " <= " + m + "\n"
-                        model.subjectTo += "z_" + zcount + " - " + "y_" + t2.id + " <= 0\n"
-                        model.subjectTo += "z_" + zcount + " - " + "y_" + t2.id + " + " + m + " " + p + " >= 0\n"
-                        model.subjectTo += "z_" + zcount + " >= 0\n"
-                        model.subjectTo += "y_" + t1.id + " - " + "z_" + zcount + " + " + (buffer + t2.attributes.length) + " " + p + " >= " + (buffer + t2.attributes.length) + "\n"
+                        p = this.mkxBase(t1.id, t2.id, 'T')
+                        model.subjectTo += "z_" + this.zcount + " + " + this.m + " " + p + " <= " + this.m + "\n"
+                        model.subjectTo += "z_" + this.zcount + " - " + "y_" + t2.id + " <= 0\n"
+                        model.subjectTo += "z_" + this.zcount + " - " + "y_" + t2.id + " + " + this.m + " " + p + " >= 0\n"
+                        model.subjectTo += "z_" + this.zcount + " >= 0\n"
+                        model.subjectTo += "y_" + t1.id + " - " + "z_" + this.zcount + " + " + (this.buffer + t2.attributes.length) + " " + p + " >= " + (this.buffer + t2.attributes.length) + "\n"
                     }
                     
-                    zcount += 1
+                    this.zcount += 1
                 }
             }
         }
 
-        for (let t of this.g.tables){
+        // defintion of the vertical position of the attributes based on the tables and the x vars of the other attributes in the table
+        for (let t of g.tables){
             for (let i in t.attributes){
                 let a1 = t.attributes[i]
                 let accumulator = 1
@@ -376,11 +410,11 @@ class LPBendinessCombinedPlusGroups {
                 for (let j in t.attributes){
                     if (i == j) continue
                     let a2 = t.attributes[j]
-                    let p = mkxBase(a2.id, a1.id)
-                    if (definitions[p] != undefined){
+                    let p =  this.mkxBase(a2.id, a1.id)
+                    if (this.definitions[p] != undefined){
                         tmpstr += " - " + p
                     } else {
-                        let p = mkxBase(a1.id, a2.id)
+                        let p = this.mkxBase(a1.id, a2.id)
                         tmpstr += " + " + p
                         accumulator += 1
                     }
@@ -391,34 +425,14 @@ class LPBendinessCombinedPlusGroups {
             }
         }
 
-        // fill function to minimize
-        for (let elem in crossing_vars){
-            model.minimize += elem + " + "
-        }
-        for (let e of this.g.edges){
+        // add to objective function
+        for (let e of g.edges){
+            if (this.isSameRankEdge(e)) continue;
             model.minimize += "0.1 bend_" + e.leftAttribute.id + "_" + e.rightAttribute.id + " + "
         }
         model.minimize = model.minimize.substring(0, model.minimize.length - 2) + "\n\n"
-
-        for (let elem in definitions){
-            model.bounds += "binary " + elem + "\n"
-        }
-        for (let elem in crossing_vars){
-            model.bounds += "binary " + elem + "\n"
-        }
-
-        // for (let i=0; i<=zcount; i++){
-        //     model.bounds += "binary z_" + i + "\n" 
-        // }
     }
 
-    isSameRankEdge(edge){
-        return edge.leftTable.depth == edge.rightTable.depth
-    }
-
-    modelToString(model){
-        return model.minimize + model.subjectTo + model.bounds + '\nEnd\n'
-    }
 
     apply_solution(solution){
         console.log(solution)

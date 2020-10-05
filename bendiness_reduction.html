@@ -38,7 +38,7 @@
 <script src="./dist/dist.js"></script>
 <script>
 
-const svg_height = 300
+const svg_height = 500
 const svg_width = 600
 
 const svg_height_s = 300
@@ -54,11 +54,14 @@ const depth_distance = 150
 let  header_height = attr_height
 let table_vert_space = 100
 
-var depth = 6;
-var seed = "ha."
-var tableDistribution = [3, 4];
+var depth = 3;
+var seed = "dkfjbnkddds."
+var tableDistribution = [4, 4];
+var attributeDistribution = [3, 4];
+var sameEdgeDistribution = 0;
+var randomEdgeDistribution = 1;
 
-g = new GraphGenerator(depth, seed, tableDistribution)
+g = new GraphGenerator(depth, seed, tableDistribution, attributeDistribution, sameEdgeDistribution, randomEdgeDistribution)
 g = g.generate()
 
 g.setExactWeights()
@@ -106,7 +109,7 @@ drawGraph(svg, g)
 // *********
 // *********
 
-g = new GraphGenerator(depth, seed, tableDistribution)
+g = new GraphGenerator(depth, seed, tableDistribution, attributeDistribution, sameEdgeDistribution, randomEdgeDistribution)
 g = g.generate()
 
 rowDiv = d3.select('body')
@@ -137,14 +140,14 @@ drawGraph(svg, g)
 // *********
 // *********
 
-g = new GraphGenerator(depth, seed, tableDistribution)
+g = new GraphGenerator(depth, seed, tableDistribution, attributeDistribution, sameEdgeDistribution, randomEdgeDistribution)
 g = g.generate()
 
 rowDiv = d3.select('body')
     .append('div')
     .html("<h1>Bendiness and intersection reduction in a single LP problem</h1>")
 
-algorithm = new LPBendinessCombined(g)
+algorithm = new LPBendinessCombinedPlusGroups(g)
 algorithm.arrange()
 
 svg = rowDiv
