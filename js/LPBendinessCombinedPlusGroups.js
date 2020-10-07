@@ -1,12 +1,29 @@
 class LPBendinessCombinedPlusGroups {
-    constructor (g) {
+    constructor (g, options) {
         this.g = g;
         this.mip = true;
         this.verbose = false;
-        this.elapsedTime = 0
+        this.elapsedTime = 0;
+        this.numConstraints = 0;
+        this.modelString = "";
+
+        if (options == undefined){
+            this.options = {
+                bendiness_reduction_active: true,
+                bendiness_reduction_type: "optimize_angles",
+                crossings_reduction_active: true,
+                crossings_reduction_weight: 1,
+                bendiness_reduction_weight: 0.1,
+                bendiness_angle_optimization_weight: 0.01
+            }
+        } else this.options = options;
+        
     }
 
     async arrange(){
+
+        // TODO: temporary fix
+        if (this.options.crossings_reduction_active == false && this.options.bendiness_reduction_active == false) return;
 
         let startTime = new Date().getTime()
 
@@ -15,7 +32,7 @@ class LPBendinessCombinedPlusGroups {
 
         this.fillModel(model)
         let prob = this.modelToString(model)
-        //console.log(prob)
+        this.modelString = prob;
 
         // solve
         let result = {}, objective, i;
@@ -61,13 +78,7 @@ class LPBendinessCombinedPlusGroups {
         model.bounds = "\nBounds \n"
 
         this.definitions = {}
-        let crossing_vars = {}
-
-        let mkc = (u1, v1, u2, v2) => {
-            let res = "c_" + u1 + v1 + "_" + u2 + v2;
-            crossing_vars[res] = ""
-            return res
-        }
+        this.crossing_vars = {}
 
         // store all variable names in order
         for (let k=0; k < this.g.maxDepth + 1; k++){
@@ -106,45 +117,11 @@ class LPBendinessCombinedPlusGroups {
                     model.subjectTo += "- y_" + table.id + " + " + m + " z_" + this.zcount + " + y_groupend_" + group.id + " <= " + m + "\n"
                     this.zcount += 1;
                 }
-            }
-
-            
+            }            
         }
 
         for (let i=0; i<=this.zcount; i++){
             model.bounds += "binary z_" + i + "\n" 
-        }
-
-        let getFirstLevelContainersInDepth = (depth) => {
-            let layerTables = this.g.tableIndex[depth];
-            let layerTablesOutsideGroups = layerTables.filter(t => t.groups.length == 0);
-            let layerGroups = [...new Set(layerTables.map(t => t.groups).flat())];
-
-            return layerGroups.concat(layerTablesOutsideGroups);
-        }
-
-        let getSecondLevelContainersInDepthInContainer = (depth, container) => {
-
-        }
-
-        let mkxDict = (sign, u1, u2) => {
-            let res = ""
-            let accumulator = 0
-            let oppsign = " - "
-
-            if (sign == " - ") oppsign = " + "
-
-            let p = this.mkxBase(u1, u2)
-            if (this.definitions[p] != undefined){
-                res += sign + p
-            } else {
-                p = this.mkxBase(u2, u1)
-                if (this.definitions[p] == undefined) console.warn(p + "not defined");
-                accumulator -= 1
-                res += oppsign + p
-            }
-
-            return [res, accumulator];
         }
         
         for (let k=0; k < this.g.maxDepth + 1; k++){
@@ -215,85 +192,7 @@ class LPBendinessCombinedPlusGroups {
             }
         }
 
-        // determining crossings
-        for (let k=0; k < this.g.maxDepth + 1; k++){
-            let layerEdges = this.g.edgeIndex[k]
-
-            for (let i=0; i<layerEdges.length; i++){
-                let u1v1 = layerEdges[i];
-
-                for (let j=i+1; j<layerEdges.length; j++){
-                    let u2v2 = layerEdges[j];
-
-                    // new: managing groups
-                    // edges that are outside of groups should never cross with edges that are inside of groups
-                    // if (u1v1.leftTable.group != undefined && u1v1.rightTable.group != undefined){
-                    //     if (u2v2.leftTable.group != u2v2.leftTable.group) {
-                    //         model.subjectTo += mkc(u1, v1, u2, v2) + " = 0\n";
-                    //     }
-                    // }
-
-                    let u1 = u1v1.leftAttribute.id
-                    let v1 = u1v1.rightAttribute.id
-                    let u2 = u2v2.leftAttribute.id
-                    let v2 = u2v2.rightAttribute.id
-
-                    // not not
-                    if (!this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)){
-                        if (u1 == u2 || v1 == v2) continue
-
-                        let p1 = mkc(u1, v1, u2, v2)
-                        let finalsum = 1 + mkxDict(" + ", u2, u1)[1] + mkxDict(" + ", v1, v2)[1]
-                        model.subjectTo += p1 + "" + mkxDict(" + ", u2, u1)[0] + mkxDict(" + ", v1, v2)[0]
-                        model.subjectTo += " >= " + finalsum + "\n"
-
-                        p1 = mkc(u1, v1, u2, v2)
-                        finalsum = 1 + mkxDict(" + ", u1, u2)[1] + mkxDict(" + ", v2, v1)[1]
-                        model.subjectTo += p1 + "" + mkxDict(" + ", u1, u2)[0] + mkxDict(" + ", v2, v1)[0]
-                        model.subjectTo += " >= " + finalsum + "\n"
-                        
-                    // if they are both same rank edges
-                    } else if (this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2)) {
-
-                        let p1 = mkc(u1, v1, u2, v2)
-                        let finalsum = 1 + mkxDict(" + ", u1, u2)[1] + mkxDict(" + ", v1, v2)[1] + mkxDict(" + ", u2, v1)[1]
-                        model.subjectTo += p1 + "" + mkxDict(" + ", u1, u2)[0] + mkxDict(" + ", v1, v2)[0] + mkxDict(" + ", u2, v1)[0]
-                        model.subjectTo += " >= " + finalsum + "\n"
-
-                        p1 = mkc(u1, v1, u2, v2)
-                        finalsum = 1 + mkxDict(" + ", u1, u2)[1] + mkxDict(" + ", v1, v2)[1] + mkxDict(" + ", v2, u1)[1]
-                        model.subjectTo += p1 + "" + mkxDict(" + ", u1, u2)[0] + mkxDict(" + ", v1, v2)[0] + mkxDict(" + ", v2, u1)[0]
-                        model.subjectTo += " >= " + finalsum + "\n"
-
-                    } else if (this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)) {
-                        
-                        let p1 = mkc(u1, v1, u2, v2)
-                        let finalsum = 1 + mkxDict(" + ", u2, u1)[1] + mkxDict(" + ", v1, u2)[1]
-                        model.subjectTo += p1 + "" + mkxDict(" + ", u2, u1)[0] + mkxDict(" + ", v1, u2)[0]
-                        model.subjectTo += " >= " + finalsum + "\n"
-
-                        p1 = mkc(u1, v1, u2, v2)
-                        finalsum = 1 + mkxDict(" + ", u2, v1)[1] + mkxDict(" + ", u1, u2)[1]
-                        model.subjectTo += p1 + "" + mkxDict(" + ", u2, v1)[0] + mkxDict(" + ", u1, u2)[0]
-                        model.subjectTo += " >= " + finalsum + "\n"
-
-                    } else if (!this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2)) {
-                        // console.log(u1, v1, u2, v2)
-                        let p1 = mkc(u1, v1, u2, v2)
-                        let finalsum = 1 + mkxDict(" + ", u1, u2)[1] + mkxDict(" + ", v2, u1)[1]
-                        model.subjectTo += p1 + "" + mkxDict(" + ", u1, u2)[0] + mkxDict(" + ", v2, u1)[0]
-                        model.subjectTo += " >= " + finalsum + "\n"
-
-
-                        p1 = mkc(u1, v1, u2, v2)
-                        finalsum = 1 + mkxDict(" + ", u1, v2)[1] + mkxDict(" + ", u2, u1)[1] 
-                        model.subjectTo += p1 + "" + mkxDict(" + ", u1, v2)[0] + mkxDict(" + ", u2, u1)[0]
-                        model.subjectTo += " >= " + finalsum + "\n"
-                    }
-                }
-            }
-        }
-
+        if (this.options.crossings_reduction_active) this.addCrossingsReduction(model)
 
        // grouping constraint of attributes within tables
        for (let k=0; k<this.g.maxDepth + 1; k++){
@@ -317,22 +216,135 @@ class LPBendinessCombinedPlusGroups {
             }
         }
 
-        // fill function to minimize
-        for (let elem in crossing_vars){
-            model.minimize += elem + " + "
+        if (this.options.bendiness_reduction_active){
+            if (this.options.bendiness_reduction_type == "simple") this.addSimpleBendiness(this.g, model)
+            else if (this.options.bendiness_reduction_type == "optimize_angles") this.addBendinessPlusMaximizeCrossingAngle(this.g, model)
+        } else {
+            model.minimize = model.minimize.substring(0, model.minimize.length - 2) + "\n\n"
         }
-
-        this.addSimpleBendiness(this.g, model)
 
         for (let elem in this.definitions){
             model.bounds += "binary " + elem + "\n"
         }
-        for (let elem in crossing_vars){
+        for (let elem in this.crossing_vars){
             model.bounds += "binary " + elem + "\n"
         }
 
         // console.log(this.modelToString(model))
-        console.log("number of constraints: ", model.subjectTo.split("\n").length)
+        this.numConstraints = model.subjectTo.split("\n").length;
+        console.log("number of constraints: ", this.numConstraints)
+    }
+
+    mkc(u1, v1, u2, v2){
+        let res = "c_" + u1 + v1 + "_" + u2 + v2;
+        this.crossing_vars[res] = ""
+        return res
+    }
+
+    mkxDict (sign, u1, u2) {
+        let res = ""
+        let accumulator = 0
+        let oppsign = " - "
+
+        if (sign == " - ") oppsign = " + "
+
+        let p = this.mkxBase(u1, u2)
+        if (this.definitions[p] != undefined){
+            res += sign + p
+        } else {
+            p = this.mkxBase(u2, u1)
+            if (this.definitions[p] == undefined) console.warn(p + "not defined");
+            accumulator -= 1
+            res += oppsign + p
+        }
+
+        return [res, accumulator];
+    }
+
+    addCrossingsReduction(model){
+        // determining crossings
+        for (let k=0; k < this.g.maxDepth + 1; k++){
+            let layerEdges = this.g.edgeIndex[k]
+
+            for (let i=0; i<layerEdges.length; i++){
+                let u1v1 = layerEdges[i];
+
+                for (let j=i+1; j<layerEdges.length; j++){
+                    let u2v2 = layerEdges[j];
+
+                    // new: managing groups
+                    // edges that are outside of groups should never cross with edges that are inside of groups
+                    // if (u1v1.leftTable.group != undefined && u1v1.rightTable.group != undefined){
+                    //     if (u2v2.leftTable.group != u2v2.leftTable.group) {
+                    //         model.subjectTo += this.mkc(u1, v1, u2, v2) + " = 0\n";
+                    //     }
+                    // }
+
+                    let u1 = u1v1.leftAttribute.id
+                    let v1 = u1v1.rightAttribute.id
+                    let u2 = u2v2.leftAttribute.id
+                    let v2 = u2v2.rightAttribute.id
+
+                    // not not
+                    if (!this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)){
+                        if (u1 == u2 || v1 == v2) continue
+
+                        let p1 = this.mkc(u1, v1, u2, v2)
+                        let finalsum = 1 + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, v2)[1]
+                        model.subjectTo += p1 + "" + this.mkxDict(" + ", u2, u1)[0] + this.mkxDict(" + ", v1, v2)[0]
+                        model.subjectTo += " >= " + finalsum + "\n"
+
+                        p1 = this.mkc(u1, v1, u2, v2)
+                        finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v2, v1)[1]
+                        model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, v1)[0]
+                        model.subjectTo += " >= " + finalsum + "\n"
+                        
+                    // if they are both same rank edges
+                    } else if (this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2)) {
+
+                        let p1 = this.mkc(u1, v1, u2, v2)
+                        let finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u2, v1)[1]
+                        model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", u2, v1)[0]
+                        model.subjectTo += " >= " + finalsum + "\n"
+
+                        p1 = this.mkc(u1, v1, u2, v2)
+                        finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", v2, u1)[1]
+                        model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", v2, u1)[0]
+                        model.subjectTo += " >= " + finalsum + "\n"
+
+                    } else if (this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)) {
+                        
+                        let p1 = this.mkc(u1, v1, u2, v2)
+                        let finalsum = 1 + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, u2)[1]
+                        model.subjectTo += p1 + "" + this.mkxDict(" + ", u2, u1)[0] + this.mkxDict(" + ", v1, u2)[0]
+                        model.subjectTo += " >= " + finalsum + "\n"
+
+                        p1 = this.mkc(u1, v1, u2, v2)
+                        finalsum = 1 + this.mkxDict(" + ", u2, v1)[1] + this.mkxDict(" + ", u1, u2)[1]
+                        model.subjectTo += p1 + "" + this.mkxDict(" + ", u2, v1)[0] + this.mkxDict(" + ", u1, u2)[0]
+                        model.subjectTo += " >= " + finalsum + "\n"
+
+                    } else if (!this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2)) {
+                        // console.log(u1, v1, u2, v2)
+                        let p1 = this.mkc(u1, v1, u2, v2)
+                        let finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v2, u1)[1]
+                        model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, u1)[0]
+                        model.subjectTo += " >= " + finalsum + "\n"
+
+
+                        p1 = this.mkc(u1, v1, u2, v2)
+                        finalsum = 1 + this.mkxDict(" + ", u1, v2)[1] + this.mkxDict(" + ", u2, u1)[1] 
+                        model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, v2)[0] + this.mkxDict(" + ", u2, u1)[0]
+                        model.subjectTo += " >= " + finalsum + "\n"
+                    }
+                }
+            }
+        }
+
+        // fill function to minimize
+        for (let elem in this.crossing_vars){
+            model.minimize += this.options.crossings_reduction_weight + " " + elem + " + "
+        }
     }
 
     isSameRankEdge(edge){
@@ -348,7 +360,111 @@ class LPBendinessCombinedPlusGroups {
     }
 
     addBendinessPlusMaximizeCrossingAngle(g, model){
+        for (let e of g.edges){
+            if (this.isSameRankEdge(e)) continue;
 
+            model.subjectTo += 
+                "y_" + e.leftAttribute.id + " - " + 
+                "y_" + e.rightAttribute.id + " - " + 
+                "bend_" + e.leftAttribute.id + "_" + e.rightAttribute.id +
+                " <= 0\n"
+
+            model.subjectTo += 
+                "y_" + e.rightAttribute.id + " - " + 
+                "y_" + e.leftAttribute.id + " - " + 
+                "bend_" + e.leftAttribute.id + "_" + e.rightAttribute.id +
+                " <= 0\n"
+        }
+
+        // definition of the vertical position of the tables based on x vars
+        for (let tableCol of g.tableIndex){
+            for (let i in tableCol){
+                let t1 = tableCol[i];
+                for (let j in tableCol){
+                    if (i == j) continue;
+
+                    let t2 = tableCol[j];
+
+                    let p = this.mkxBase(t2.id, t1.id, 'T')
+                    if (this.definitions[p] != undefined){
+                        model.subjectTo += "z_" + this.zcount + " - " + this.m + " " + p + " <= 0\n" 
+                        model.subjectTo += "z_" + this.zcount + " - " + "y_" + t2.id + " <= 0\n"
+                        model.subjectTo += "z_" + this.zcount + " - " + "y_" + t2.id + " - " + this.m + " " + p + " >= - " + this.m + "\n"  
+                        model.subjectTo += "z_" + this.zcount + " >= 0\n"
+                        model.subjectTo += "y_" + t1.id + " - " + "z_" + this.zcount + " - " + (this.buffer + t2.attributes.length) + " " + p + " >= 0\n"
+                    } else {
+                        p = this.mkxBase(t1.id, t2.id, 'T')
+                        model.subjectTo += "z_" + this.zcount + " + " + this.m + " " + p + " <= " + this.m + "\n"
+                        model.subjectTo += "z_" + this.zcount + " - " + "y_" + t2.id + " <= 0\n"
+                        model.subjectTo += "z_" + this.zcount + " - " + "y_" + t2.id + " + " + this.m + " " + p + " >= 0\n"
+                        model.subjectTo += "z_" + this.zcount + " >= 0\n"
+                        model.subjectTo += "y_" + t1.id + " - " + "z_" + this.zcount + " + " + (this.buffer + t2.attributes.length) + " " + p + " >= " + (this.buffer + t2.attributes.length) + "\n"
+                    }
+                    
+                    this.zcount += 1
+                }
+            }
+        }
+
+        // defintion of the vertical position of the attributes based on the tables and the x vars of the other attributes in the table
+        for (let t of g.tables){
+            for (let i in t.attributes){
+                let a1 = t.attributes[i]
+                let accumulator = 1
+                let tmpstr = "y_" + a1.id + " - " + "y_" + t.id
+                for (let j in t.attributes){
+                    if (i == j) continue
+                    let a2 = t.attributes[j]
+                    let p =  this.mkxBase(a2.id, a1.id)
+                    if (this.definitions[p] != undefined){
+                        tmpstr += " - " + p
+                    } else {
+                        let p = this.mkxBase(a1.id, a2.id)
+                        tmpstr += " + " + p
+                        accumulator += 1
+                    }
+                }
+
+                tmpstr += " = " + accumulator + "\n"
+                model.subjectTo += tmpstr
+            }
+        }
+
+        // new part
+        for (let e of g.edges){
+            if (this.isSameRankEdge(e)) continue;
+
+            let la = e.leftAttribute.id;
+            let ra = e.rightAttribute.id;
+
+            for (let c in this.crossing_vars){
+                let c_split = c.split("_")
+                if (c_split[1] == la + ra || c_split[2] == la + ra) {
+                    model.subjectTo += "onecross_" + la + "_" + ra + " - " + c + " >= 0\n"
+                }
+            }
+            
+            model.bounds += "binary " + "onecross_" + la + "_" + ra + "\n"
+
+            model.subjectTo += "auxbend_" + la + "_" + ra + " + " + this.m + " onecross_" + la + "_" + ra + " <= " + this.m + "\n"  
+            model.subjectTo += "auxbend_" + la + "_" + ra + " - bend_" + la + "_" + ra + " <= 0\n" 
+            model.subjectTo += "auxbend_" + la + "_" + ra + " - bend_" + la + "_" + ra + " + " + this.m + " onecross_" + la + "_" + ra + " >= 0\n"
+            model.subjectTo += "auxbend_" + la + "_" + ra + " >= 0\n"
+
+            model.subjectTo += "aux2bend_" + la + "_" + ra + " - " + this.m + " onecross_" + la + "_" + ra + " <= 0\n"
+            model.subjectTo += "aux2bend_" + la + "_" + ra + " + bend_" + la + "_" + ra + " <= " + this.m + "\n"
+            model.subjectTo += "aux2bend_" + la + "_" + ra + " + bend_" + la + "_" + ra + " - " + this.m + " onecross_" + la + "_" + ra + " >= 0\n"
+            model.subjectTo += "aux2bend_" + la + "_" + ra + " >= 0\n"
+        }
+
+        // add to objective function
+        for (let e of g.edges){
+            if (this.isSameRankEdge(e)) continue;
+            // model.minimize += "0.1 bend_" + e.leftAttribute.id + "_" + e.rightAttribute.id + " + "
+            model.minimize += this.options.bendiness_reduction_weight + " auxbend_" + e.leftAttribute.id + "_" + e.rightAttribute.id + " + "
+            model.minimize += this.options.bendiness_angle_optimization_weight + " aux2bend_" + e.leftAttribute.id + "_" + e.rightAttribute.id + " + "
+        }
+        model.minimize = model.minimize.substring(0, model.minimize.length - 2) + "\n\n"
     }
 
     addSimpleBendiness(g, model){
@@ -428,7 +544,7 @@ class LPBendinessCombinedPlusGroups {
         // add to objective function
         for (let e of g.edges){
             if (this.isSameRankEdge(e)) continue;
-            model.minimize += "0.1 bend_" + e.leftAttribute.id + "_" + e.rightAttribute.id + " + "
+            model.minimize +=  this.options.bendiness_reduction_weight + " bend_" + e.leftAttribute.id + "_" + e.rightAttribute.id + " + "
         }
         model.minimize = model.minimize.substring(0, model.minimize.length - 2) + "\n\n"
     }

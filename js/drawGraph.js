@@ -1,3 +1,14 @@
+let find_negative_vertical_space = (g) => {
+    let minVal = Infinity;
+
+    for (d of g.tables){
+        let tmpval = g.tableIndex[d.depth].indexOf(d) * table_vert_space + d.verticalAttrOffset * attr_height;
+        if (tmpval < minVal) minVal = tmpval;
+    }
+
+    return minVal
+}
+
 let drawGraph = (svg, g, algorithm = undefined) => {
     let line = d3.line()
         .curve(d3.curveBasis);
@@ -6,8 +17,10 @@ let drawGraph = (svg, g, algorithm = undefined) => {
 
     table_vert_space = g.baseRowDistance * attr_height
 
+    let negative_vert_space = find_negative_vertical_space(g) // TODO: temporary fix
+
     visg = svg.append('g')
-        .attr('transform', 'translate(20, 20)')
+        .attr('transform', 'translate(20, ' + (20 - negative_vert_space) + ')')
 
     // temp grid indicator
     for (let i in [ ... Array(10).keys()]){
@@ -125,7 +138,7 @@ let drawGraph = (svg, g, algorithm = undefined) => {
 
     d3.select(svg.node().parentNode)
         .append('div').append('text')
-        .text('crossings: ' + g.getEdgeCrossings() + ', tables: ' + g.tables.length + ', edges: ' + g.edges.length + ", bendiness: " + g.getGraphTotalEdgeBendiness())
+        .text('crossings: ' + g.getEdgeCrossings() + ', tables: ' + g.tables.length + ', edges: ' + g.edges.length)
         .style('font-family', 'Arial')
         .attr('class', 'crossing_count')
 
