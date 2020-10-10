@@ -8,6 +8,7 @@ class Attribute {
         this.randomEdges = 0;
         this.sameEdges = 0;
         this.mutable = true;
+        // this.id = this.simplifyName(name);
         this.id = name;
     }
 
@@ -15,5 +16,10 @@ class Attribute {
         if (this.weight > arg0.weight) return -1;
         else if (this.weight < arg0.weight) return 1;
         else return 0;
+    }
+
+    simplifyName(name){
+        name = name.replace(/"/g, '').replace(/=/g, '').replace(/ /g, '')
+        return name;
     }
 }

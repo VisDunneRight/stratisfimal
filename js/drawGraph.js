@@ -61,7 +61,7 @@ let drawGraph = (svg, g, algorithm = undefined) => {
         .attr('fill', d => d.type == "groupheader"? "black" : 'white')
         .attr('font-size', '0.7em')
         .attr("font-family", "Arial")
-        .text(d => d.header + " w:" + d.weight)
+        .text(d => d.header /*+ " w:" + d.weight*/)
     
     // *****
     // attributes
@@ -75,7 +75,7 @@ let drawGraph = (svg, g, algorithm = undefined) => {
     attrgroups.append("rect")
         .attr("width", table_width)
         .attr("height", attr_height)
-        .attr("fill", "#ccc")
+        .attr("fill", d => d.type == "constraint"? "#FFFF73" : "#ccc")
         .attr("stroke", "white")
         .attr("stroke-width", 2)
         .on('click', d => console.log(d))
@@ -86,18 +86,18 @@ let drawGraph = (svg, g, algorithm = undefined) => {
         .attr('text-anchor', 'middle')
         .attr('font-size', '0.7em')
         .attr("font-family", "Arial")
-        .text(d => d.attr + " w:" + d.weight) 
+        .text(d => d.attr /*+ " w:" + d.weight*/) 
 
     let get_1st_coord = (d) => 
         [d.leftTable.depth * depth_distance + table_width,
-        d.leftTable.attributes.indexOf(d.att1)*attr_height + header_height + attr_height/2 + g.tableIndex[d.leftTable.depth].indexOf(d.leftTable)*table_vert_space + d.leftTable.verticalAttrOffset*attr_height]
+        d.leftTable.attributes.indexOf(d.leftAttribute)*attr_height + header_height + attr_height/2 + g.tableIndex[d.leftTable.depth].indexOf(d.leftTable)*table_vert_space + d.leftTable.verticalAttrOffset*attr_height]
    
     let get_2nd_coord = (d) => {
         if (d.leftTable.depth != d.rightTable.depth)
             return [d.rightTable.depth * depth_distance, 
-                d.rightTable.attributes.indexOf(d.att2)*attr_height + header_height + attr_height/2 + g.tableIndex[d.rightTable.depth].indexOf(d.rightTable)*table_vert_space + d.rightTable.verticalAttrOffset*attr_height]
+                d.rightTable.attributes.indexOf(d.rightAttribute)*attr_height + header_height + attr_height/2 + g.tableIndex[d.rightTable.depth].indexOf(d.rightTable)*table_vert_space + d.rightTable.verticalAttrOffset*attr_height]
         else return [d.leftTable.depth * depth_distance + table_width,
-            d.rightTable.attributes.indexOf(d.att2)*attr_height + header_height + attr_height/2 + g.tableIndex[d.rightTable.depth].indexOf(d.rightTable)*table_vert_space + d.rightTable.verticalAttrOffset*attr_height]    
+            d.rightTable.attributes.indexOf(d.rightAttribute)*attr_height + header_height + attr_height/2 + g.tableIndex[d.rightTable.depth].indexOf(d.rightTable)*table_vert_space + d.rightTable.verticalAttrOffset*attr_height]    
     }
 
     // *****

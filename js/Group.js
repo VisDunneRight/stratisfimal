@@ -1,5 +1,5 @@
 class Group {
-    constructor(){
+    constructor(groupHeader = undefined){
         this.tables = [];
         this.coords = [];
         this.x_coord = 0;
@@ -8,9 +8,12 @@ class Group {
         this.height_coord = 0;
         this.id = undefined;
         this.margin = 7;
-        this.groupHeader = "count";
-        this.groupHeaderTable = new Table(this.groupHeader, this.groupHeader, true, 20, "groupheader");
-        this.addTable(this.groupHeaderTable);
+
+        if (groupHeader != undefined){
+            this.groupHeader = "count";
+            this.groupHeaderTable = new Table(this.groupHeader, this.groupHeader, true, 20, "groupheader");
+            this.addTable(this.groupHeaderTable);
+        }
 
         this.coords = [];
     }
@@ -91,6 +94,6 @@ class Group {
         
         this.coords.push(this.coords[0]);
 
-        this.groupHeaderTable.depth = leftMaxDepth;
+        if (this.groupHeader != undefined) this.groupHeaderTable.depth = leftMaxDepth;
     }
 }

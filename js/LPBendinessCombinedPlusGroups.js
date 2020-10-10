@@ -113,8 +113,8 @@ class LPBendinessCombinedPlusGroups {
 
             for (let table of this.g.tables){
                 if (group.tables.indexOf(table) == -1 && group.tables.map(t => t.depth).indexOf(table.depth) != -1){
-                    model.subjectTo += "y_" + table.id + " - " + m + " z_" + this.zcount + " - y_groupstart_" + group.id + " <= - " + (table.attributes.length + this.buffer) + "\n";
-                    model.subjectTo += "- y_" + table.id + " + " + m + " z_" + this.zcount + " + y_groupend_" + group.id + " <= " + m + "\n"
+                    model.subjectTo += "y_" + table.id + " - " + this.m + " z_" + this.zcount + " - y_groupstart_" + group.id + " <= - " + (table.attributes.length + this.buffer) + "\n";
+                    model.subjectTo += "- y_" + table.id + " + " + this.m + " z_" + this.zcount + " + y_groupend_" + group.id + " <= " + this.m + "\n"
                     this.zcount += 1;
                 }
             }            
@@ -139,6 +139,8 @@ class LPBendinessCombinedPlusGroups {
 
                     for (let m = j + 1; m < layerTables.length; m++){
                         let t3 = layerTables[m].id;
+
+                        if (t1 == t2 || t2 == t3 || t1 == t3) continue;
 
                         model.subjectTo += ""
                             + this.mkxBase(t1, t2, 'T')
@@ -175,6 +177,8 @@ class LPBendinessCombinedPlusGroups {
                         if (layerAttributes[m].table.id != layerAttributes[j].table.id) continue
 
                         let t3 = layerAttributes[m].id;
+
+                        if (t1 == t2 || t2 == t3 || t1 == t3) continue;
 
                         model.subjectTo += ""
                             + this.mkxBase(t1, t2)
@@ -253,7 +257,7 @@ class LPBendinessCombinedPlusGroups {
             res += sign + p
         } else {
             p = this.mkxBase(u2, u1)
-            if (this.definitions[p] == undefined) console.warn(p + "not defined");
+            if (this.definitions[p] == undefined) console.warn(p + " not defined");
             accumulator -= 1
             res += oppsign + p
         }
@@ -585,14 +589,16 @@ class LPBendinessCombinedPlusGroups {
         // **********
         // bendiness
         // **********
-        for (let i=0; i<this.g.tableIndex.length; i++){
-            let tableCol = this.g.tableIndex[i];
-            for (let j=0; j<tableCol.length; j++){
-                let t = tableCol[j];
-
-                let val = solution["y_" + t.id]
-                if (val == undefined) continue;
-                t.verticalAttrOffset = val - t.weight * this.g.baseRowDistance;
+        if (this.options.bendiness_reduction_active){
+            for (let i=0; i<this.g.tableIndex.length; i++){
+                let tableCol = this.g.tableIndex[i];
+                for (let j=0; j<tableCol.length; j++){
+                    let t = tableCol[j];
+    
+                    let val = solution["y_" + t.id]
+                    if (val == undefined) continue;
+                    t.verticalAttrOffset = val - t.weight * this.g.baseRowDistance;
+                }
             }
         }
     }

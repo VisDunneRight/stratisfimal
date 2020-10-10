@@ -8,6 +8,7 @@ class Graph {
             this.maxDepth = 0;
             this.groups = [];
             this.baseRowDistance = 6;
+            this.attributeCounter = 0;
             this.newLayer();
         } else {
             obj && Object.assign(this, obj);
@@ -18,8 +19,10 @@ class Graph {
     addGroup(group){
         this.groups.push(group);
         group.id = "g" + this.groups.indexOf(group);
-        let groupHeaderTable = group.groupHeaderTable;
-        this.addTable(groupHeaderTable);
+        if (group.groupHeader != undefined){ 
+            let groupHeaderTable = group.groupHeaderTable;
+            this.addTable(groupHeaderTable);
+        }
     }
 
     updateGroupCoords(){
@@ -34,7 +37,7 @@ class Graph {
     }
 
     addTable(table){
-        while(this.maxDepth < table.depth){
+        while(this.maxDepth <= table.depth){
             this.maxDepth+=1;
             this.newLayer();
         }
@@ -48,6 +51,12 @@ class Graph {
     addEdge(edge){
         this.edges.push(edge)
         this.edgeIndex[edge.leftTable.depth].push(edge)
+    }
+
+    addAttribute(table, attribute){
+        attribute.id = attribute.id + this.attributeCounter;
+        this.attributeCounter += 1;
+        table.attributes.push(attribute);
     }
 
     ensureUniqueEdges(){

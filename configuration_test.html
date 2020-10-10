@@ -7,6 +7,10 @@
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <script src="./lib/glpk.min.js"></script>
 
+  <script src="https://unpkg.com/node-sql-parser/umd/mysql.umd.js"></script>
+
+  <script src="./js/query_samples/queries.js"></script>
+
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
 </head>
 
@@ -51,8 +55,7 @@
         opacity: 0.5;
     }
 
-    #modelDiv {
-        height: 400px;
+    .modelDivClass {
         font-size: x-small;
         white-space: pre-wrap;
         font-family: "Lucida Console", Monaco, monospace;
@@ -64,75 +67,99 @@
 </style>
 
 <body>
-    <div class="container">
+    <div class="container-fluid">
         <div class="row">
-            <div class="col">
-                <h4>Graph generation settings</h4>
-                <div id="depthSlider" class="customSlider">
-                    <label for="slider" class="customLabel">Number of columns (depth)</label>
-                    <input type="range" class="custom-range" min="0" max="6" id="slider">
-                    <span class="valueSpan"></span>
+            <div class="col-6">
+
+                <a class="btn btn-secondary" style="width: 100%" data-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample" id="generateFromQueryBtn">
+                    <h4>Generate from query</h4>
+                  </a>
+                <div class="collapse card-body" id="collapseExample">
+                    <div id="dropdown-container" class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" style='width: 100%; font-size: small;' type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Select a query
+                        </button>
+                    </div>
+                    Schema:
+                    <div id="schemaTextContainer" class="modelDivClass overflow-auto"></div>
+                    Query:
+                    <div id="queryTextContainer" class="modelDivClass overflow-auto">
+                    </div>
                 </div>
+
+                <br>
+
+                <a class="btn btn-secondary" style="width: 100%; margin-top: 20px" data-toggle="collapse" href="#collapseExample2" role="button" aria-expanded="false" aria-controls="collapseExample" id="randomGraphGenerationBtn">
+                    <h4>Random graph generation</h4>
+                </a>
                 
-                <div id="seedinput">
-                    <label for="exampleFormControlInput1" class="customLabel">Seed</label>
-                    <input class="form-control" id="exampleFormControlInput1" placeholder="Seed">
-                </div>
-                
-                <!-- <div class="card"> -->
+                <div class="collapse card-body" id="collapseExample2">
+                    <div id="depthSlider" class="customSlider">
+                        <label for="slider" class="customLabel">Number of columns (depth)</label>
+                        <input type="range" class="custom-range" min="0" max="6" id="slider">
+                        <span class="valueSpan"></span>
+                    </div>
+                    
+                    <div id="seedinput">
+                        <label for="exampleFormControlInput1" class="customLabel">Seed</label>
+                        <input class="form-control" id="exampleFormControlInput1" placeholder="Seed">
+                    </div>
+                    
+                    <!-- <div class="card"> -->
+                        <div class="card-body">
+                            <h6>Tables per column</h6>
+                            <div class="row">
+                                <div class="col">
+                                    <div id="minTableSlider" class="customSlider">
+                                        <label for="customRange2" class="customLabel">Min</label>
+                                        <input type="range" class="custom-range" min="1" max="5" id="slider2" value="3">
+                                        <span class="valueSpan"></span>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div id="maxTableSlider" class="customSlider">
+                                        <label for="slider3" class="customLabel">Max</label>
+                                        <input type="range" class="custom-range" min="1" max="5" id="slider3" value="3">
+                                        <span class="valueSpan"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <!-- </div> -->
+
                     <div class="card-body">
-                        <h6>Tables per column</h6>
+                        <h6>Attributes per table</h6>
                         <div class="row">
                             <div class="col">
-                                <div id="minTableSlider" class="customSlider">
+                                <div id="minAttrSlider" class="customSlider">
                                     <label for="customRange2" class="customLabel">Min</label>
-                                    <input type="range" class="custom-range" min="1" max="5" id="slider2" value="3">
+                                    <input type="range" class="custom-range" min="1" max="5" id="customRange2">
                                     <span class="valueSpan"></span>
                                 </div>
                             </div>
                             <div class="col">
-                                <div id="maxTableSlider" class="customSlider">
-                                    <label for="slider3" class="customLabel">Max</label>
-                                    <input type="range" class="custom-range" min="1" max="5" id="slider3" value="3">
+                                <div id="maxAttrSlider" class="customSlider">
+                                    <label for="customRange2" class="customLabel">Max</label>
+                                    <input type="range" class="custom-range" min="1" max="5" id="customRange2">
                                     <span class="valueSpan"></span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                <!-- </div> -->
 
-                <div class="card-body">
-                    <h6>Attributes per table</h6>
-                    <div class="row">
-                        <div class="col">
-                            <div id="minAttrSlider" class="customSlider">
-                                <label for="customRange2" class="customLabel">Min</label>
-                                <input type="range" class="custom-range" min="1" max="5" id="customRange2">
-                                <span class="valueSpan"></span>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div id="maxAttrSlider" class="customSlider">
-                                <label for="customRange2" class="customLabel">Max</label>
-                                <input type="range" class="custom-range" min="1" max="5" id="customRange2">
-                                <span class="valueSpan"></span>
-                            </div>
-                        </div>
+                    <div id="sameRankSlider" class="customSlider">
+                        <label for="customRange2" class="customLabel">Same-rank edge frequency</label>
+                        <input type="range" class="custom-range" min="0" max="1" id="customRange2" step="0.1" value="0">
+                        <span class="valueSpan"></span>
                     </div>
-                </div>
 
-                <div id="sameRankSlider" class="customSlider">
-                    <label for="customRange2" class="customLabel">Same-rank edge frequency</label>
-                    <input type="range" class="custom-range" min="0" max="1" id="customRange2" step="0.1" value="0">
-                    <span class="valueSpan"></span>
-                </div>
+                    <div id="randomEdgeSlider" class="customSlider">
+                        <label for="customRange2" class="customLabel">Random edge frequency</label>
+                        <input type="range" class="custom-range" min="0" max="1" id="customRange2" step="0.1" value="0.5">
+                        <span class="valueSpan"></span>
+                    </div>
 
-                <div id="randomEdgeSlider" class="customSlider">
-                    <label for="customRange2" class="customLabel">Random edge frequency</label>
-                    <input type="range" class="custom-range" min="0" max="1" id="customRange2" step="0.1" value="0.5">
-                    <span class="valueSpan"></span>
                 </div>
-
             </div>
 
             <div class="col">
@@ -196,7 +223,7 @@
 
             <div class="col">
                 <h4>Generated problem</h4>
-                <div class="overflow-auto" id="modelDiv"></div>
+                <div class="overflow-auto modelDivClass" id="modelDiv" style="height: 400px"></div>
             </div>
         </div>
 
@@ -216,20 +243,13 @@
 <script src="./dist/dist.js"></script>
 <script>
 
-const svg_height = 500
-const svg_width = 600
-
-const svg_height_s = 300
-const svg_width_s = 600
-const svg_height_m = 800
-const svg_width_m = 1600
-const svg_height_l = 1600
-const svg_width_l = 3200
+var svg_height = 500
+var svg_width = 1000
 
 const attr_height = 15
-const table_width = 70
-const depth_distance = 150
-let  header_height = attr_height
+const table_width = 100
+const depth_distance = 200
+let header_height = attr_height
 let table_vert_space = 100
 
 var depth = 4;
@@ -249,7 +269,108 @@ var LPoptions = {
     bendiness_angle_optimization_weight: 0.01
 };
 
+var graphInputMethod = 'sampleQuery'; // or randomlyGenerated;
+var selectedQuery = 131;
+var selectedSchema = "Bars";
+
+var dropdownDict = {
+    101: "101 Bars: Persons who frequent a bar.",
+    102: "102 Bars: Persons, bars they frequent, and drinks that are served.",
+    103: "103 Bars: Persons who frequent some bar that serves some drink they like.",
+    104: "104 Bars: Persons who frequent some bar that serves some drink they like.",
+    111: "111 Bars: Persons who frequent only bars that serve some drink they like.",
+    112: "112 Bars: Persons who frequent only bars that serve some drink they like.",
+    121: "121 Bars: Persons who frequent some bar that serves only drinks they like.",
+    131: "131 Bars: Bars that serve a drink liked by Joe, but none liked by Michael.",
+    136: "136 Bars: Persons who frequent a bar with >= 2 beers they like, one <3$ and one >5$.",
+    137: "137 Bars: Persons who frequent bars with a drink < 3$ and at least two with > 5$.",
+    140: "140 Bars: Persons who do not frequent bars with 'Golden' and a more expensive drink.",
+    151: "151 Bars: Bars that serve every beer that Joe likes.",
+    155: "155 Bars: Persons who like a beer that Joe likes and is served somewhere at > $5.",
+    156: "156 Bars: Persons who like a beer that Joe likes and is served somewhere at > $5.",
+    160: "160 Bars: Drinks that are the unique drinks liked by a person.",
+    161: "161 Bars: Drinks that are the unique drinks liked by a person.",
+    
+    201: "201 IMDB: Random node placement.",
+    202: "202 IMDB: Actors who have played in movies before 1900. ",
+    203: "203 IMDB: Movies in which Kevin Bacon plays, together with all its actors.",
+    204: "204 IMDB: Movies in which Kevin Bacon plays, together with all its actors.",
+    205: "205 IMDB: Actors with Kevin Bacon number 1.",
+    206: "206 IMDB: Actors with Kevin Bacon number 2. ",
+    207: "207 IMDB: Movies and actors in with Kevin Bacon does not play.",
+
+    301: "301 Sailors: Sailors who have reserved all boats. ",
+    302: "302 Sailors: Sailors who have reserved all red boats. ",
+    303: "303 Sailors: Sailors who have not reserved a red boats. ",
+
+    401: "401 Worlds: Worlds where each tuple is already contained in some earlier world.",
+    411: "411 Worlds: Worlds for which there exists one other, earlier world that contains all its tuples.",
+    412: "412 Worlds: Worlds for which there is no earlier world that contains all its tuples.",
+    416: "416 Worlds: Worlds for which there is no earlier world with exactly the same tuples.",
+    451: "451 Worlds: Worlds with a tuple that does not appear in a later world.",
+
+    501: "501 Abstract: Attribute value between numerical values.",
+    503: "503 Abstract: Attribute comparisons.",
+    505: "505 Abstract: Attribute comparisons inside a component.",
+    506: "506 Abstract: Attribute comparisons inside a component.",
+    507: "507 Abstract: Attribute comparisons inside a component.",
+    508: "508 Abstract: Attribute comparisons between components.",
+    511: "511 Abstract: Multiple conjunctive selections on predicates.",
+    551: "551 Abstract: R.A with R.B biggest among all R.Bs.",
+    561: "561 Abstract: R.A where R.B is different from at least one S.B.",
+    562: "562 Abstract: R.A where R.B is different from at least one S.B.",
+    571: "571 Abstract: R.A so that R.B is different from all S.B.",
+    573: "573 Abstract: R.A for which R.B is not in S.B."
+}
+
+var dcont = document.getElementById('dropdown-container')
+var dchild = document.createElement('div')
+dchild.className = "dropdown-menu"
+dchild.style.height = "600px"
+dchild.style.overflow = "scroll"
+dcont.append(dchild)
+for (let q in QUERY){
+    if (q == 0) continue;
+    if (QUERY[q] == undefined) continue;
+    var dq = document.createElement('div')
+    dq.className = "dropdown-item"
+    dq.innerHTML = dropdownDict[q];
+    dq.style.fontSize = "small";
+    dq.value = q;
+    dchild.append(dq);
+
+    dchild.onclick = (a) => {
+        let val = a.target.value;
+        selectedQuery = val;
+
+        if (val <= 161) selectedSchema = "Bars"
+        else if (val <= 207) selectedSchema = "IMDB"
+        else if (val <= 303) selectedSchema = "Sailors"
+        else if (val <= 451) selectedSchema = "Belief worlds"
+        else selectedSchema = "Abstract"
+
+        update_settings();
+    }
+}
+
 var update_settings = () => {
+    document.getElementById("dropdownMenuButton").innerHTML = dropdownDict[selectedQuery];
+    document.getElementById("queryTextContainer").innerHTML = QUERY[selectedQuery];
+    document.getElementById("schemaTextContainer").innerHTML = SCHEMA[selectedSchema];
+    $("#collapseExample").collapse({toggle: true})
+    document.getElementById("randomGraphGenerationBtn").onclick = (a) => {
+        $("#collapseExample").collapse('toggle')
+        if (graphInputMethod == "sampleQuery") graphInputMethod = "randomlyGenerated";
+        else graphInputMethod = "sampleQuery"
+        update_settings()
+    }
+    document.getElementById("generateFromQueryBtn").onclick = (a) => {
+        $("#collapseExample2").collapse('toggle')
+        if (graphInputMethod == "sampleQuery") graphInputMethod = "randomlyGenerated";
+        else graphInputMethod = "sampleQuery"
+        update_settings()
+    }
+
     depth = document.getElementById("depthSlider").getElementsByTagName('input')[0].value;
     document.getElementById("depthSlider").getElementsByTagName('input')[0].onchange = update_settings;
     document.getElementById("depthSlider").getElementsByClassName('valueSpan')[0].innerHTML = depth;
@@ -341,18 +462,23 @@ var update_settings = () => {
     }
 }
 
-
 // *********
 // *********
 var update_vis = () => {
     d3.select("#vis-div").select('svg').remove()
     d3.select("#vis-div").select('div').remove()
 
-    g = new GraphGenerator(depth, seed, tableDistribution, attributeDistribution, sameEdgeDistribution, randomEdgeDistribution)
-    g = g.generate()
+    if (graphInputMethod == "sampleQuery"){
+        g = parseQuery(QUERY[selectedQuery], SCHEMA[selectedSchema])
+    } else {
+        g = new GraphGenerator(depth, seed, tableDistribution, attributeDistribution, sameEdgeDistribution, randomEdgeDistribution)
+        g = g.generate()
+    }
 
     algorithm = new LPBendinessCombinedPlusGroups(g, LPoptions)
     algorithm.arrange()
+
+    svg_width = (1 + Math.max.apply(0, g.tables.map(t => t.depth)))*depth_distance
 
     svg = d3.select("#vis-div")
             .style('width', '80%')
@@ -410,6 +536,7 @@ update_settings()
 //             if (!finished) console.log('worker terminated')
 //         }, 1000000);
 //     }
+
 
 </script>
 </html>
