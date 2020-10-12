@@ -55,12 +55,12 @@ let parseQuery = (qstring, schemastring) => {
         }
     }
 
-    let navigateExpr = (ast, depth, group) => {
+    let navigateExpr = (ast, depth, group, prevOperator) => {
         for (let elem of ast.from){
             tabledefs[elem.as] = elem.table + tablecount
             tablecount += 1
         }
-        navigateWhere(ast.where, depth + 1, group)
+        navigateWhere(ast.where, depth + 1, group, prevOperator)
     }
 
     let getTableAttribute = (table, name) => {
@@ -91,22 +91,27 @@ let parseQuery = (qstring, schemastring) => {
         return t1
     }
 
-    let navigateWhere = (w, depth, group) => {
+    let navigateWhere = (w, depth, group, prevOperator) => {
         if (w == null) return;
 
         if (w.operator == "AND"){
-            navigateWhere(w.left, depth+1, group)
-            navigateWhere(w.right, depth+1, group)
+            navigateWhere(w.left, depth+1, group, prevOperator)
+            navigateWhere(w.right, depth+1, group, prevOperator)
         }
 
-        if (w.operator == "="){
+        if (w.operator == "=" || w.operator == ">" || w.operator == "<" || w.operator == "<>"){
             if (w.right.type == "string"){
                 let t = g.tables.find(t => t.id == tabledefs[w.left.table])
-                let attr = new Attribute(t, w.left.column + " = " + '"' + w.right.value + '"')
-                attr.id = attr.name.replace(/"/g, '').replace(/=/g, '').replace(/ /g, '')
+                let attr = new Attribute(t, w.left.column + " " + w.operator + " " + '"' + w.right.value + '"')
+                attr.id = attr.name.replace(/"/g, '').replace(/=/g, '').replace(/>/g, '').replace(/</g, '').replace(/ /g, '')
                 attr.type = "constraint";
                 t.attributes.push(attr);
-
+            } else if (w.right.type == "number"){
+                let t = g.tables.find(t => t.id == tabledefs[w.left.table])
+                let attr = new Attribute(t, w.left.column + " " + w.operator + " " + w.right.value)
+                attr.id = attr.name.replace(/"/g, '').replace(/=/g, '').replace(/>/g, '').replace(/</g, '').replace(/ /g, '')
+                attr.type = "constraint";
+                t.attributes.push(attr);
             } else if (w.right.type == "column_ref"){
                 let tablename1 = tabledefs[w.left.table]
                 let tablename2 = tabledefs[w.right.table]
@@ -118,6 +123,12 @@ let parseQuery = (qstring, schemastring) => {
                 let attr2 = getTableAttribute(t2, w.right.column)             
 
                 let e = new Edge(t1, attr1, t2, attr2)
+                if (prevOperator == "NOT EXISTS"){
+                    e.type = "directed";
+                }
+                if (w.operator == "<>"){
+                    e.label = "<>"
+                }
                 g.addEdge(e);
 
             } else console.warn('something weird here')
@@ -126,17 +137,15 @@ let parseQuery = (qstring, schemastring) => {
 
         } else if (w.operator == "NOT EXISTS"){
             let group = new Group()
-            group.type = "not exists"
-            // g.addGroup(group);
-            navigateExpr(w.expr.ast, depth + 1, group)
+            group.type = "NOT EXISTS"
+            //g.addGroup(group);
+            navigateExpr(w.expr.ast, depth + 1, group, w.operator)
         } else if (w.operator == "EXISTS"){
             navigateExpr(w.expr.ast, depth + 1, group)
         }
         
     }
     navigateWhere(ast.where, 0)
-
-    console.log(tabledefs)
 
     // fill in the first select table
     for (let c of ast.columns){

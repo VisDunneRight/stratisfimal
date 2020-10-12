@@ -22,6 +22,19 @@ let drawGraph = (svg, g, algorithm = undefined) => {
     visg = svg.append('g')
         .attr('transform', 'translate(20, ' + (20 - negative_vert_space) + ')')
 
+    svg.append('defs')
+        .append('marker')
+        .attr('id', 'arrow')
+        .attr('viewBox', [0, 0, 10, 10])
+        .attr('refX', 5)
+        .attr('refY', 5)
+        .attr('markerWidth', 10)
+        .attr('markerHeight', 10)
+        .attr('orient', 'auto-start-reverse')
+        .append('path')
+        .attr('d', d3.line()([[0, 0], [0, 10], [10, 5]]))
+        .attr('stroke', 'black');
+
     // temp grid indicator
     for (let i in [ ... Array(10).keys()]){
         visg.append('path')
@@ -31,7 +44,6 @@ let drawGraph = (svg, g, algorithm = undefined) => {
             .style("stroke-dasharray", ("5, 3"))
             .attr('d', straightline([[0, attr_height*g.baseRowDistance*i], [1000, attr_height*g.baseRowDistance*i]]))
     }
-    
 
     // *****
     // tables
@@ -109,7 +121,7 @@ let drawGraph = (svg, g, algorithm = undefined) => {
         .enter()
         .append('path')
         .attr('class', 'grouplines')
-        .attr('stroke-width', 3)
+        .attr('stroke-width', 2)
         .attr('stroke', 'black')
         .attr('fill', 'none')
         .style("stroke-dasharray", ("5, 3"))
@@ -125,6 +137,7 @@ let drawGraph = (svg, g, algorithm = undefined) => {
         .append('path')
         .attr('stroke', 'black')
         .attr('fill', 'none')
+        .attr('marker-end', d => d.type == "directed"? 'url(#arrow)' : "")
         .attr('d', d => {
             first = get_1st_coord(d)
             second = get_2nd_coord(d)
@@ -134,6 +147,19 @@ let drawGraph = (svg, g, algorithm = undefined) => {
                 [second[0] + (d.leftTable.depth == d.rightTable.depth ? 1 : -1)*depth_distance*0.2, second[1]],
                 second]
             )
+        })
+
+    edgeLabels = visg.selectAll('.edgeLabels')
+        .data(g.edges.filter(e => e.label != undefined))
+        .enter()
+        .append('text')
+        .text(e => e.label)
+        .style('font-size', 'small')
+        .style('text-anchor', 'middle')
+        .attr('transform', d => {
+            first = get_1st_coord(d)
+            second = get_2nd_coord(d)
+            return 'translate(' + (first[0]/2 + second[0]/2) + ',' + (-2 + first[1]/2 + second[1]/2) + ')';
         })
 
     d3.select(svg.node().parentNode)

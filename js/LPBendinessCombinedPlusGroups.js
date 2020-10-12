@@ -127,8 +127,6 @@ class LPBendinessCombinedPlusGroups {
         for (let k=0; k < this.g.maxDepth + 1; k++){
             let layerTables = this.g.tableIndex[k];
             let layerAttributes = layerTables.map(t => t.attributes).flat()
-
-            // let firstLevelContainers = getFirstLevelContainersInDepth(k);
             
             // global ordering of tables 
             for (let i=0; i<layerTables.length; i++){
@@ -191,6 +189,18 @@ class LPBendinessCombinedPlusGroups {
                             + " - " + this.mkxBase(t2, t3)
                             + " + " + this.mkxBase(t1, t3)
                             + " >= -1\n"
+                    }
+
+                    // attributes with value constraints should always be on the bottom
+                    // this is removable for general formulations
+                    if (layerAttributes[j].type == "constraint"){
+                        model.subjectTo += "" 
+                            + this.mkxDict(" + ", t1, t2)[0]
+                            + " = " + (1 + this.mkxDict(" + ", t1, t2)[1]) + "\n";
+                    } else if (layerAttributes[i].type == "constraint"){
+                        model.subjectTo += "" 
+                            + this.mkxDict(" + ", t2, t1)[0]
+                            + " = " + (1 + this.mkxDict(" + ", t2, t1)[1]) + "\n";
                     }
                 }
             }
