@@ -56,10 +56,18 @@ let parseQuery = (qstring, schemastring) => {
     }
 
     let navigateExpr = (ast, depth, group, prevOperator) => {
+        console.log('navigateExpr', depth, ast)
+
         for (let elem of ast.from){
-            tabledefs[elem.as] = elem.table + tablecount
-            tablecount += 1
+            if (elem.as != undefined){
+                tabledefs[elem.as] = elem.table + tablecount
+                tablecount += 1
+            } else {
+                tabledefs[elem.table] = elem.table + tablecount
+                tablecount += 1
+            }
         }
+        
         navigateWhere(ast.where, depth + 1, group, prevOperator)
     }
 
@@ -74,12 +82,20 @@ let parseQuery = (qstring, schemastring) => {
 
     let getTableById = (tableId, group) => {
         let t1 = g.tables.find(t => t.id == tableId)
+        
         if (t1 == undefined){
+            
             t1 = new Table(tableId, tableId, true, depth)
-            if (group != undefined) group.addTable(t1);
+
+            if (group != undefined) 
+                group.addTable(t1);
+
             g.addTable(t1)
 
             let tname = tableId.slice(0, tableId.length - 1)
+
+            if (tname == undefined) console.error("not found: " + tableId)
+            
             // find table in schemadict
             if (schemaDict[tname] != undefined){
                 for (let a of schemaDict[tname]){
@@ -91,25 +107,35 @@ let parseQuery = (qstring, schemastring) => {
         return t1
     }
 
-    let navigateWhere = (w, depth, group, prevOperator) => {
+    let navigateWhere = (w, depth, group, prevAst) => {
         if (w == null) return;
 
+        console.log('navigateWhere', depth, w)
+
         if (w.operator == "AND"){
-            navigateWhere(w.left, depth+1, group, prevOperator)
-            navigateWhere(w.right, depth+1, group, prevOperator)
+            navigateWhere(w.left, depth+1, group, prevAst)
+            navigateWhere(w.right, depth+1, group, prevAst)
         }
+
+        if (w.table == null) 
+            w.table = prevAst.columns.find(c => c.column == w.attribute).expr.table
+        if (w.left != undefined && w.left.table == null)
+            w.left.table = prevAst.columns.find(c => c.column == w.left.attribute).expr.table
+            // console.log(w.left.table)
+        
 
         if (w.operator == "=" || w.operator == ">" || w.operator == "<" || w.operator == "<>"){
             if (w.right.type == "string"){
                 let t = g.tables.find(t => t.id == tabledefs[w.left.table])
                 let attr = new Attribute(t, w.left.column + " " + w.operator + " " + '"' + w.right.value + '"')
-                attr.id = attr.name.replace(/"/g, '').replace(/=/g, '').replace(/>/g, '').replace(/</g, '').replace(/ /g, '')
+                attr.id = attr.name.replace(/"/g, '').replace(/=/g, '').replace(/>/g, '').replace(/</g, '').replace(/ /g, '') + "c"
                 attr.type = "constraint";
                 t.attributes.push(attr);
             } else if (w.right.type == "number"){
-                let t = g.tables.find(t => t.id == tabledefs[w.left.table])
+                // let t = g.tables.find(t => t.id == tabledefs[w.left.table])
+                let t = getTableById(tabledefs[w.left.table])
                 let attr = new Attribute(t, w.left.column + " " + w.operator + " " + w.right.value)
-                attr.id = attr.name.replace(/"/g, '').replace(/=/g, '').replace(/>/g, '').replace(/</g, '').replace(/ /g, '')
+                attr.id = attr.name.replace(/"/g, '').replace(/=/g, '').replace(/>/g, '').replace(/</g, '').replace(/ /g, '') + "c"
                 attr.type = "constraint";
                 t.attributes.push(attr);
             } else if (w.right.type == "column_ref"){
@@ -123,12 +149,19 @@ let parseQuery = (qstring, schemastring) => {
                 let attr2 = getTableAttribute(t2, w.right.column)             
 
                 let e = new Edge(t1, attr1, t2, attr2)
-                if (prevOperator == "NOT EXISTS"){
-                    e.type = "directed";
-                }
+                // if (prevOperator == "NOT EXISTS"){
+                //     e.type = "directed";
+                //     console.log(depth, w)
+                // }
                 if (w.operator == "<>"){
                     e.label = "<>"
-                }
+                } else if (w.operator == "<"){
+                    e.type = "directed";
+                    e.label = "<"
+                } else if (w.operator == ">"){
+                    e.type = "directed";
+                    e.label = ">"
+                } 
                 g.addEdge(e);
 
             } else console.warn('something weird here')
@@ -139,13 +172,13 @@ let parseQuery = (qstring, schemastring) => {
             let group = new Group()
             group.type = "NOT EXISTS"
             //g.addGroup(group);
-            navigateExpr(w.expr.ast, depth + 1, group, w.operator)
+            navigateExpr(w.expr.ast, depth + 1, group, prevAst)
         } else if (w.operator == "EXISTS"){
-            navigateExpr(w.expr.ast, depth + 1, group)
+            navigateExpr(w.expr.ast, depth + 1, group, prevAst)
         }
-        
     }
-    navigateWhere(ast.where, 0)
+
+    navigateWhere(ast.where, 0, undefined, ast)
 
     // fill in the first select table
     for (let c of ast.columns){
@@ -219,19 +252,37 @@ let parseQuery = (qstring, schemastring) => {
         }
         g.edgeIndex[edge.leftTable.depth].push(edge);
     }
+    arrangeTables(g, g.tableIndex[0][0])
+    for (let col in g.tableIndex){
+        g.tableIndex[col] = [];
+    }
+    for (let table of g.tables){
+        g.tableIndex[table.depth].push(table);
+    }
+    for (let edge of g.edges){
+        if (edge.leftTable.depth > edge.rightTable.depth){
+            let tmpTable = edge.leftTable;
+            let tmpAttr = edge.leftAttribute;
+            edge.leftTable = edge.rightTable;
+            edge.rightTable = tmpTable;
+            edge.leftAttribute = edge.rightAttribute;
+            edge.rightAttribute = tmpAttr;
+        }
+        g.edgeIndex[edge.leftTable.depth].push(edge);
+    }
 
     return g;
 }
 
 // dfs to arrange the tables on the correct depths
 let arrangeTables = (g, startTable) => {    
-    let outedges = g.edges.filter(e => e.leftTable == startTable);
+    let outedges = g.edges.filter(e => e.leftTable == startTable && e.rightTable.depth != e.leftTable.depth);
     if (outedges.length == 0) return;
+
     for (let t of outedges.map(e => e.rightTable)){
-        let tempdpth = t.depth;
         t.depth = startTable.depth + 1;
         while (g.tableIndex.length < t.depth){
-            g.addLevel()
+            g.newLayer()
         }
         arrangeTables(g, t);
     }
