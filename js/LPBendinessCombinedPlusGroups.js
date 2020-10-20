@@ -33,6 +33,7 @@ class LPBendinessCombinedPlusGroups {
         this.fillModel(model)
         let prob = this.modelToString(model)
         this.modelString = prob;
+        if (model.minimize.length <= 10) return;
 
         // solve
         let result = {}, objective, i;

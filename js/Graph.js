@@ -18,6 +18,7 @@ class Graph {
 
     addGroup(group){
         this.groups.push(group);
+        group.graph = this;
         group.id = "g" + this.groups.indexOf(group);
         if (group.groupHeader != undefined){ 
             let groupHeaderTable = group.groupHeaderTable;

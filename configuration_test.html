@@ -64,6 +64,11 @@
         border-radius: 4px;
     }
 
+    .redrawButton {
+        margin-top: 5px;
+        float: right;
+    }
+
 </style>
 
 <body>
@@ -81,10 +86,11 @@
                         </button>
                     </div>
                     Schema:
-                    <div id="schemaTextContainer" class="modelDivClass overflow-auto"></div>
+                    <div id="schemaTextContainer" class="modelDivClass overflow-auto" contenteditable="true"></div>
                     Query:
-                    <div id="queryTextContainer" class="modelDivClass overflow-auto">
+                    <div id="queryTextContainer" class="modelDivClass overflow-auto" contenteditable="true">
                     </div>
+                    <button class="btn btn-secondary redrawButton" onclick="redraw_query()">Redraw</button>
                 </div>
 
                 <br>
@@ -270,8 +276,10 @@ var LPoptions = {
 };
 
 var graphInputMethod = 'sampleQuery'; // or randomlyGenerated;
-var selectedQuery = 136;
+var selectedQuery = 101;
 var selectedSchema = "Bars";
+var selectedQueryText = QUERY[selectedQuery];
+var selectedSchemaText = SCHEMA[selectedSchema];
 
 var dropdownDict = {
     101: "101 Bars: Persons who frequent a bar.",
@@ -350,14 +358,30 @@ for (let q in QUERY){
         else if (val <= 451) selectedSchema = "Belief worlds"
         else selectedSchema = "Abstract"
 
+        document.getElementById("dropdownMenuButton").innerHTML = dropdownDict[selectedQuery];
+        document.getElementById("queryTextContainer").innerHTML = QUERY[selectedQuery];
+        document.getElementById("schemaTextContainer").innerHTML = SCHEMA[selectedSchema];
+
+        selectedQueryText = QUERY[selectedQuery];
+        selectedSchemaText = SCHEMA[selectedSchema];
+
         update_settings();
     }
 }
 
+document.getElementById("dropdownMenuButton").innerHTML = dropdownDict[selectedQuery];
+document.getElementById("queryTextContainer").innerHTML = QUERY[selectedQuery];
+document.getElementById("schemaTextContainer").innerHTML = SCHEMA[selectedSchema];
+
+var redraw_query = () => {
+    selectedSchemaText = document.getElementById('schemaTextContainer').textContent;
+    selectedQueryText = document.getElementById('queryTextContainer').textContent;
+
+    update_settings();
+}
+
 var update_settings = () => {
-    document.getElementById("dropdownMenuButton").innerHTML = dropdownDict[selectedQuery];
-    document.getElementById("queryTextContainer").innerHTML = QUERY[selectedQuery];
-    document.getElementById("schemaTextContainer").innerHTML = SCHEMA[selectedSchema];
+
     $("#collapseExample").collapse({toggle: true})
     document.getElementById("randomGraphGenerationBtn").onclick = (a) => {
         $("#collapseExample").collapse('toggle')
@@ -470,7 +494,7 @@ var update_vis = () => {
     d3.select("#vis-div").select('div').remove()
 
     if (graphInputMethod == "sampleQuery"){
-        g = parseQuery(QUERY[selectedQuery], SCHEMA[selectedSchema])
+        g = parseQuery(selectedQueryText, selectedSchemaText)
     } else {
         g = new GraphGenerator(depth, seed, tableDistribution, attributeDistribution, sameEdgeDistribution, randomEdgeDistribution)
         g = g.generate()
@@ -478,6 +502,8 @@ var update_vis = () => {
 
     algorithm = new LPBendinessCombinedPlusGroups(g, LPoptions)
     algorithm.arrange()
+
+    if (LPoptions.bendiness_reduction_active == false && LPoptions.crossings_reduction_active == false) g.setExactWeights();
 
     svg_width = (1 + Math.max.apply(0, g.tables.map(t => t.depth)))*depth_distance
 

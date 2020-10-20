@@ -159,7 +159,7 @@ let drawGraph = (svg, g, algorithm = undefined) => {
         .attr('transform', d => {
             first = get_1st_coord(d)
             second = get_2nd_coord(d)
-            return 'translate(' + (first[0]/2 + second[0]/2) + ',' + (-2 + first[1]/2 + second[1]/2) + ')';
+            return 'translate(' + (first[0]/2 + second[0]/2 + (d.leftTable.depth == d.rightTable.depth ? 1 : 0)*depth_distance*0.16) + ',' + (-2 + first[1]/2 + second[1]/2) + ')';
         })
 
     d3.select(svg.node().parentNode)
