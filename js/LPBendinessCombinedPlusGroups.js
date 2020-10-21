@@ -105,26 +105,128 @@ class LPBendinessCombinedPlusGroups {
             }
         }
 
-        // all groups should have the same y_start and y_end on every depth
-        for (let group of this.g.groups){
-            for (let table of group.tables){
-                model.subjectTo += "y_groupstart_" + group.id + " - y_" + table.id + " <= 0\n";
-                model.subjectTo += "y_groupend_" + group.id + " - y_" + table.id + " >= " + (table.attributes.length + this.buffer) + "\n";
-            }
-
-            for (let table of this.g.tables){
-                if (group.tables.indexOf(table) == -1 && group.tables.map(t => t.depth).indexOf(table.depth) != -1){
-                    model.subjectTo += "y_" + table.id + " - " + this.m + " z_" + this.zcount + " - y_groupstart_" + group.id + " <= - " + (table.attributes.length + this.buffer) + "\n";
-                    model.subjectTo += "- y_" + table.id + " + " + this.m + " z_" + this.zcount + " + y_groupend_" + group.id + " <= " + this.m + "\n"
-                    this.zcount += 1;
-                }
-            }            
+        if (this.options.bendiness_reduction_active) this.setGroupConstraints(model);
+        else {
+            this.g.addBlankTables();
+            this.xGroupConstraints(model);
         }
-
-        for (let i=0; i<=this.zcount; i++){
-            model.bounds += "binary z_" + i + "\n" 
-        }
+        this.setTransitivityConstraints(model);
         
+        if (this.options.crossings_reduction_active) this.addCrossingsReduction(model)
+
+       // constraint of attributes within tables
+       for (let k=0; k<this.g.maxDepth + 1; k++){
+            let layerTables = this.g.tableIndex[k];
+            let layerAttributes = layerTables.map(t => t.attributes).flat()
+            
+            for (let i=0; i<layerAttributes.length; i++){
+                let attr1 = layerAttributes[i].id;
+                let t1 = layerAttributes[i].table.id;
+
+                for (let j=i+1; j<layerAttributes.length; j++){
+                    let attr2 = layerAttributes[j].id;
+                    let t2 = layerAttributes[j].table.id
+
+                    if (t1 != t2){
+                        model.subjectTo += this.mkxBase(attr1, attr2) + ""
+                            + " - " + this.mkxBase(t1, t2, 'T') 
+                            + " = 0\n"
+                    }
+                }
+            }
+        }
+
+        if (this.options.bendiness_reduction_active){
+            if (this.options.bendiness_reduction_type == "simple") 
+                this.addSimpleBendiness(this.g, model)
+            else if (this.options.bendiness_reduction_type == "optimize_angles") 
+                this.addBendinessPlusMaximizeCrossingAngle(this.g, model)
+        } else {
+            model.minimize = model.minimize.substring(0, model.minimize.length - 2) + "\n\n"
+        }
+
+        for (let elem in this.definitions){
+            model.bounds += "binary " + elem + "\n"
+        }
+        for (let elem in this.crossing_vars){
+            model.bounds += "binary " + elem + "\n"
+        }
+
+        // console.log(this.modelToString(model))
+        this.numConstraints = model.subjectTo.split("\n").length;
+        console.log("number of constraints: ", this.numConstraints)
+    }
+
+    mkc(u1, v1, u2, v2){
+        let res = "c_" + u1 + v1 + "_" + u2 + v2;
+        this.crossing_vars[res] = ""
+        return res
+    }
+
+    mkxDict (sign, u1, u2, pre) {
+        let res = ""
+        let accumulator = 0
+        let oppsign = " - "
+
+        if (sign == " - ") oppsign = " + "
+
+        let p = this.mkxBase(u1, u2, pre)
+        if (this.definitions[p] != undefined){
+            res += sign + p
+        } else {
+            p = this.mkxBase(u2, u1, pre)
+            if (this.definitions[p] == undefined) console.warn(p + " not yet in dict");
+            accumulator -= 1
+            res += oppsign + p
+        }
+
+        return [res, accumulator];
+    }
+
+    groupConditionApplies(tt1, tt2, tt3){
+        for (let group of tt1.groups){
+            if (!tt2.groups.includes(group)) continue;
+            else if (tt3.groups.includes(group)) continue;
+            else return true;
+        }
+        return false;
+    }
+
+    xGroupConstraints(model){
+        for (let group of this.g.groups){
+            let minDepth = Math.min.apply(0, group.tables.map(t => t.depth))
+            let maxDepth = Math.max.apply(0, group.tables.map(t => t.depth))
+
+            for (let i=minDepth; i<maxDepth; i++){
+                let tablesAtDepth1 = group.tables.filter(t => t.depth == i)
+                let tablesOutGroupAtDepth1 = this.g.tables.filter(t => t.depth == i && !t.groups.includes(group))
+
+                let tablesAtDepth2 = group.tables.filter(t => t.depth == i+1)
+                let tablesOutGroupAtDepth2 = this.g.tables.filter(t => t.depth == i+1 && !t.groups.includes(group))
+
+                let tstring1 = ""
+                for (let t1 of tablesAtDepth1){
+                    for (let t2 of tablesOutGroupAtDepth1){
+                        tstring1 += " + " + this.mkxBase(t1.id, t2.id, 'T')
+                    }
+                }
+
+                let tstring2 = ""
+                for (let t1 of tablesAtDepth2){
+                    for (let t2 of tablesOutGroupAtDepth2){
+                        tstring2 += " - " + this.mkxBase(t1.id, t2.id, 'T') 
+                    }
+                }
+                
+                if (tstring1 == "" || tstring2 == "") continue;
+                
+                model.subjectTo += tstring1 + tstring2 + " = 0\n"
+
+            }
+        }
+    }
+
+    setTransitivityConstraints(model){
         for (let k=0; k < this.g.maxDepth + 1; k++){
             let layerTables = this.g.tableIndex[k];
             let layerAttributes = layerTables.map(t => t.attributes).flat()
@@ -132,14 +234,31 @@ class LPBendinessCombinedPlusGroups {
             // global ordering of tables 
             for (let i=0; i<layerTables.length; i++){
                 let t1 = layerTables[i].id;
+                let tt1 = layerTables[i];
 
                 for (let j = i+1; j < layerTables.length; j++){
                     let t2 = layerTables[j].id;
+                    let tt2 = layerTables[j];
 
                     for (let m = j + 1; m < layerTables.length; m++){
                         let t3 = layerTables[m].id;
+                        let tt3 = layerTables[m];
 
                         if (t1 == t2 || t2 == t3 || t1 == t3) continue;
+
+                        if (this.groupConditionApplies(tt1, tt2, tt3)) {
+                            model.subjectTo += ""
+                                + this.mkxDict(" + ", t1, t3, 'T')[0]
+                                + this.mkxDict(" - ", t2, t3, 'T')[0]
+                                + " = " + ( - this.mkxDict(" - ", t2, t3, 'T')[1] + this.mkxDict(" + ", t1, t3, 'T')[1]) + "\n"
+                            continue;
+                        } else if (this.groupConditionApplies(tt1, tt3, tt2)){
+                            model.subjectTo += ""
+                                + this.mkxDict(" + ", t1, t2, 'T')[0]
+                                + this.mkxDict(" - ", t3, t2, 'T')[0]
+                                + " = " + ( - this.mkxDict(" - ", t3, t2, 'T')[1] + this.mkxDict(" + ", t1, t2, 'T')[1]) + "\n"
+                            continue;
+                        }
 
                         model.subjectTo += ""
                             + this.mkxBase(t1, t2, 'T')
@@ -206,74 +325,28 @@ class LPBendinessCombinedPlusGroups {
                 }
             }
         }
+    }
 
-        if (this.options.crossings_reduction_active) this.addCrossingsReduction(model)
-
-       // grouping constraint of attributes within tables
-       for (let k=0; k<this.g.maxDepth + 1; k++){
-            let layerTables = this.g.tableIndex[k];
-            let layerAttributes = layerTables.map(t => t.attributes).flat()
-            
-            for (let i=0; i<layerAttributes.length; i++){
-                let attr1 = layerAttributes[i].id;
-                let t1 = layerAttributes[i].table.id;
-
-                for (let j=i+1; j<layerAttributes.length; j++){
-                    let attr2 = layerAttributes[j].id;
-                    let t2 = layerAttributes[j].table.id
-
-                    if (t1 != t2){
-                        model.subjectTo += this.mkxBase(attr1, attr2) + ""
-                            + " - " + this.mkxBase(t1, t2, 'T') 
-                            + " = 0\n"
-                    }
-                }
+    setGroupConstraints(model){
+        // all groups should have the same y_start and y_end on every depth
+        for (let group of this.g.groups){
+            for (let table of group.tables){
+                model.subjectTo += "y_groupstart_" + group.id + " - y_" + table.id + " <= 0\n";
+                model.subjectTo += "y_groupend_" + group.id + " - y_" + table.id + " >= " + (table.attributes.length + this.buffer) + "\n";
             }
+
+            for (let table of this.g.tables){
+                if (group.tables.indexOf(table) == -1 && group.tables.map(t => t.depth).indexOf(table.depth) != -1){
+                    model.subjectTo += "y_" + table.id + " - " + this.m + " z_" + this.zcount + " - y_groupstart_" + group.id + " <= - " + (table.attributes.length + this.buffer) + "\n";
+                    model.subjectTo += "- y_" + table.id + " + " + this.m + " z_" + this.zcount + " + y_groupend_" + group.id + " <= " + this.m + "\n"
+                    this.zcount += 1;
+                }
+            }            
         }
 
-        if (this.options.bendiness_reduction_active){
-            if (this.options.bendiness_reduction_type == "simple") this.addSimpleBendiness(this.g, model)
-            else if (this.options.bendiness_reduction_type == "optimize_angles") this.addBendinessPlusMaximizeCrossingAngle(this.g, model)
-        } else {
-            model.minimize = model.minimize.substring(0, model.minimize.length - 2) + "\n\n"
+        for (let i=0; i<=this.zcount; i++){
+            model.bounds += "binary z_" + i + "\n" 
         }
-
-        for (let elem in this.definitions){
-            model.bounds += "binary " + elem + "\n"
-        }
-        for (let elem in this.crossing_vars){
-            model.bounds += "binary " + elem + "\n"
-        }
-
-        // console.log(this.modelToString(model))
-        this.numConstraints = model.subjectTo.split("\n").length;
-        console.log("number of constraints: ", this.numConstraints)
-    }
-
-    mkc(u1, v1, u2, v2){
-        let res = "c_" + u1 + v1 + "_" + u2 + v2;
-        this.crossing_vars[res] = ""
-        return res
-    }
-
-    mkxDict (sign, u1, u2) {
-        let res = ""
-        let accumulator = 0
-        let oppsign = " - "
-
-        if (sign == " - ") oppsign = " + "
-
-        let p = this.mkxBase(u1, u2)
-        if (this.definitions[p] != undefined){
-            res += sign + p
-        } else {
-            p = this.mkxBase(u2, u1)
-            if (this.definitions[p] == undefined) console.warn(p + " not defined");
-            accumulator -= 1
-            res += oppsign + p
-        }
-
-        return [res, accumulator];
     }
 
     addCrossingsReduction(model){
@@ -286,14 +359,6 @@ class LPBendinessCombinedPlusGroups {
 
                 for (let j=i+1; j<layerEdges.length; j++){
                     let u2v2 = layerEdges[j];
-
-                    // new: managing groups
-                    // edges that are outside of groups should never cross with edges that are inside of groups
-                    // if (u1v1.leftTable.group != undefined && u1v1.rightTable.group != undefined){
-                    //     if (u2v2.leftTable.group != u2v2.leftTable.group) {
-                    //         model.subjectTo += this.mkc(u1, v1, u2, v2) + " = 0\n";
-                    //     }
-                    // }
 
                     let u1 = u1v1.leftAttribute.id
                     let v1 = u1v1.rightAttribute.id

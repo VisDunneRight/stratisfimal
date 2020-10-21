@@ -555,4 +555,17 @@ QUERY[573] =
 	"	FROM	S\n" +
 	"	WHERE	S.B = R.B)";
 
+
+QUERY[574] = 
+`SELECT 	R.A
+FROM 	R, T
+WHERE 	R.A = T.A 
+AND not exists
+	(SELECT	*
+	FROM 	S, T, U
+	WHERE	S.A = R.A
+	AND	S.B = T.B
+	AND S.A = U.A)
+`
+
 	

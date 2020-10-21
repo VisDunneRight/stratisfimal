@@ -97,7 +97,7 @@ class Group {
         this.x_coord = leftTable.depth;
 
         let computeYCoord = (table) => {
-            return table.weight * table_vert_space + table.verticalAttrOffset * attr_height;
+            return parseFloat(table.weight) * table_vert_space + table.verticalAttrOffset * attr_height;
         }
 
         let topMax = Math.min.apply(0, this.tables.map(t => computeYCoord(t)));
@@ -107,15 +107,19 @@ class Group {
         let rightMax = Math.max.apply(0, this.tables.map(t => t.depth));
         let rightTable = this.tables.find(t => t.depth == rightMax);
         this.width_coord = rightTable.depth - leftTable.depth;
+
+        let computeYCoordBottom = (table) => {
+            return computeYCoord(table) + (1 + table.attributes.length)*attr_height
+        }
         
-        let bottomMax = Math.max.apply(0, this.tables.map(t => t.weight));
-        let bottomTable = this.tables.find(t => t.weight == bottomMax);
-        this.height_coord = bottomTable.weight - topTable.weight;
+        let bottomMax = Math.max.apply(0, this.tables.map(t => computeYCoordBottom(t)));
+        let bottomTable = this.tables.find(t => computeYCoordBottom(t) == bottomMax);
+        this.height_coord = computeYCoordBottom(bottomTable);
         
         this.coords.push([leftTable.depth*depth_distance - this.margin, this.y_coord - this.margin])
         this.coords.push([leftTable.depth*depth_distance + this.margin + this.width_coord*depth_distance + table_width, this.y_coord - this.margin])
-        this.coords.push([leftTable.depth*depth_distance + this.margin + this.width_coord*depth_distance + table_width, bottomTable.weight*table_vert_space + (1 + bottomTable.attributes.length)*attr_height + bottomTable.verticalAttrOffset*attr_height + this.margin])
-        this.coords.push([leftTable.depth*depth_distance - this.margin, bottomTable.weight*table_vert_space + (1 + bottomTable.attributes.length)*attr_height + bottomTable.verticalAttrOffset*attr_height + this.margin])
+        this.coords.push([leftTable.depth*depth_distance + this.margin + this.width_coord*depth_distance + table_width, this.height_coord + this.margin])
+        this.coords.push([leftTable.depth*depth_distance - this.margin, this.height_coord + this.margin])
         
         this.coords.push(this.coords[0]);
 

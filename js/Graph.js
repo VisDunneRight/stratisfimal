@@ -293,8 +293,6 @@ class Graph {
                     let upperBound = getUpperBound(tableCol, k);
                     let lowerBound = getLowerBound(tableCol, k);
 
-                    
-
                     for (let j = upperBound; j <= lowerBound; j++){
                         table.verticalAttrOffset = j;
                         let tempBendinessSum = this.getTableBendiness(table);
@@ -321,6 +319,54 @@ class Graph {
         }
 
         this.updateGroupCoords();
+    }
+
+    addBlankTables(){
+        // should start from smaller groups, not cycle through all groups at once
+
+        let blankTableCounter = 0;
+
+        for (let group of this.groups){
+            let minRank = Math.min.apply(0, group.tables.map(t => t.depth))
+            let maxRank = Math.max.apply(0, group.tables.map(t => t.depth))
+            let maxTablesInRank = 0;
+            for (let i=minRank; i<=maxRank; i++){
+                let numTablesInDepth = group.tables.filter(t => t.depth == i).length
+                if (numTablesInDepth > maxTablesInRank) maxTablesInRank = numTablesInDepth;
+            }
+            for (let i=minRank; i<=maxRank; i++){
+                if (group.tables.filter(t => t.depth == i).length < maxTablesInRank){
+                    let t = new Table('blank' + blankTableCounter, 'blank' + blankTableCounter, true, i);
+                    t.type = "aux";
+                    this.addTable(t);
+                    group.addTable(t);
+                    blankTableCounter += 1;
+                } 
+            }
+        }
+
+        let maxTablesInDepth = Math.max.apply(0, this.tableIndex.map(t => t.length))
+        for (let tIndex of this.tableIndex){
+            if (tIndex.length == 0) continue;
+            else {
+                let i = this.tableIndex.indexOf(tIndex)
+                while (tIndex.length < maxTablesInDepth){
+                    let t = new Table('blank' + blankTableCounter, 'blank' + blankTableCounter, true, i);
+                    this.addTable(t);
+                    t.type = "aux";
+                    blankTableCounter += 1;
+                }
+            }
+        }
+    }
+
+    sendGroupsToTop(){
+        // doesn't work properly in all cases. With multiple groups in the same graph, it could be messy.
+        for (let tIndex of this.tableIndex){
+            tIndex = tIndex.sort((a, b) => {
+                if (a.groups.length < b.groups.length) return 1;
+            })
+        }
     }
 }
 

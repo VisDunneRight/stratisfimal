@@ -69,7 +69,7 @@ let parseQuery = (qstring, schemastring) => {
         
         if (t1 == undefined){
             
-            t1 = new Table(tableId, tableId, true, depth)
+            t1 = new Table(tableId, tableId, true, parseFloat(depth))
 
             if (groups!= undefined && groups.length > 0){
                 for (group of groups){
@@ -103,22 +103,20 @@ let parseQuery = (qstring, schemastring) => {
             navigateWhere(w.right, depth+1, groups, prevAst)
         }
 
-        // if (w.table == null) 
-        //     w.table = prevAst.columns.find(c => c.column == w.attribute).expr.table
+
         if (w.left != undefined && w.left.table == null)
             w.left.table = prevAst.columns.find(c => c.column == w.left.attribute).expr.table
-            // console.log(w.left.table)
+
 
         if (w.operator == "=" || w.operator == ">" || w.operator == "<" || w.operator == "<>"){
             if (w.right.type == "string"){
-                let t = g.tables.find(t => t.id == tabledefs[w.left.table])
+                let t = getTableById(tabledefs[w.left.table], groups)
                 let attr = new Attribute(t, w.left.column + " " + w.operator + " " + '"' + w.right.value + '"')
                 attr.id = attr.name.replace(/"/g, '').replace(/=/g, '').replace(/>/g, '').replace(/</g, '').replace(/ /g, '') + "c"
                 attr.type = "constraint";
                 t.attributes.push(attr);
             } else if (w.right.type == "number"){
-                // let t = g.tables.find(t => t.id == tabledefs[w.left.table])
-                let t = getTableById(tabledefs[w.left.table])
+                let t = getTableById(tabledefs[w.left.table], groups)
                 let attr = new Attribute(t, w.left.column + " " + w.operator + " " + w.right.value)
                 attr.id = attr.name.replace(/"/g, '').replace(/=/g, '').replace(/>/g, '').replace(/</g, '').replace(/ /g, '') + "c"
                 attr.type = "constraint";
@@ -199,7 +197,8 @@ let parseQuery = (qstring, schemastring) => {
 }
 
 let assignTablesToDepths = (g) => {
-    for (let i=0; i<2; i++){
+    for (let i=0; i<4; i++){
+        g.tables.forEach(t => t.visited = false)
         arrangeTables(g, g.tableIndex[0][0]);
         for (let col in g.tableIndex){
             g.tableIndex[col] = [];
@@ -230,10 +229,17 @@ let assignTablesToDepths = (g) => {
 
 // dfs to arrange the tables on the correct depths
 let arrangeTables = (g, startTable) => {    
-    let outedges = g.edges.filter(e => e.leftTable == startTable && e.rightTable.depth != e.leftTable.depth);
+    let outedges = g.edges.filter(e => e.leftTable == startTable);
     if (outedges.length == 0) return;
 
-    for (let t of outedges.map(e => e.rightTable)){
+    for (let i in outedges){
+        let edge = outedges[i]
+        
+        let t = edge.rightTable
+
+        if (t.visited == true) continue;
+        t.visited = true;
+
         t.depth = startTable.depth + 1;
         while (g.tableIndex.length < t.depth){
             g.newLayer()

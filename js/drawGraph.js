@@ -49,7 +49,7 @@ let drawGraph = (svg, g, algorithm = undefined) => {
     // tables
     // *****
     tablegroups = visg.selectAll(".tables")
-        .data(g.tables)
+        .data(g.tables.filter(t => t.type != "aux"))
         .enter()
         .append('g')
         .attr('class', 'tablegroup')
