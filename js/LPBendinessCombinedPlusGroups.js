@@ -64,8 +64,7 @@ class LPBendinessCombinedPlusGroups {
 
         this.apply_solution(result)
 
-        this.elapsedTime = new Date().getTime() - startTime
-        
+        this.elapsedTime = new Date().getTime() - startTime 
     }
 
     fillModel(model){

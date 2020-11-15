@@ -1,0 +1,110 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./lib/seedrandom.min.js"></script>
+  <script src="./lib/d3.v5.min.js"></script>
+  <script src="./lib/glpk.min.js"></script>
+  <script src="./lib/mysql.umd.js"></script>
+  <script src="./js/query_samples/queries.js"></script>
+
+  <link rel="stylesheet" href="./css/bootstrap.min.css">
+
+  <script src="./simple/simplegraph.js"></script>
+  <script src="./simple/simpleLp.js"></script>
+  <script src="./simple/testCaseGenerator.js"></script>
+</head>
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 5%;
+    }
+
+    svg {
+        margin: 1%;
+        background-color: white;
+    }
+
+    .modelDivClass {
+        font-size: xx-small;
+        white-space: pre-wrap;
+        font-family: "Lucida Console", Monaco, monospace;
+        background-color: #eee;
+        padding: 2%;
+        border-radius: 4px;
+        margin: 1%;
+    }
+</style>
+
+<body>
+    <!-- bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+</body>
+
+<script>
+
+    let drawTest = (test, testRow) => {
+        let div = testRow
+            .append('div')
+            .style('width', '20%')
+
+        let svg = div
+            .append('svg')
+            .style('width', '100%')
+            .style('height', '150px')
+
+        div.append('div')
+            .attr('class', 'modelDivClass')
+            .text(test.algorithm.model.minimize)
+
+        div.append('div')
+            .attr('class', 'modelDivClass')
+            .text(test.algorithm.model.subjectTo)
+
+        let rt = div.append('div')
+            .attr('class', 'modelDivClass')
+
+        for (elem in test.algorithm.result){
+            if (elem == "empty") continue;
+            rt.append('text')
+                .text(elem + ": " + test.algorithm.result[elem] + '\n')
+        }
+
+        test.graph.draw(svg);
+    }
+    
+    let testGenerator = new TestCaseGenerator();
+
+    let testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex') 
+
+    for (test of testGenerator.gen2x2CrossingTest()){
+        drawTest(test, testRow);
+    }
+
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
+
+    for (test of testGenerator.genTransitivityTest()){
+        drawTest(test, testRow);
+    }
+
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
+
+    for (test of testGenerator.genGroupTest()){
+        drawTest(test, testRow);
+    }
+    
+</script>
+
+</html>
