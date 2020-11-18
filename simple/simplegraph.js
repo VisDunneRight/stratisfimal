@@ -47,9 +47,14 @@ class SimpleGraph {
                 .attr('stroke', 'black')
                 .attr('stroke-width', 2)
                 .attr('d', () => {
+                    let m = 0
+                    if (edge.nodes[0].depth == edge.nodes[1].depth) m = 20;
                     return line([
                         [getNodeCoordX(edge.nodes[0]), getNodeCoordY(edge.nodes[0])], 
-                        [getNodeCoordX(edge.nodes[1]), getNodeCoordY(edge.nodes[1])]])
+                        [getNodeCoordX(edge.nodes[0]) + m, getNodeCoordY(edge.nodes[0])], 
+                        [getNodeCoordX(edge.nodes[1]) + m, getNodeCoordY(edge.nodes[1])],
+                        [getNodeCoordX(edge.nodes[1]), getNodeCoordY(edge.nodes[1])]
+                    ])
                 })
         }
 
@@ -59,6 +64,8 @@ class SimpleGraph {
                     .attr('transform', 'translate(' + (getNodeCoordX(node)) + ',' + getNodeCoordY(node) +')');
 
                 g.append('circle')
+                    .datum(node)
+                    .attr('class', 'node')
                     .attr('fill', '#ccc')
                     .attr('stroke', 'black')
                     .attr('stroke-width', 2)
@@ -80,14 +87,13 @@ class SimpleGraph {
             let left = Math.min.apply(0, group.nodes.map(n => getNodeCoordX(n)));
             let right = Math.max.apply(0, group.nodes.map(n => getNodeCoordX(n)));
 
-            console.log(top, bottom, group.nodes.map(n => getNodeCoordY(n)));
-
             svg.append('rect')
                 .attr('stroke', 'black')
                 .attr('x', left - 10)
-                .attr('y', top - 10)
+                .attr('y', top - 8)
+                .attr('opacity', 0.2)
                 .attr('width', right - left + 20)
-                .attr('height', bottom - top + 20)
+                .attr('height', bottom - top + 16)
                 .attr('fill', 'none')
                 .attr('stroke-width', 2)
                 .attr('stroke-dasharray', '3 3')

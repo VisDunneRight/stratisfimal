@@ -35,6 +35,12 @@
         padding: 2%;
         border-radius: 4px;
         margin: 1%;
+        min-width: 150px;
+    }
+
+    .flexbreak {
+        flex-basis: 100%;
+        height: 0;
     }
 </style>
 
@@ -48,6 +54,11 @@
 <script>
 
     let drawTest = (test, testRow) => {
+
+        let mkx = (elem) => {
+            return "x_" + elem[0].id + "_" + elem[1].id
+        }
+
         let div = testRow
             .append('div')
             .style('width', '20%')
@@ -55,29 +66,69 @@
         let svg = div
             .append('svg')
             .style('width', '100%')
-            .style('height', '150px')
+            .style('height', '200px')
+
+        if (test.forceOrder != undefined){
+            let rt = div.append('div')
+                .attr('class', 'modelDivClass')
+                .html('<b>forced vars<b>\n')
+
+            for (elem of test.forceOrder){
+                rt.append('text')
+                    .text(mkx(elem) + '\n')
+            }
+        }
+
+        if (!test.algorithm.model.minimize.includes('empty')){
+            div.append('div')
+                .attr('class', 'modelDivClass')
+                .html(test.algorithm.model.minimize.substring(0, test.algorithm.model.minimize.length - 1).replace('Minimize', '<b>Minimize</b>'))
+        }
 
         div.append('div')
             .attr('class', 'modelDivClass')
-            .text(test.algorithm.model.minimize)
-
-        div.append('div')
-            .attr('class', 'modelDivClass')
-            .text(test.algorithm.model.subjectTo)
+            .html(test.algorithm.model.subjectTo.replace('Subject To', '<b>Subject To</b>'))
+            .style('max-height', '200px')
+            .style('overflow-y', 'scroll')
 
         let rt = div.append('div')
             .attr('class', 'modelDivClass')
+            .html('<b>result</b>\n')
 
         for (elem in test.algorithm.result){
             if (elem == "empty") continue;
-            rt.append('text')
-                .text(elem + ": " + test.algorithm.result[elem] + '\n')
+            let r = rt.append('text')
+                .html(elem + ": " + test.algorithm.result[elem] + '\n')
+
+            if (test.forceOrder != undefined){
+                let found = true;
+                for (el of test.forceOrder){
+                    if (mkx(el) == elem){
+                        found = false;
+                    }
+                }
+                if (found) r.html("<b>" + elem + ": " + test.algorithm.result[elem] + '</b>\n')
+            }
         }
 
         test.graph.draw(svg);
+
+        if (test.forceOrder != undefined){
+            for (o of test.forceOrder){
+                for (n of o){
+                    svg.selectAll('.node')
+                        .filter(no => no.id == n.id)
+                        .attr('fill', 'red')
+                }
+            }
+        }
     }
     
     let testGenerator = new TestCaseGenerator();
+
+    d3.select('body')
+        .append('div')
+        .html('<h1>Simple Intersection</h1>')
 
     let testRow = d3.select('body')
         .append('div')
@@ -86,6 +137,10 @@
     for (test of testGenerator.gen2x2CrossingTest()){
         drawTest(test, testRow);
     }
+
+    d3.select('body')
+        .append('div')
+        .html('<h1>Simple Transitivity</h1>')
 
     testRow = d3.select('body')
         .append('div')
@@ -96,12 +151,55 @@
         drawTest(test, testRow);
     }
 
+    d3.select('body')
+        .append('div')
+        .html('<h1>Single-rank grouping (2 elems per group)</h1>')
+
     testRow = d3.select('body')
         .append('div')
         .style('display', 'flex')
         .style('margin-top', '20px')
 
-    for (test of testGenerator.genGroupTest()){
+    for (test of testGenerator.genGroupTest(2, 1)){
+        drawTest(test, testRow);
+    }
+
+    d3.select('body')
+        .append('div')
+        .html('<h1>Single-rank grouping (3 elems per group)</h1>')
+
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
+
+    for (test of testGenerator.genGroupTest(3, 1)){
+        drawTest(test, testRow);
+    }
+
+    d3.select('body')
+        .append('div')
+        .html('<h1>Same rank edges</h1>')
+
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
+
+    for (test of testGenerator.genSameRankEdgesTest()){
+        drawTest(test, testRow);
+    }
+
+    d3.select('body')
+        .append('div')
+        .html('<h1>Same rank edges and two-rank edges</h1>')
+
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
+
+    for (test of testGenerator.genSameRankEdgesPlusTwoRankEdgesTest()){
         drawTest(test, testRow);
     }
     

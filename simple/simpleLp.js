@@ -70,12 +70,12 @@ class SimpleLp {
         this.crossing_vars = {};
         this.definitions = {};
 
+        this.addForcedOrders();
+
         this.addTransitivity();
 
         this.addCrossingsToSubjectTo();
         this.addCrossingsToMinimize();
-
-        this.addForcedOrders();
 
         this.model.minimize = this.model.minimize.substring(0, this.model.minimize.length - 2) + "\n\n"
 
@@ -94,7 +94,7 @@ class SimpleLp {
     }
 
     addCrossingsToSubjectTo(){
-        for (let k = 0; k < this.g.nodeIndex.length - 1; k++){
+        for (let k = 0; k < this.g.nodeIndex.length; k++){
             let layerEdges = this.g.edges.filter(e => e.nodes[0].depth == k);
 
             // nlogn
@@ -119,6 +119,16 @@ class SimpleLp {
                         finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v2, v1)[1]
                         this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, v1)[0]
                         this.model.subjectTo += " >= " + finalsum + "\n"
+                    } else if (this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2)) {
+                        let p1 = this.mkc(u1, v1, u2, v2)
+                        let finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u2, v1)[1]
+                        this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", u2, v1)[0]
+                        this.model.subjectTo += " >= " + finalsum + "\n"
+
+                        p1 = this.mkc(u1, v1, u2, v2)
+                        finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", v2, u1)[1]
+                        this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", v2, u1)[0]
+                        this.model.subjectTo += " >= " + finalsum + "\n"
                     }
                 }
             }
@@ -126,6 +136,14 @@ class SimpleLp {
     }
 
     addTransitivity(){
+
+        let addGroupConstraint = (ingroup1, ingroup2, outgroup) => {
+            this.model.subjectTo += ""
+                + this.mkxDict(" + ", ingroup1, outgroup)[0]
+                + this.mkxDict(" - ", ingroup2, outgroup)[0]
+                + " = " + (this.mkxDict(" + ", ingroup1, outgroup)[1] - this.mkxDict(" - ", ingroup2, outgroup)[1]) + "\n"
+        }
+
         for (let k=0; k < this.g.nodeIndex.length; k++){
             let layerNodes = this.g.nodeIndex[k];
 
@@ -138,17 +156,29 @@ class SimpleLp {
                     for (let m = j + 1; m < layerNodes.length; m++){
                         let u3 = layerNodes[m].id;
 
-                        this.model.subjectTo += ""
-                            + this.mkxBase(u1, u2)
-                            + " + " + this.mkxBase(u2, u3)
-                            + " - " + this.mkxBase(u1, u3)
-                            + " >= 0\n"
-
-                        this.model.subjectTo += ""
-                            + "- " + this.mkxBase(u1, u2)
-                            + " - " + this.mkxBase(u2, u3)
-                            + " + " + this.mkxBase(u1, u3)
-                            + " >= -1\n"
+                        // groups
+                        if (this.g.groups.find(g => g.nodes.find(n => n.id == u1) && g.nodes.find(n => n.id == u2) && !g.nodes.find(n => n.id == u3))){
+                            addGroupConstraint(u1, u2, u3)
+                        } else if (this.g.groups.find(g => g.nodes.find(n => n.id == u1) && g.nodes.find(n => n.id == u3) && !g.nodes.find(n => n.id == u2))) {
+                            addGroupConstraint(u1, u3, u2)
+                        } else if (this.g.groups.find(g => g.nodes.find(n => n.id == u2) && g.nodes.find(n => n.id == u3) && !g.nodes.find(n => n.id == u1))) {
+                            addGroupConstraint(u2, u3, u1)
+                        } else {
+                            // no groups
+                            let finalsum = this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", u2, u3)[1] - this.mkxDict(" - ", u1, u3)[1]
+                            this.model.subjectTo += ""
+                                + this.mkxDict(" + ", u1, u2)[0]
+                                + this.mkxDict(" + ", u2, u3)[0]
+                                + this.mkxDict(" - ", u1, u3)[0]
+                                + " >= " + finalsum + "\n"
+    
+                            finalsum = - this.mkxDict(" - ", u1, u2)[1] - this.mkxDict(" - ", u2, u3)[1] + this.mkxDict(" + ", u1, u3)[1]
+                            this.model.subjectTo += ""
+                                + this.mkxDict(" - ", u1, u2)[0]
+                                + this.mkxDict(" - ", u2, u3)[0]
+                                + this.mkxDict(" + ", u1, u3)[0]
+                                + " >= " + (- 1 + finalsum) + "\n"
+                        }
                     }
                 }
             }
@@ -157,7 +187,20 @@ class SimpleLp {
 
     addForcedOrders(){
         for (let o of this.forcedOrderList){
-            this.model.subjectTo += this.mkxDict(" + ", o[0].id, o[1].id)[0] + " = " + this.mkxDict(" + ", o[0].id, o[1].id)[1] + "\n"
+            this.model.subjectTo += this.mkxDict(" + ", o[0].id, o[1].id)[0] + " = 1\n"
+        }
+    }
+
+    apply_solution(){
+        for (let i=0; i<this.g.nodeIndex.length; i++){
+            let layerNodes = this.g.nodeIndex[i];
+
+            layerNodes.sort((a, b) => {
+                if (this.result["x_" + a.id + "_" + b.id] == 0) return 1;
+                else if (this.result["x_" + a.id + "_" + b.id] == 1) return -1;
+                else if (this.result["x_" + b.id + "_" + a.id] == 1) return 1;
+                else if (this.result["x_" + b.id + "_" + a.id] == 0) return -1;
+            })
         }
     }
 
