@@ -25,6 +25,10 @@ class SimpleLp {
             this.model.minimize += 'empty\n';
         }
 
+        if (this.model.subjectTo.length <= 12) {
+            this.model.subjectTo += 'empty = 1\n';
+        }
+
         let prob = this.modelToString(this.model)
         this.modelString = prob;
 
@@ -120,15 +124,44 @@ class SimpleLp {
                         this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, v1)[0]
                         this.model.subjectTo += " >= " + finalsum + "\n"
                     } else if (this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2)) {
-                        let p1 = this.mkc(u1, v1, u2, v2)
-                        let finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u2, v1)[1]
-                        this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", u2, v1)[0]
-                        this.model.subjectTo += " >= " + finalsum + "\n"
+                        // let p1 = this.mkc(u1, v1, u2, v2)
+                        // let finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u2, v1)[1]
+                        // this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", u2, v1)[0]
+                        // this.model.subjectTo += " >= " + finalsum + "\n"
 
-                        p1 = this.mkc(u1, v1, u2, v2)
-                        finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", v2, u1)[1]
-                        this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", v2, u1)[0]
-                        this.model.subjectTo += " >= " + finalsum + "\n"
+                        // p1 = this.mkc(u1, v1, u2, v2)
+                        // finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", v2, u1)[1]
+                        // this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", v2, u1)[0]
+                        // this.model.subjectTo += " >= " + finalsum + "\n"
+
+                        let p1 = this.mkc(u1, v1, u2, v2)
+                        let finalsum = 1 + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, u2)[1] + this.mkxDict(" + ", v2, u2)[1];
+                        this.model.subjectTo += "" + p1
+                            + this.mkxDict(" + ", u2, u1)[0]
+                            + this.mkxDict(" + ", v1, u2)[0]
+                            + this.mkxDict(" + ", v2, u2)[0]
+                            + " >= " + finalsum + "\n"
+
+                        finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v1, u1)[1] + this.mkxDict(" + ", v2, u1)[1];
+                        this.model.subjectTo += "" + p1
+                            + this.mkxDict(" + ", u1, u2)[0]
+                            + this.mkxDict(" + ", v1, u1)[0]
+                            + this.mkxDict(" + ", v2, u1)[0]
+                            + " >= " + finalsum + "\n"
+
+                        finalsum = 1 + this.mkxDict(" + ", v2, v1)[1] + this.mkxDict(" + ", u1, v2)[1] + this.mkxDict(" + ", u2, v2)[1];
+                        this.model.subjectTo += "" + p1
+                            + this.mkxDict(" + ", v2, v1)[0]
+                            + this.mkxDict(" + ", u1, v2)[0]
+                            + this.mkxDict(" + ", u2, v2)[0]
+                            + " >= " + finalsum + "\n"
+
+                        finalsum = 1 + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u1, v1)[1] + this.mkxDict(" + ", u2, v1)[1];
+                        this.model.subjectTo += "" + p1
+                            + this.mkxDict(" + ", v1, v2)[0]
+                            + this.mkxDict(" + ", u1, v1)[0]
+                            + this.mkxDict(" + ", u2, v1)[0]
+                            + " >= " + finalsum + "\n"
                     }
                 }
             }

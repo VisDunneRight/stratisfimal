@@ -202,6 +202,32 @@
     for (test of testGenerator.genSameRankEdgesPlusTwoRankEdgesTest()){
         drawTest(test, testRow);
     }
+
+    d3.select('body')
+        .append('div')
+        .html('<h1>Anchors</h1>')
+
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
+
+    for (test of testGenerator.genSimpleAnchorTest()){
+        drawTest(test, testRow);
+    }
+
+    d3.select('body')
+        .append('div')
+        .html('<h1>Multi-rank groups</h1>')
+
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
+
+    for (test of testGenerator.genMultiRankGroupTest()){
+        drawTest(test, testRow);
+    }
     
 </script>
 

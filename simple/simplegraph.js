@@ -5,6 +5,8 @@ class SimpleGraph {
         this.nodeIndex = [];
         this.edgeIndex = [];
         this.groups = [];
+
+        this.fakeNodeCount = 0;
     }
 
     addNode(node){
@@ -35,6 +37,31 @@ class SimpleGraph {
         this.groups.push(group);
     }
 
+    addAnchors(){
+        for (let e of this.edges){
+            if (Math.abs(e.nodes[0].depth - e.nodes[1].depth) > 1) {
+                let minDepth = Math.min(e.nodes[0].depth, e.nodes[1].depth)
+                let maxDepth = Math.max(e.nodes[0].depth, e.nodes[1].depth)
+                let newanchors = [];
+
+                for (let i = minDepth + 1; i<maxDepth; i++){
+                    let n = {depth: i, name: 'a' + this.fakeNodeCount++, type: 'fake'};
+                    this.addNode(n);
+                    newanchors.push(n);
+                }
+
+                this.addEdge({nodes:[e.nodes[0], newanchors[0]]});
+                this.addEdge({nodes:[newanchors[newanchors.length - 1], e.nodes[1]]});
+
+                for (let i = 1; i < newanchors.length; i++){
+                    this.addEdge({nodes: [newanchors[i-1], newanchors[i]]})
+                }
+            }
+        }
+
+        this.edges = this.edges.filter(e => Math.abs(e.nodes[0].depth - e.nodes[1].depth) <= 1);
+    }
+
     draw(svg){
 
         let getNodeCoordX = (node) => (20 + 50 * (node.depth));
@@ -61,7 +88,8 @@ class SimpleGraph {
         for (let depth in this.nodeIndex){
             for (let node of this.nodeIndex[depth]){
                 let g = svg.append('g')
-                    .attr('transform', 'translate(' + (getNodeCoordX(node)) + ',' + getNodeCoordY(node) +')');
+                    .attr('transform', 'translate(' + (getNodeCoordX(node)) + ',' + getNodeCoordY(node) +')')
+                    .attr('opacity', () => {return node.type == "fake"? 0.3 : 1})
 
                 g.append('circle')
                     .datum(node)

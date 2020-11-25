@@ -184,4 +184,76 @@ class TestCaseGenerator {
             yield {graph: g, algorithm: algorithm, forceOrder: forceOrder};        
         }
     }
+
+    * genSimpleAnchorTest(){
+        let u1 = {depth: 0, name: 'u1'}
+        let v1 = {depth: 2, name: 'v1'}
+
+        for (let i=0; i<5; i++){
+            let g = new SimpleGraph();
+
+            if (i == 0){
+                g.addNodes([u1, v1]);
+            }
+            if (i == 1) {
+                g.addNodes([u1, v1]);
+                g.addNodes([{depth: 1, name: 'u2'}]);
+            }
+            if (i == 2) {
+                g.addNodes([u1, v1]);
+                let u2 = {depth: 1, name: 'u2'};
+                let v2 = {depth: 3, name: 'v2'}
+                g.addNodes([u2, v2])
+                g.addEdge({nodes: [u2, v2]})
+            }
+            if (i == 3) {
+                v1.depth = 3;
+                g.addNodes([u1, v1]);
+            }
+            if (i == 4) {
+                v1.depth = 3;
+                let u2 = {depth: 1, name: 'u2'};
+                let v2 = {depth: 2, name: 'v2'}
+                g.addNodes([u2, v2]);
+                g.addNodes([u1, v1]);
+                g.addEdge({nodes: [u2, v2]});
+            }
+            g.addEdge({nodes:[u1, v1]});
+            g.addAnchors();
+
+            let algorithm = new SimpleLp(g);
+            algorithm.arrange();
+            algorithm.apply_solution();
+
+            yield {graph: g, algorithm: algorithm};  
+        }
+    }
+
+    * genMultiRankGroupTest(){
+        let u1 = {depth: 0, name: 'u1'};
+        let u2 = {depth: 0, name: 'u2'};
+        let v1 = {depth: 1, name: 'v1'};
+        let v2 = {depth: 1, name: 'v2'};
+
+        for (let perm of this.permutator([v1, v2])){
+            let g = new SimpleGraph();
+            let group = {nodes: [u1, v1]};
+
+            g.addNodes([u1, u2, v1, v2]);
+            g.addGroup(group);
+
+            let forceOrder = [
+                [perm[0], perm[1]]
+            ];
+
+            let algorithm = new SimpleLp(g);
+            for (let f of forceOrder){
+                algorithm.forceOrder(f[0], f[1])
+            }
+            algorithm.arrange();
+            algorithm.apply_solution();
+
+            yield {graph: g, algorithm: algorithm, forceOrder: forceOrder};  
+        }
+    }
 }
