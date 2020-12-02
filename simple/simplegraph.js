@@ -7,6 +7,7 @@ class SimpleGraph {
         this.groups = [];
 
         this.fakeNodeCount = 0;
+        this.groupIdCounter = 0;
     }
 
     addNode(node){
@@ -34,6 +35,7 @@ class SimpleGraph {
     }
 
     addGroup(group){
+        group.id = this.groupIdCounter++;
         this.groups.push(group);
     }
 
@@ -60,12 +62,47 @@ class SimpleGraph {
         }
 
         this.edges = this.edges.filter(e => Math.abs(e.nodes[0].depth - e.nodes[1].depth) <= 1);
+
+        // note: this is important
+        this.groups = this.groups.sort((a, b) => a.nodes.length > b.nodes.length)
+
+        for (let g of this.groups){
+            let minRank = Math.min.apply(0, g.nodes.map(n => n.depth))
+            let maxRank = Math.max.apply(0, g.nodes.map(n => n.depth))
+            let maxNodesInRank = 0;
+            for (let r = minRank; r <= maxRank; r++){
+                if (g.nodes.filter(n => n.depth == r).length > maxNodesInRank) maxNodesInRank = g.nodes.filter(n => n.depth == r).length;
+            }
+            for (let r = minRank; r <= maxRank; r++){
+                while (g.nodes.filter(n => n.depth == r).length < maxNodesInRank){
+                    let n = {depth: r, name: 'a' + this.fakeNodeCount++, type: 'fake'};
+                    for (let gr of this.groups){
+                        if (g.nodes.every(val => gr.nodes.includes(val)) && gr != g) gr.nodes.push(n);
+                    }
+                    g.nodes.push(n);
+                    this.addNode(n);
+                }
+            }
+        }
+
+        let maxNodesInRank = Math.max.apply(0, this.nodeIndex.map(n => n.length))
+        for (let r in this.nodeIndex){
+            if (this.groups.length == 0) continue;
+            while (this.nodeIndex[r].length < maxNodesInRank){
+                this.addNode({depth: r, name: 'a' + this.fakeNodeCount++, type: 'fake'});
+            }
+        }
     }
 
     draw(svg){
 
-        let getNodeCoordX = (node) => (20 + 50 * (node.depth));
-        let getNodeCoordY = (node) => (20 + this.nodeIndex[node.depth].indexOf(node) * 50);
+        let nodeYDistance = 50;
+
+        let getNodeCoordX = (node) => (20 + nodeYDistance * (node.depth));
+        let getNodeCoordY = (node) => {
+            if (node.y != undefined) return 20 + node.y * nodeYDistance;
+            else return 20 + this.nodeIndex[node.depth].indexOf(node) * nodeYDistance
+        };
         let line = d3.line().curve(d3.curveBasis);
 
         for (let edge of this.edges){
@@ -74,12 +111,18 @@ class SimpleGraph {
                 .attr('stroke', 'black')
                 .attr('stroke-width', 2)
                 .attr('d', () => {
-                    let m = 0
-                    if (edge.nodes[0].depth == edge.nodes[1].depth) m = 20;
+                    let m = 0;
+                    let s1 = 0;
+                    let s2 = 0;
+                    if (edge.nodes[0].depth == edge.nodes[1].depth) m = 20 + (Math.abs(getNodeCoordY(edge.nodes[0]) - getNodeCoordY(edge.nodes[1]))/(nodeYDistance/4));
+                    else {
+                        s1 = 20;
+                        s2 = -20;
+                    }
                     return line([
                         [getNodeCoordX(edge.nodes[0]), getNodeCoordY(edge.nodes[0])], 
-                        [getNodeCoordX(edge.nodes[0]) + m, getNodeCoordY(edge.nodes[0])], 
-                        [getNodeCoordX(edge.nodes[1]) + m, getNodeCoordY(edge.nodes[1])],
+                        [getNodeCoordX(edge.nodes[0]) + m + s1, getNodeCoordY(edge.nodes[0])], 
+                        [getNodeCoordX(edge.nodes[1]) + m + s2, getNodeCoordY(edge.nodes[1])],
                         [getNodeCoordX(edge.nodes[1]), getNodeCoordY(edge.nodes[1])]
                     ])
                 })
@@ -110,18 +153,24 @@ class SimpleGraph {
         }
 
         for (let group of this.groups){
+            if (group.nodes == undefined || group.nodes.length == 0) continue;
             let top = Math.min.apply(0, group.nodes.map(n => getNodeCoordY(n)));
             let bottom = Math.max.apply(0, group.nodes.map(n => getNodeCoordY(n)));
             let left = Math.min.apply(0, group.nodes.map(n => getNodeCoordX(n)));
             let right = Math.max.apply(0, group.nodes.map(n => getNodeCoordX(n)));
 
+            let groupMargin = 5;
+            for (let gr of this.groups){
+                if (group.nodes.every(n => gr.nodes.includes(n)) && gr != group) groupMargin -= 3;
+            }
+
             svg.append('rect')
                 .attr('stroke', 'black')
-                .attr('x', left - 10)
-                .attr('y', top - 8)
+                .attr('x', left - 10 - groupMargin)
+                .attr('y', top - 8 - groupMargin)
                 .attr('opacity', 0.2)
-                .attr('width', right - left + 20)
-                .attr('height', bottom - top + 16)
+                .attr('width', right - left + 20 + groupMargin*2)
+                .attr('height', bottom - top + 16 + groupMargin*2)
                 .attr('fill', 'none')
                 .attr('stroke-width', 2)
                 .attr('stroke-dasharray', '3 3')

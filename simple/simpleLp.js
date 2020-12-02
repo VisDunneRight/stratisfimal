@@ -4,9 +4,15 @@ class SimpleLp {
         this.verbose = false;
         this.model = {};
         this.forcedOrderList = [];
+        this.mip = true;
+        this.zcount = 0;
+        this.m = 40;
 
         this.options = {
-            crossings_reduction_weight: 1
+            crossings_reduction_weight: 1,
+            crossings_reduction_active: true,
+            bendiness_reduction_weight: 0.1,
+            bendiness_reduction_active: false
         };
     }
 
@@ -60,7 +66,7 @@ class SimpleLp {
             }
         }
 
-        // console.log(result);
+        // console.log(this.result);
         // this.apply_solution(result)
 
         this.elapsedTime = new Date().getTime() - startTime 
@@ -78,8 +84,15 @@ class SimpleLp {
 
         this.addTransitivity();
 
+        this.addMultiRankGroupConstraints();
+
         this.addCrossingsToSubjectTo();
         this.addCrossingsToMinimize();
+
+        if (this.options.bendiness_reduction_active){
+            this.addBendinessReductionToSubjectTo();
+            this.addBendinessReductionToMinimize();
+        }
 
         this.model.minimize = this.model.minimize.substring(0, this.model.minimize.length - 2) + "\n\n"
 
@@ -89,6 +102,14 @@ class SimpleLp {
         for (let elem in this.crossing_vars){
             this.model.bounds += "binary " + elem + "\n"
         }
+    }
+
+    addBendinessReductionToMinimize(){
+        for (let e of this.g.edges){
+            if (this.isSameRankEdge(e)) continue;
+            this.model.minimize +=  this.options.bendiness_reduction_weight + " bend_" + e.nodes[0].id + "_" + e.nodes[1].id + " + "
+        }
+        this.model.minimize = this.model.minimize.substring(0, this.model.minimize.length - 2) + "\n\n"
     }
 
     addCrossingsToMinimize(){
@@ -113,6 +134,8 @@ class SimpleLp {
                     let u2 = u2v2.nodes[0].id;
                     let v2 = u2v2.nodes[1].id;
 
+                    if (u1 == u2 || v1 == v2) continue;
+
                     if (!this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)){
                         let p1 = this.mkc(u1, v1, u2, v2);
                         let finalsum = 1 + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, v2)[1]
@@ -123,45 +146,133 @@ class SimpleLp {
                         finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v2, v1)[1]
                         this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, v1)[0]
                         this.model.subjectTo += " >= " + finalsum + "\n"
-                    } else if (this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2)) {
-                        // let p1 = this.mkc(u1, v1, u2, v2)
-                        // let finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u2, v1)[1]
-                        // this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", u2, v1)[0]
-                        // this.model.subjectTo += " >= " + finalsum + "\n"
+                    } else if ((this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)) || (!this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2))){
+                        let theSameRankEdge, theOtherEdge;
+                        if (this.isSameRankEdge(u1v1)) {
+                            theSameRankEdge = u1v1;
+                            theOtherEdge = u2v2;
+                        }
+                        else {
+                            theSameRankEdge = u2v2;
+                            theOtherEdge = u1v1;
+                        }
 
-                        // p1 = this.mkc(u1, v1, u2, v2)
-                        // finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", v2, u1)[1]
-                        // this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", v2, u1)[0]
-                        // this.model.subjectTo += " >= " + finalsum + "\n"
+                        let su = theSameRankEdge.nodes[0];
+                        let sv = theSameRankEdge.nodes[1];
+                        let no = theOtherEdge.nodes[0];
 
                         let p1 = this.mkc(u1, v1, u2, v2)
-                        let finalsum = 1 + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, u2)[1] + this.mkxDict(" + ", v2, u2)[1];
-                        this.model.subjectTo += "" + p1
-                            + this.mkxDict(" + ", u2, u1)[0]
-                            + this.mkxDict(" + ", v1, u2)[0]
-                            + this.mkxDict(" + ", v2, u2)[0]
-                            + " >= " + finalsum + "\n"
+                        let finalsum = 1 + this.mkxDict(" + ", no.id, su.id)[1] + this.mkxDict(" + ", sv.id, no.id)[1]
+                        let tmp = p1 + "" + this.mkxDict(" + ", no.id, su.id)[0] + this.mkxDict(" + ", sv.id, no.id)[0]
+                        tmp += " >= " + finalsum + "\n"
+                        this.model.subjectTo += tmp;
 
-                        finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v1, u1)[1] + this.mkxDict(" + ", v2, u1)[1];
-                        this.model.subjectTo += "" + p1
-                            + this.mkxDict(" + ", u1, u2)[0]
-                            + this.mkxDict(" + ", v1, u1)[0]
-                            + this.mkxDict(" + ", v2, u1)[0]
-                            + " >= " + finalsum + "\n"
+                        finalsum = 1 + this.mkxDict(" + ", no.id, sv.id)[1] + this.mkxDict(" + ", su.id, no.id)[1]
+                        tmp = p1 + "" + this.mkxDict(" + ", no.id, sv.id)[0] + this.mkxDict(" + ", su.id, no.id)[0]
+                        tmp += " >= " + finalsum + "\n";
+                        this.model.subjectTo += tmp;
 
-                        finalsum = 1 + this.mkxDict(" + ", v2, v1)[1] + this.mkxDict(" + ", u1, v2)[1] + this.mkxDict(" + ", u2, v2)[1];
-                        this.model.subjectTo += "" + p1
-                            + this.mkxDict(" + ", v2, v1)[0]
-                            + this.mkxDict(" + ", u1, v2)[0]
-                            + this.mkxDict(" + ", u2, v2)[0]
-                            + " >= " + finalsum + "\n"
+                    } else if (this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2)) {
+                        let p1 = this.mkc(u1, v1, u2, v2)
+                        let finalsum = 1 + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, u2)[1] + this.mkxDict(" + ", v2, v1)[1]
+                        this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u2, u1)[0] + this.mkxDict(" + ", v1, u2)[0] + this.mkxDict(" + ", v2, v1)[0]
+                        this.model.subjectTo += " >= " + finalsum + "\n"
 
-                        finalsum = 1 + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u1, v1)[1] + this.mkxDict(" + ", u2, v1)[1];
-                        this.model.subjectTo += "" + p1
-                            + this.mkxDict(" + ", v1, v2)[0]
-                            + this.mkxDict(" + ", u1, v1)[0]
-                            + this.mkxDict(" + ", u2, v1)[0]
-                            + " >= " + finalsum + "\n"
+                        finalsum = 1 + this.mkxDict(" + ", v2, u1)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u2, v1)[1]
+                        this.model.subjectTo += p1 + "" + this.mkxDict(" + ", v2, u1)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", u2, v1)[0]
+                        this.model.subjectTo += " >= " + finalsum + "\n"
+
+                        finalsum = 1 +                      this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v2, u1)[1] + this.mkxDict(" + ", v1, v2)[1]
+                        this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, u1)[0] + this.mkxDict(" + ", v1, v2)[0]
+                        this.model.subjectTo += " >= " + finalsum + "\n"
+
+                        finalsum = 1 +                      this.mkxDict(" + ", v1, u2)[1] + this.mkxDict(" + ", v2, v1)[1] + this.mkxDict(" + ", u1, v2)[1]
+                        this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", v1, u2)[0] + this.mkxDict(" + ", v2, v1)[0] + this.mkxDict(" + ", u1, v2)[0]
+                        this.model.subjectTo += " >= " + finalsum + "\n"
+
+                        finalsum = 1 +                      this.mkxDict(" + ", u2, v1)[1] + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v2, u1)[1]
+                        this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", u2, v1)[0] + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, u1)[0]
+                        this.model.subjectTo += " >= " + finalsum + "\n"
+
+                        finalsum = 1 +                      this.mkxDict(" + ", v2, v1)[1] + this.mkxDict(" + ", u1, v2)[1] + this.mkxDict(" + ", u2, u1)[1]
+                        this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", v2, v1)[0] + this.mkxDict(" + ", u1, v2)[0] + this.mkxDict(" + ", u2, u1)[0]
+                        this.model.subjectTo += " >= " + finalsum + "\n"
+
+                        finalsum = 1 +                      this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u2, v1)[1] + this.mkxDict(" + ", u1, u2)[1]
+                        this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", u2, v1)[0] + this.mkxDict(" + ", u1, u2)[0]
+                        this.model.subjectTo += " >= " + finalsum + "\n"
+
+                        finalsum = 1 +                      this.mkxDict(" + ", u1, v2)[1] + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, u2)[1]
+                        this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", u1, v2)[0] + this.mkxDict(" + ", u2, u1)[0] + this.mkxDict(" + ", v1, u2)[0]
+                        this.model.subjectTo += " >= " + finalsum + "\n"
+                    }
+                }
+            }
+        }
+    }
+
+    addBendinessReductionToSubjectTo(){
+        for (let e of this.g.edges){
+            if (this.isSameRankEdge(e)) continue;
+
+            this.model.subjectTo += 
+                "y_" + e.nodes[0].id + " - " + 
+                "y_" + e.nodes[1].id + " - " + 
+                "bend_" + e.nodes[0].id + "_" + e.nodes[1].id +
+                " <= 0\n"
+
+            this.model.subjectTo += 
+                "y_" + e.nodes[1].id + " - " + 
+                "y_" + e.nodes[0].id + " - " + 
+                "bend_" + e.nodes[0].id + "_" + e.nodes[1].id +
+                " <= 0\n"
+        }
+
+        let distance = 1;
+
+        for (let nodeCol of this.g.nodeIndex){
+            for (let i = 0; i < nodeCol.length; i++){
+                let n1 = nodeCol[i];
+                for (let j = 0; j < nodeCol.length; j++){
+                    if (i == j) continue;
+                    let n2 = nodeCol[j];
+
+                    let p = this.mkxBase(n2.id, n1.id)
+                    if (this.definitions[p] != undefined){
+                        this.definitions[p] = [];
+                        this.model.subjectTo += "z_" + this.zcount + " - " + this.m + " " + p + " <= 0\n" 
+                        this.model.subjectTo += "z_" + this.zcount + " - " + "y_" + n2.id + " <= 0\n"
+                        this.model.subjectTo += "z_" + this.zcount + " >= 0\n"
+                        this.model.subjectTo += "z_" + this.zcount + " - " + "y_" + n2.id + " - " + this.m + " " + p + " >= - " + this.m + "\n"  
+                        this.model.subjectTo += "y_" + n1.id + " - " + "z_" + this.zcount + " - " + (distance) + " " + p + " >= 0\n"
+                    } else {
+                        p = this.mkxBase(n1.id, n2.id)
+                        this.definitions[p] = [];
+                        this.model.subjectTo += "z_" + this.zcount + " + " + this.m + " " + p + " <= " + this.m + "\n" 
+                        this.model.subjectTo += "z_" + this.zcount + " - " + "y_" + n2.id + " <= 0\n"
+                        this.model.subjectTo += "z_" + this.zcount + " >= 0\n"
+                        this.model.subjectTo += "z_" + this.zcount + " - " + "y_" + n2.id + " + " + this.m + " " + p + " >= 0\n"
+                        this.model.subjectTo += "y_" + n1.id + " - " + "z_" + this.zcount + " + " + (distance) + " " + p + " >= " + (distance) + "\n"
+                    }
+
+                    this.zcount += 1;
+                }
+            }
+        }
+
+        if (this.g.groups.length != 0){
+            for (let group of this.g.groups){
+                for (let node of group.nodes){
+                    this.model.subjectTo += "y_" + node.id + " - ytop_" + group.id + " >= 0\n"
+                    this.model.subjectTo += "y_" + node.id + " - ybottom_" + group.id + " >= 1\n" 
+                }
+
+                for (let node of this.g.nodes){
+                    if (group.nodes.map(n => n.depth).includes(node.depth)){
+                        this.model.subjectTo += "y_" + node.id + " - " + this.m + " z_" + this.zcount + " - ytop_" + group.id + " <= 0\n";
+                        this.model.subjectTo += "- y_" + node.id + " + " + this.m + " z_" + this.zcount + " + ybottom_" + group.id + " <= " + this.m + "\n";
+
+                        this.zcount += 1;
                     }
                 }
             }
@@ -218,9 +329,46 @@ class SimpleLp {
         }
     }
 
+    addMultiRankGroupConstraints(){
+        for (let group of this.g.groups){
+            // does this group span across more than 1 rank?
+            if (new Set(group.nodes.map(n => n.depth)).size == 1) continue;
+
+            let minRankInGroup = Math.min.apply(0, group.nodes.map(n => n.depth))
+            let maxRankInGroup = Math.max.apply(0, group.nodes.map(n => n.depth))
+
+            for (let r1 = minRankInGroup; r1 <= maxRankInGroup; r1++){
+                for (let r2 = r1+1; r2 <= maxRankInGroup; r2++){
+                    let nodesInGroupInR1 = group.nodes.filter(n => n.depth == r1);
+                    let nodesNotInGroupInR1 = this.g.nodeIndex[r1].filter(n => !group.nodes.includes(n));
+
+                    let nodesInGroupInR2 = group.nodes.filter(n => n.depth == r2);
+                    let nodesNotInGroupInR2 = this.g.nodeIndex[r2].filter(n => !group.nodes.includes(n));
+
+                    let tmp = ""
+                    let finalsum = 0;
+                    for (let n1 of nodesInGroupInR1){
+                        for (let n2 of nodesNotInGroupInR1){
+                            tmp += this.mkxDict(" + ", n1.id, n2.id)[0]
+                            finalsum += this.mkxDict(" + ", n1.id, n2.id)[1]
+                        }
+                    } 
+                    for (let n1 of nodesInGroupInR2){
+                        for (let n2 of nodesNotInGroupInR2){
+                            tmp += this.mkxDict(" - ", n1.id, n2.id)[0]
+                            finalsum -= this.mkxDict(" + ", n1.id, n2.id)[1]
+                        }
+                    }
+                    tmp += " = " + finalsum + "\n"
+                    this.model.subjectTo += tmp;
+                }
+            }
+        }
+    }
+
     addForcedOrders(){
         for (let o of this.forcedOrderList){
-            this.model.subjectTo += this.mkxDict(" + ", o[0].id, o[1].id)[0] + " = 1\n"
+            this.model.subjectTo += this.mkxDict(" + ", o[0].id, o[1].id)[0].slice(3) + " = 1\n"
         }
     }
 
@@ -234,6 +382,17 @@ class SimpleLp {
                 else if (this.result["x_" + b.id + "_" + a.id] == 1) return 1;
                 else if (this.result["x_" + b.id + "_" + a.id] == 0) return -1;
             })
+        }
+
+        // **********
+        // bendiness
+        // **********
+        if (this.options.bendiness_reduction_active){
+            console.log(this.result)
+            for (let node of this.g.nodes){
+                let val = this.result["y_" + node.id]                
+                node.y = val;
+            }
         }
     }
 
@@ -256,7 +415,7 @@ class SimpleLp {
 
     // *****
     // *****
-    // variable definitions
+    // variable definitions\
     // *****
     // *****
     mkc(u1, v1, u2, v2){
@@ -269,7 +428,7 @@ class SimpleLp {
         return "x_" + pre + u1 + "_" + pre + u2
     }
 
-    mkxDict (sign, u1, u2) {
+    mkxDict (sign, u1, u2, mult = 1) {
         let res = ""
         let accumulator = 0
 
@@ -282,14 +441,16 @@ class SimpleLp {
 
         let p = this.mkxBase(u1, u2)
         if (this.definitions[p] != undefined){
-            res += sign + p
+            if (mult != 1) res += sign + mult + " " + p
+            else res += sign + "" + p 
         } else {
             p = this.mkxBase(u2, u1)
             // if (this.definitions[p] == undefined) console.warn(p + " not yet in dict");
             accumulator -= 1;
-            res += oppsign + p;
+            if (mult != 1) res += oppsign + mult + " " + p;
+            else res += oppsign + "" + p;
         }
 
-        return [res, accumulator];
+        return [res, accumulator * mult];
     }
 }

@@ -40,7 +40,7 @@ gulp.task('watch', function() {
     ['./js/*.js', './lib/*.js', './*.html'],
     gulp.parallel('concat')
   );
-  browserSync.reload();
+  // browserSync.reload();
 });
 
 // default task
