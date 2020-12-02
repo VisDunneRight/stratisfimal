@@ -449,7 +449,8 @@
             its bendiness, and change the way in which nodes are represented on the plane: they are no more just represented
             by squishing them all to the top, but have a precise vertical position (the $y$) that should be optimized to straighten the lines.
             Therefore, we not only add constraints, but also edit the objective function to reflect the additional variables that need to be minimized.<br>
-            $w_1$ and $w_2$ are two arbitrary constants indicating the weight of the two parts of the function. <br>
+            $w_1$ and $w_2$ are two arbitrary constants indicating the weight of the two parts of the function. If applied to same rank edges,
+            it keeps the ends of the same-rank edges close together. <br>
             <br>
             <b>Formula:</b> <br> 
             Objective function: $\\textrm{Minimize}: w_1 \\sum_{k \\in \\ell}\; \\sum_{\\substack{u_1v_1, u_2v_2 \in E_k \\ u_1v_1 \\neq u_2v_2
@@ -484,7 +485,7 @@
             <br>
             <b>Complexity:</b> <br>
             <br>
-            <b>Todo:</b> Only one case presented. Better discuss buffer. Calculate complexity.`)
+            <b>Todo:</b> Better discuss buffer. Calculate complexity.`)
 
     testRow = d3.select('body')
         .append('div')
@@ -492,7 +493,7 @@
         .style('margin-top', '20px')
 
     for (test of testGenerator.genSimpleBendinessReductionTest()){
-        drawTest(test, testRow);
+        drawTest(test, testRow, 300);
     }
 
     // *********
