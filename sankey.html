@@ -1,0 +1,265 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./lib/seedrandom.min.js"></script>
+  <script src="./lib/d3.v5.min.js"></script>
+  <script src="./lib/glpk.min.js"></script>
+
+  <script src="./simple/simplegraph.js"></script>
+  <script src="./simple/simpleLp.js"></script>
+  <script src="./simple/testCaseGenerator.js"></script>
+
+  <script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+  </script>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs=" crossorigin="anonymous"></script>
+</head>
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 5%;
+    }
+
+    svg {
+        margin: 1%;
+        background-color: white;
+    }
+
+    .modelDivClass {
+        font-size: xx-small;
+        white-space: pre-wrap;
+        font-family: "Lucida Console", Monaco, monospace;
+        background-color: #eee;
+        padding: 2%;
+        border-radius: 4px;
+        margin: 1%;
+        min-width: 150px;
+    }
+
+    .flexbreak {
+        flex-basis: 100%;
+        height: 0;
+    }
+</style>
+
+<body>
+    
+</body>
+
+<script>
+
+let drawSankey = (svg, graph, nodeXDistance = 50, nodeYDistance = 50) => {
+
+    let getNodeCoordX = (node) => (80 + nodeXDistance * (node.depth));
+    let getNodeCoordY = (node) => {
+        if (node.y != undefined) return 20 + node.y * nodeYDistance;
+        else return 20 + graph.nodeIndex[node.depth].indexOf(node) * nodeYDistance
+    };
+    let gnv = (val) => val/30 + 1
+    let getNodeVal = (node) => gnv(node.value)
+    let line = d3.line().curve(d3.curveBasis);
+
+    for (let edge of graph.edges){
+        svg.append('path')
+            .attr('fill', 'none')
+            .attr('stroke', "url(#linear-gradient-" + edge.nodes[0].id + "-" + edge.nodes[1].id + ")")
+            .attr('stroke-width', getNodeVal(edge))
+            .attr('d', () => {
+                let m = 0;
+                let s1 = 0;
+                let s2 = 0;
+                if (edge.nodes[0].depth == edge.nodes[1].depth) m = 20 + (Math.abs(getNodeCoordY(edge.nodes[0]) - getNodeCoordY(edge.nodes[1]))/(nodeYDistance/4));
+                else {
+                    s1 = 20;
+                    s2 = -20;
+                }
+
+                let firstNodeCoord = getNodeCoordY(edge.nodes[0]) + getNodeVal(edge)/2
+                let lastNodeCoord = getNodeCoordY(edge.nodes[1]) + getNodeVal(edge)/2
+
+                let firstNodeEdges = graph.edges.filter(e => e.nodes[0] == edge.nodes[0])
+                    .sort((a, b) => getNodeCoordY(a.nodes[1]) > getNodeCoordY(b.nodes[1]))
+
+                let secondNodeEdges = graph.edges.filter(e => e.nodes[1] == edge.nodes[1])
+                    .sort((a, b) => getNodeCoordY(a.nodes[0]) > getNodeCoordY(b.nodes[0]))
+
+                if (firstNodeEdges.length > 1 && firstNodeEdges.indexOf(edge) != 0){
+                    let sFNE = firstNodeEdges.slice(0, firstNodeEdges.indexOf(edge))
+                        .map(e => e.value).reduce((a, b) => a + b)
+                    firstNodeCoord += gnv(sFNE)
+                }
+                if (secondNodeEdges.length > 1 && secondNodeEdges.indexOf(edge) != 0){
+                    let sFNE = secondNodeEdges.slice(0, secondNodeEdges.indexOf(edge))
+                        .map(e => e.value).reduce((a, b) => a + b)
+                    lastNodeCoord += gnv(sFNE)
+                }
+
+                if (Math.abs(firstNodeCoord - lastNodeCoord) < 2) lastNodeCoord = firstNodeCoord + 1;
+
+                let a = [
+                    [getNodeCoordX(edge.nodes[0]), firstNodeCoord], 
+                    [getNodeCoordX(edge.nodes[0]) + m + s1, firstNodeCoord], 
+                    [getNodeCoordX(edge.nodes[1]) + m + s2, lastNodeCoord],
+                    [getNodeCoordX(edge.nodes[1]), lastNodeCoord]
+                ]
+
+                return line(a);
+            })
+    }
+
+    for (let depth in graph.nodeIndex){
+        for (let node of graph.nodeIndex[depth]){
+            let g = svg.append('g')
+                .attr('transform', 'translate(' + (getNodeCoordX(node)) + ',' + getNodeCoordY(node) +')')
+                .attr('opacity', () => {return node.type == "fake"? 0.1 : 1})
+
+            g.append('rect')
+                .datum(node)
+                .attr('class', 'node')
+                .attr('fill', node.color)
+                .attr('x', -5)
+                .attr('y', 0)
+                .attr('width', 10)
+                .attr('height', (n) => {
+                    return getNodeVal(n);
+                })
+
+            g.append('text')
+                .text(node.name)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', 'small')
+                .attr('y', -10)
+        }
+    }
+
+    for (let group of graph.groups){
+        if (group.nodes == undefined || group.nodes.length == 0) continue;
+        let top = Math.min.apply(0, group.nodes.map(n => getNodeCoordY(n)));
+        let bottom = Math.max.apply(0, group.nodes.map(n => getNodeCoordY(n)));
+        let left = Math.min.apply(0, group.nodes.map(n => getNodeCoordX(n)));
+        let right = Math.max.apply(0, group.nodes.map(n => getNodeCoordX(n)));
+
+        let groupMargin = 5;
+        for (let gr of graph.groups){
+            if (group.nodes.every(n => gr.nodes.includes(n)) && gr != group) groupMargin -= 3;
+        }
+
+        svg.append('rect')
+            .attr('stroke', 'black')
+            .attr('x', left - 10 - groupMargin)
+            .attr('y', top - 8 - groupMargin)
+            .attr('opacity', 0.2)
+            .attr('width', right - left + 20 + groupMargin*2)
+            .attr('height', bottom - top + 16 + groupMargin*2)
+            .attr('fill', 'none')
+            .attr('stroke-width', 2)
+            .attr('stroke-dasharray', '3 3')
+    }
+}
+
+    d3.json("https://gist.githubusercontent.com/mbostock/ca9a0bb7ba204d12974bca90acc507c0/raw/398136b7db83d7d7fd89181b080924eb76041692/energy.json")
+        .then(data => {
+            // data.nodes = data.nodes.slice(0, 15);
+
+            let svg = d3.select("body").append("svg")
+                .attr("width", 1500)
+                .attr("height", 2000)
+
+            let g = new SimpleGraph();
+
+            let nodeCount = 0;
+
+            for (let node of data.nodes){
+                g.addNode({
+                    name: node.name, 
+                    id: 'u' + nodeCount++, 
+                    depth: 0,
+                    value: 0,
+                    color: d3.schemeCategory10[nodeCount%d3.schemeCategory10.length]
+                })
+            }
+
+            for (let link of data.links){
+                let n1 = g.nodes.find(n => n.id == 'u' + link.source)
+                let n2 = g.nodes.find(n => n.id == 'u' + link.target)
+
+                if (n1 == undefined || n2 == undefined) continue;
+
+                g.addEdge({nodes: [n1, n2], value: link.value});
+            }
+
+            let updateDepths = (startnode) => {
+                let childEdges = g.edges.filter(e => e.nodes[0] == startnode)
+
+                if (childEdges.length == 0){
+                    startnode.value = g.edges.filter(e => e.nodes[1] == startnode)
+                        .map(e => e.value).reduce((a, b) => a + b)
+                } else if (g.edges.filter(e => e.nodes[1] == startnode).length == 0){
+                    startnode.value = g.edges.filter(e => e.nodes[0] == startnode)
+                        .map(e => e.value).reduce((a, b) => a + b)
+                }
+                else startnode.value = Math.max(
+                    g.edges.filter(e => e.nodes[0] == startnode)
+                        .map(e => e.value).reduce((a, b) => a + b),
+                    g.edges.filter(e => e.nodes[1] == startnode)
+                        .map(e => e.value).reduce((a, b) => a + b),
+                )
+
+                for (let edge of childEdges){
+                    let n2 = edge.nodes[1];
+                    if (n2.depth < startnode.depth + 1) {
+                        g.nodeIndex[n2.depth].splice(g.nodeIndex[n2.depth].indexOf(n2), 1);
+                        n2.depth = startnode.depth + 1;
+                        while (g.nodeIndex.length <= n2.depth) g.nodeIndex.push([]);
+                        g.nodeIndex[n2.depth].push(n2);
+                        updateDepths(n2);
+                    }
+                }
+            }
+
+            for (let startnode of g.nodes.filter(n => n.depth == 0)){
+                updateDepths(startnode);
+            }
+
+            g.addAnchors();
+
+            for (let edge of g.edges){
+                if (edge.nodes[1].color == undefined) edge.nodes[1].color = edge.nodes[0].color
+                else if (edge.nodes[0].color == undefined) edge.nodes[0].color = edge.nodes[1].color
+
+                var linearGradient = svg.append("defs")
+                    .append("linearGradient")
+                    .attr("id", "linear-gradient-" + edge.nodes[0].id + "-" + edge.nodes[1].id)
+
+                linearGradient.append("stop")
+                    .attr("offset", "0%")
+                    .attr("stop-color", edge.nodes[0].color + "55");
+
+                linearGradient.append("stop")
+                    .attr("offset", "100%")
+                    .attr("stop-color", edge.nodes[1].color + "55");
+            }
+
+            let algorithm = new SimpleLp(g);
+            algorithm.options.bendiness_reduction_active = true;
+            // algorithm.arrange();
+            // algorithm.apply_solution();
+
+            algorithm.makeModel();
+            algorithm.readFromGurobi();
+
+            d3.select("body").append("div")
+                .attr("class", "modelDivClass")
+                .html(algorithm.writeForGurobi())
+
+            document.addEventListener('gurobi_reading_complete', function (e) {
+                drawSankey(svg, g, 200, 50);
+            }, false);
+        })
+</script>
+
+</html>

@@ -22,9 +22,15 @@ class SimpleLp {
         if (this.options.crossings_reduction_active == false && this.options.bendiness_reduction_active == false) return;
 
         let startTime = new Date().getTime()
+        
+        this.makeModel()
+        this.solve()
 
-        // build model from graph
-        this.fillModel(this.model)
+        this.elapsedTime = new Date().getTime() - startTime 
+    }
+
+    makeModel(){
+        this.fillModel()
 
         if (this.model.minimize.length <= 10) {
             this.model.minimize = this.model.minimize.substring(0, this.model.minimize.length - 1)
@@ -35,10 +41,12 @@ class SimpleLp {
             this.model.subjectTo += 'empty = 1\n';
         }
 
+    }
+
+    solve(){
         let prob = this.modelToString(this.model)
         this.modelString = prob;
 
-        // solve
         this.result = {}
         let objective, i;
 
@@ -65,14 +73,9 @@ class SimpleLp {
                 this.result[glp_get_col_name(lp, i)] = glp_get_col_prim (lp, i);
             }
         }
-
-        // console.log(this.result);
-        // this.apply_solution(result)
-
-        this.elapsedTime = new Date().getTime() - startTime 
     }
 
-    fillModel(model){
+    fillModel(){
         this.model.minimize = "Minimize \n"
         this.model.subjectTo = "Subject To \n"
         this.model.bounds = "\nBounds \n"
@@ -390,7 +393,7 @@ class SimpleLp {
         if (this.options.bendiness_reduction_active){
             console.log(this.result)
             for (let node of this.g.nodes){
-                let val = this.result["y_" + node.id]                
+                let val = this.result["y_" + node.id]              
                 node.y = val;
             }
         }
@@ -432,6 +435,9 @@ class SimpleLp {
         let res = ""
         let accumulator = 0
 
+        // if (this.g.groups.find(g => g.nodes.find(n => n.id == u1) && !g.nodes.find(n => n.id == u2))) 
+        //     u1 = 'g' + this.g.groups.find(g => g.nodes.find(n => n.id == u1) && !g.nodes.find(n => n.id == u2)).id;
+
         let oppsign = " - "
         if (sign == " - ") oppsign = " + "
 
@@ -445,12 +451,38 @@ class SimpleLp {
             else res += sign + "" + p 
         } else {
             p = this.mkxBase(u2, u1)
-            // if (this.definitions[p] == undefined) console.warn(p + " not yet in dict");
             accumulator -= 1;
             if (mult != 1) res += oppsign + mult + " " + p;
             else res += oppsign + "" + p;
         }
 
         return [res, accumulator * mult];
+    }
+
+    writeForGurobi(){
+        let tmpstring = ""
+        for (let elem of this.model.bounds.split("\n")){
+            tmpstring += elem.replace("binary ", " ").replace("Bounds", "Binaries\n")
+        }
+        return this.model.minimize.slice(0, this.model.minimize.length - 1) + this.model.subjectTo + tmpstring + '\nEnd\n'
+    }
+
+    readFromGurobi(){
+        fetch('/gurobi/solution.sol')
+            .then(response => response.text())
+            .then(text => {
+                this.result = {};
+                for (let i in text.split("\n")){
+                    if (i == 0) continue;
+                    else {
+                        let r = text.split("\n")[i].split(" ")
+                        this.result[r[0]] = parseFloat(r[1])
+                    }
+                }
+                this.apply_solution();
+
+                const evt = new Event('gurobi_reading_complete');
+                document.dispatchEvent(evt)
+            })
     }
 }

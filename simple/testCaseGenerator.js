@@ -531,4 +531,81 @@ class TestCaseGenerator {
             } 
         }
     }
+
+    * genTestIssue1(){
+        for (let i=0; i<1; i++){
+            
+            if (i == 0){
+                let g = new SimpleGraph();
+            
+                let u1 = {name: 'u1', depth: 0}
+                let u2 = {name: 'u2', depth: 0}
+                let u3 = {name: 'u3', depth: 0}
+                let u4 = {name: 'u4', depth: 1}
+                let u5 = {name: 'u5', depth: 1}
+                let u6 = {name: 'u6', depth: 1}
+                // let v3 = {name: 'u7', depth: 1}
+    
+                g.addNodes([u1, u2, u4, u5])
+                g.addEdge({nodes:[u1, u5]})
+                g.addEdge({nodes:[u2, u4]})
+
+                let group = {nodes: [u2, u5]}
+                g.addGroup(group);
+    
+                let algorithm = new SimpleLp(g);
+                // algorithm.options.bendiness_reduction_active = true;
+    
+                let forceOrder = [
+                ];
+                
+                for (let f of forceOrder){
+                    algorithm.forceOrder(f[0], f[1]);
+                }
+    
+                algorithm.arrange();
+                algorithm.apply_solution();
+    
+                yield {graph: g, algorithm: algorithm, forceOrder: forceOrder}; 
+            } 
+        }
+    }
+
+    * genVarReductionTest(){
+        for (let i=0; i<1; i++){
+            
+            if (i == 0){
+                let g = new SimpleGraph();
+            
+                let u1 = {name: 'u1', depth: 0}
+                let u2 = {name: 'u2', depth: 0}
+                let u3 = {name: 'u3', depth: 0}
+                let u4 = {name: 'u4', depth: 1}
+                let u5 = {name: 'u5', depth: 1}
+                let u6 = {name: 'u6', depth: 1}
+    
+                g.addNodes([u1, u2, u4, u5, u3, u6])
+                g.addEdge({nodes:[u1, u5]})
+                g.addEdge({nodes:[u2, u4]})
+
+                let group = {nodes: [u2, u5, u3, u6]}
+                g.addGroup(group);
+    
+                let algorithm = new SimpleLp(g);
+    
+                let forceOrder = [
+                    [u1, u2]
+                ];
+                
+                for (let f of forceOrder){
+                    algorithm.forceOrder(f[0], f[1]);
+                }
+    
+                algorithm.arrange();
+                algorithm.apply_solution();
+    
+                yield {graph: g, algorithm: algorithm, forceOrder: forceOrder}; 
+            } 
+        }
+    }
 }

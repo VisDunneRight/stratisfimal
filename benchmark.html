@@ -1,0 +1,205 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./lib/seedrandom.min.js"></script>
+  <script src="./lib/d3.v5.min.js"></script>
+  <script src="./lib/glpk.min.js"></script>
+
+  <script src="./simple/simplegraph.js"></script>
+  <script src="./simple/simpleLp.js"></script>
+  <script src="./simple/testCaseGenerator.js"></script>
+
+  <script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+  </script>
+
+<!-- <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs=" crossorigin="anonymous"></script> -->
+</head>
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 5%;
+    }
+
+    svg {
+        margin: 1%;
+        background-color: white;
+    }
+
+    .modelDivClass {
+        font-size: xx-small;
+        white-space: pre-wrap;
+        font-family: "Lucida Console", Monaco, monospace;
+        background-color: #eee;
+        padding: 2%;
+        border-radius: 4px;
+        margin: 1%;
+        min-width: 150px;
+    }
+
+    .flexbreak {
+        flex-basis: 100%;
+        height: 0;
+    }
+</style>
+
+<body>
+    
+</body>
+
+<script>
+
+graficon10nodi = `grafo1010.10
+grafo1032.10
+grafo1070.10
+grafo1071.10
+grafo1098.10
+grafo1120.10
+grafo1123.10
+grafo1126.10
+grafo1137.10
+grafo1164.10
+grafo155.10
+grafo1621.10
+grafo1627.10
+grafo1643.10
+grafo1654.10
+grafo1657.10
+grafo166.10
+grafo1704.10
+grafo1723.10
+grafo1740.10
+grafo1774.10
+grafo1857.10
+grafo1898.10
+grafo1955.10
+grafo1957.10
+grafo1972.10
+grafo209.10
+grafo210.10
+grafo2105.10
+grafo2111.10
+grafo238.10
+grafo2511.10
+grafo2538.10
+grafo254.10
+grafo257.10
+grafo2628.10
+grafo265.10
+grafo2896.10
+grafo3024.10
+grafo327.10
+grafo328.10
+grafo363.10
+grafo376.10
+grafo402.10
+grafo407.10
+grafo455.10
+grafo460.10
+grafo461.10
+grafo462.10
+grafo465.10
+grafo466.10
+grafo473.10
+grafo474.10
+grafo513.10
+grafo541.10
+grafo554.10
+grafo586.10
+grafo587.10
+grafo613.10
+grafo633.10
+grafo688.10
+grafo689.10
+grafo717.10
+grafo718.10
+grafo758.10
+grafo782.10
+grafo836.10
+grafo837.10
+grafo869.10
+grafo870.10
+grafo881.10
+grafo898.10
+grafo907.10
+grafo910.10
+grafo938.10
+grafo949.10
+grafo961.10
+grafo962.10
+grafo978.10`
+
+let processFile = (filename) => {
+    fetch('benchmarks/Rome-Lib/graficon10nodi/' + filename)
+    .then(response => response.text())
+    .then(text => {
+        let svg = d3.select("body").append("svg")
+            .attr("width", 1500)
+            .attr("height", 200)
+
+        let g = new SimpleGraph();
+
+        for (let n of text.split("#")[0].split('\n')){
+            if (n.split(' ')[0] == '') continue;
+            g.addNode({depth: 0, name: 'u' + n.split(' ')[0]})
+        }
+
+        for (let e of text.split("#")[1].split('\n')){
+            if (e.split(" ").length < 4) continue;
+            let n1 = g.nodes.find(n => n.id == 'u' + e.split(' ')[2])
+            let n2 = g.nodes.find(n => n.id == 'u' + e.split(' ')[3].replace("\r", ""))
+
+            if (n1 == undefined || n2 == undefined) continue;
+
+            g.addEdge({nodes: [n1, n2]});
+        }
+
+        let updateDepths = (startnode) => {
+            if (startnode.visited) return;
+            startnode.visited = true;
+            let childEdges = g.edges.filter(e => e.nodes[0] == startnode || e.nodes[1] == startnode)
+
+            for (let edge of childEdges){
+                let n2 = edge.nodes.find(n => n != startnode);
+                if (n2.visited) continue;
+                if (n2.depth < startnode.depth + 1 || true) {
+                    g.nodeIndex[n2.depth].splice(g.nodeIndex[n2.depth].indexOf(n2), 1);
+                    n2.depth = startnode.depth + 1;
+                    while (g.nodeIndex.length <= n2.depth) g.nodeIndex.push([]);
+                    g.nodeIndex[n2.depth].push(n2);
+                    updateDepths(n2);
+                }
+            }
+        }
+
+        for (let startnode of g.nodes){
+            updateDepths(startnode);
+        }
+
+        for (let edge of g.edges){
+            if (edge.nodes[0].depth > edge.nodes[1].depth){
+                edge.nodes = [edge.nodes[1], edge.nodes[0]];
+            }
+        }
+
+        g.addAnchors();
+
+        let algorithm = new SimpleLp(g);
+        // algorithm.options.bendiness_reduction_active = true;
+        algorithm.arrange();
+        algorithm.apply_solution();
+
+        g.draw(svg, 50, 30);
+    })
+}
+
+for (filename of graficon10nodi.split('\n')){
+    processFile(filename);
+}
+
+</script>
+
+</html>

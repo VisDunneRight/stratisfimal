@@ -13,7 +13,7 @@ class SimpleGraph {
     addNode(node){
         // if (this.nodes.name.find(n => n.name == node.name) != undefined) 
         // fix when it becomes a problem
-        node.id = node.name;
+        if (node.id == undefined) node.id = node.name;
 
         this.nodes.push(node);
         this.addLevelsToNodeIndex(node.depth);
@@ -52,11 +52,22 @@ class SimpleGraph {
                     newanchors.push(n);
                 }
 
-                this.addEdge({nodes:[e.nodes[0], newanchors[0]]});
-                this.addEdge({nodes:[newanchors[newanchors.length - 1], e.nodes[1]]});
+                let firstEdge = {nodes:[e.nodes[0], newanchors[0]]};
+                let lastEdge = {nodes:[newanchors[newanchors.length - 1], e.nodes[1]]};  
+
+                if (e.value != undefined){
+                    firstEdge.value = e.value;
+                    lastEdge.value = e.value;
+                }
+
+                this.addEdge(firstEdge);
+                this.addEdge(lastEdge);
 
                 for (let i = 1; i < newanchors.length; i++){
-                    this.addEdge({nodes: [newanchors[i-1], newanchors[i]]})
+                    let newEdge = {nodes: [newanchors[i-1], newanchors[i]]}; 
+                    if (e.value != undefined) newEdge.value = e.value;
+                    
+                    this.addEdge(newEdge);
                 }
             }
         }
@@ -94,11 +105,9 @@ class SimpleGraph {
         }
     }
 
-    draw(svg){
+    draw(svg, nodeXDistance = 50, nodeYDistance = 50){
 
-        let nodeYDistance = 50;
-
-        let getNodeCoordX = (node) => (20 + nodeYDistance * (node.depth));
+        let getNodeCoordX = (node) => (20 + nodeXDistance * (node.depth));
         let getNodeCoordY = (node) => {
             if (node.y != undefined) return 20 + node.y * nodeYDistance;
             else return 20 + this.nodeIndex[node.depth].indexOf(node) * nodeYDistance
