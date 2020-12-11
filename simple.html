@@ -70,6 +70,17 @@
             .style('width', '100%')
             .style('height', svgheight + 'px')
 
+        if (test.graph.groups.length != 0){
+            let rt = div.append('div')
+                .attr('class', 'modelDivClass')
+                .html('<b>groups<b>\n')
+
+            for (let group of test.graph.groups){
+                rt.append('text')
+                    .text('g' + group.id + ": " + group.nodes.map(n => n.id).join(", ") + "\n")
+            }
+        }
+
         if (test.forceOrder != undefined && test.forceOrder.length > 0){
             let rt = div.append('div')
                 .attr('class', 'modelDivClass')
@@ -134,430 +145,430 @@
 
     MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
 
-    // // *********
-    // // SIMPLE INTERSECTION
-    // // *********
+    // *********
+    // SIMPLE INTERSECTION
+    // *********
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h1>✓ Simple Intersection</h1>')
+    d3.select('body')
+        .append('div')
+        .html('<h1>✓ Simple Intersection</h1>')
 
-    // d3.select('body')
-    //     .append('div')
-    //     .style('margin-bottom', '20px')
-    //     .html(`Crossings are computed by comparing each pair of edges in a rank, excluding (for now) same rank edges. <br>
-    //         <b>Formula:</b> <br> 
-    //         $c_{u_1v_1, u_2v_2} + x_{u_2, u_1} + x_{v_1,v_2} \\geq 1 \\quad \\forall u_1, u_2 \\in E_k, \\forall k \\in \\ell$ <br>
-    //         $c_{u_1v_1, u_2v_2} + x_{u_1, u_2} + x_{v_2,v_1} \\geq 1$ <br>
-    //         <br>
-    //         <b>Complexity:</b> <br>
-    //         O(2 * num_edges * log(num_edges)) => $O(|E| log(|E|))$ <br>
-    //         <br>
-    //         <b>Intuition:</b> <br>
-    //         There's a crossing ($c_{u_1v_1, u_2v_2} = 1$) if the ends of an edge have opposite positions in the two adjacent ranks: 
-    //         either $u_1$ is above $u_2$ but $v_1$ is below $v_2$, or viceversa.`)
+    d3.select('body')
+        .append('div')
+        .style('margin-bottom', '20px')
+        .html(`Crossings are computed by comparing each pair of edges in a rank, excluding (for now) same rank edges. <br>
+            <b>Formula:</b> <br> 
+            $c_{u_1v_1, u_2v_2} + x_{u_2, u_1} + x_{v_1,v_2} \\geq 1 \\quad \\forall u_1, u_2 \\in E_k, \\forall k \\in \\ell$ <br>
+            $c_{u_1v_1, u_2v_2} + x_{u_1, u_2} + x_{v_2,v_1} \\geq 1$ <br>
+            <br>
+            <b>Complexity:</b> <br>
+            O(2 * num_edges * log(num_edges)) => $O(|E| log(|E|))$ <br>
+            <br>
+            <b>Intuition:</b> <br>
+            There's a crossing ($c_{u_1v_1, u_2v_2} = 1$) if the ends of an edge have opposite positions in the two adjacent ranks: 
+            either $u_1$ is above $u_2$ but $v_1$ is below $v_2$, or viceversa.`)
 
-    // let testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex') 
+    let testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex') 
 
-    // for (test of testGenerator.gen2x2CrossingTest()){
-    //     drawTest(test, testRow);
-    // }
+    for (test of testGenerator.gen2x2CrossingTest()){
+        drawTest(test, testRow);
+    }
 
-    // // *********
-    // // SIMPLE TRANSITIVITY
-    // // *********
+    // *********
+    // SIMPLE TRANSITIVITY
+    // *********
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h1>Simple Transitivity</h1>')
+    d3.select('body')
+        .append('div')
+        .html('<h1>Simple Transitivity</h1>')
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('')
+    d3.select('body')
+        .append('div')
+        .html('')
 
-    // d3.select('body')
-    //     .append('div')
-    //     .style('margin-bottom', '20px')
-    //     .html(`This is applied to all triplets of nodes in a rank. This enforces a total order of the nodes in a rank. 
-    //         Nodes in different groups don't need to have these constraints. <br> 
-    //         <br>
-    //         <b>Formula:</b> <br> 
-    //         $x_{u_1, u_2} + x_{u_2, u_3} - x_{u_1, u_3} \\geq 0 \\quad \\quad \\forall k \\in \\ell, u_1, u_2, u_3 \\in N_k \\quad
-    //         u_1 \\neq u_2 \\neq u_3, u_1 \\neq u_3$ <br>
-    //         $- x_{u_1, u_2} - x_{u_2, u_3} + x_{u_1, u_3} \\geq -1$ <br>
-    //         <br>
-    //         <b>Complexity:</b> <br>
-    //         O(2 * num_nodes * log(num_nodes * log(num_nodes))) => $O(|N| log(|N| log(|N|)))$ <br>
-    //         <br>
-    //         <b>Intuition:</b> <br>
-    //         If $u_1$ is above $u_2$, and $u_2$ is above $u_3$, then $u_1$ must be above $u_3$. <br>
-    //         <br>
-    //         <b>Todo</b>: not all meaningful combinations are shown here`)
+    d3.select('body')
+        .append('div')
+        .style('margin-bottom', '20px')
+        .html(`This is applied to all triplets of nodes in a rank. This enforces a total order of the nodes in a rank. 
+            Nodes in different groups don't need to have these constraints. <br> 
+            <br>
+            <b>Formula:</b> <br> 
+            $x_{u_1, u_2} + x_{u_2, u_3} - x_{u_1, u_3} \\geq 0 \\quad \\quad \\forall k \\in \\ell, u_1, u_2, u_3 \\in N_k \\quad
+            u_1 \\neq u_2 \\neq u_3, u_1 \\neq u_3$ <br>
+            $- x_{u_1, u_2} - x_{u_2, u_3} + x_{u_1, u_3} \\geq -1$ <br>
+            <br>
+            <b>Complexity:</b> <br>
+            O(2 * num_nodes * log(num_nodes * log(num_nodes))) => $O(|N| log(|N| log(|N|)))$ <br>
+            <br>
+            <b>Intuition:</b> <br>
+            If $u_1$ is above $u_2$, and $u_2$ is above $u_3$, then $u_1$ must be above $u_3$. <br>
+            <br>
+            <b>Todo</b>: not all meaningful combinations are shown here`)
 
-    // testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex')
-    //     .style('margin-top', '20px')
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
 
-    // for (test of testGenerator.genTransitivityTest()){
-    //     drawTest(test, testRow);
-    // }
+    for (test of testGenerator.genTransitivityTest()){
+        drawTest(test, testRow);
+    }
 
-    // // *********
-    // // SAME-RANK EDGES
-    // // *********
+    // *********
+    // SAME-RANK EDGES
+    // *********
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h1>Same rank edges</h1>')
+    d3.select('body')
+        .append('div')
+        .html('<h1>Same rank edges</h1>')
 
-    //     d3.select('body')
-    //     .append('div')
-    //     .style('margin-bottom', '20px')
-    //     .html(`This is one of the most problematic formulas I have. It's just complicated to visualize. It needs to be applied to 
-    //         every pair of same-rank edges in a rank, but it needs 8 different constraints to catch all cases. Overall, the complexity
-    //         doesn't scale that much, but it's ugly.<br> 
-    //         <br>
-    //         <b>Formula:</b> <br> 
-    //         $c_{u_1v_1, u_2v_2} + x_{u_2, u_1} + x_{v_1, u_2} + x_{v_2, v_1} \\geq 1 \\quad \\forall u_1v_1, u_2v_2 \\in E^*_k$<br>
-    //         $c_{u_1v_1, u_2v_2} + x_{v_2, u_1} + x_{v_1, v_2} + x_{u_2, v_1} \\geq 1$<br>
-    //         $c_{u_1v_1, u_2v_2} + x_{u_1, u_2} + x_{v_2, u_1} + x_{v_1, v_2} \\geq 1$<br>
-    //         $c_{u_1v_1, u_2v_2} + x_{v_1, u_2} + x_{v_2, v_1} + x_{u_1, v_2} \\geq 1$<br>
-    //         $c_{u_1v_1, u_2v_2} + x_{u_2, v_1} + x_{u_1, u_2} + x_{v_2, u_1} \\geq 1$<br>
-    //         $c_{u_1v_1, u_2v_2} + x_{v_2, v_1} + x_{u_1, v_2} + x_{u_2, u_1} \\geq 1$<br>
-    //         $c_{u_1v_1, u_2v_2} + x_{v_1, v_2} + x_{u_2, v_1} + x_{u_1, u_2} \\geq 1$<br>
-    //         $c_{u_1v_1, u_2v_2} + x_{u_1, v_2} + x_{u_2, u_1} + x_{v_1, u_2} \\geq 1$<br>
-    //         <br>
-    //         <b>Complexity:</b> <br>
-    //         $O(|E| log(|E|))$ <br>
-    //         <br>
-    //         <b>Intuition:</b> <br>
-    //         There's a crossing between two-same rank edges if nodes are in specific configurations. One example is: if $u_1$ is above $u_2$, $u_2$ is above $v_1$ and $v_1$ is above $v_2$, there's a crossing.<br>
-    //         <br>
-    //         <b>Requirements: </b> Simple Transitivity <br>
-    //         <br>
-    //         <b>Doubts:</b> These formulas are ridiculous, they are too many and just not elegant. 
-    //         Unfortunately, this is the only configuration I have been able to find which captures all the cases. I would need a clever intuition that can catch more cases with less constraints.
-    //         This works, but I'm mostly concerned about presenting this in a paper.`)
+        d3.select('body')
+        .append('div')
+        .style('margin-bottom', '20px')
+        .html(`This is one of the most problematic formulas I have. It's just complicated to visualize. It needs to be applied to 
+            every pair of same-rank edges in a rank, but it needs 8 different constraints to catch all cases. Overall, the complexity
+            doesn't scale that much, but it's ugly.<br> 
+            <br>
+            <b>Formula:</b> <br> 
+            $c_{u_1v_1, u_2v_2} + x_{u_2, u_1} + x_{v_1, u_2} + x_{v_2, v_1} \\geq 1 \\quad \\forall u_1v_1, u_2v_2 \\in E^*_k$<br>
+            $c_{u_1v_1, u_2v_2} + x_{v_2, u_1} + x_{v_1, v_2} + x_{u_2, v_1} \\geq 1$<br>
+            $c_{u_1v_1, u_2v_2} + x_{u_1, u_2} + x_{v_2, u_1} + x_{v_1, v_2} \\geq 1$<br>
+            $c_{u_1v_1, u_2v_2} + x_{v_1, u_2} + x_{v_2, v_1} + x_{u_1, v_2} \\geq 1$<br>
+            $c_{u_1v_1, u_2v_2} + x_{u_2, v_1} + x_{u_1, u_2} + x_{v_2, u_1} \\geq 1$<br>
+            $c_{u_1v_1, u_2v_2} + x_{v_2, v_1} + x_{u_1, v_2} + x_{u_2, u_1} \\geq 1$<br>
+            $c_{u_1v_1, u_2v_2} + x_{v_1, v_2} + x_{u_2, v_1} + x_{u_1, u_2} \\geq 1$<br>
+            $c_{u_1v_1, u_2v_2} + x_{u_1, v_2} + x_{u_2, u_1} + x_{v_1, u_2} \\geq 1$<br>
+            <br>
+            <b>Complexity:</b> <br>
+            $O(|E| log(|E|))$ <br>
+            <br>
+            <b>Intuition:</b> <br>
+            There's a crossing between two-same rank edges if nodes are in specific configurations. One example is: if $u_1$ is above $u_2$, $u_2$ is above $v_1$ and $v_1$ is above $v_2$, there's a crossing.<br>
+            <br>
+            <b>Requirements: </b> Simple Transitivity <br>
+            <br>
+            <b>Doubts:</b> These formulas are ridiculous, they are too many and just not elegant. 
+            Unfortunately, this is the only configuration I have been able to find which captures all the cases. I would need a clever intuition that can catch more cases with less constraints.
+            This works, but I'm mostly concerned about presenting this in a paper.`)
 
-    // testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex')
-    //     .style('margin-top', '20px')
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
 
-    // for (test of testGenerator.genSameRankEdgesTest()){
-    //     drawTest(test, testRow);
-    // }
+    for (test of testGenerator.genSameRankEdgesTest()){
+        drawTest(test, testRow);
+    }
 
-    // // *********
-    // // SAME-RANK EDGES AND TWO-RANK EDGES
-    // // *********
+    // *********
+    // SAME-RANK EDGES AND TWO-RANK EDGES
+    // *********
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h1>Same rank edges and two-rank edges</h1>')
+    d3.select('body')
+        .append('div')
+        .html('<h1>Same rank edges and two-rank edges</h1>')
 
-    // d3.select('body')
-    //     .append('div')
-    //     .style('margin-bottom', '20px')
-    //     .html(`Applied to every pair of same-rank edge and non-same-rank edge in the same rank.<br> 
-    //         <br>
-    //         <b>Formula:</b> <br> 
-    //         $c_{u_1v_1, u_2v_2} + x_{u_1, u_2} + x_{v_2, u_1} \\geq 1 \\quad \\forall u_1v_1 \\in E^*_k, u_2v_2 \\in E^{**}_k, k \\in \\ell$ <br>
-    //         $c_{u_1v_1, u_2v_2} + x_{u_1, v_2} + x_{u_2, u_1} \\geq 1$ <br>
-    //         <br>
-    //         <b>Complexity:</b> <br>
-    //         O(num_two_rank_edges * num_same_rank_edges)<br>
-    //         <br>
-    //         <b>Intuition:</b> <br>
-    //         There's a crossing between a same-rank edge and a non-same-rank edge iff the source of the non-same-rank edge 
-    //         is exactly in-between the two ends of the same-rank edge.<br>
-    //         <br>
-    //         <b>Requirements</b>: Simple Transitivity<br>
-    //         <br>
-    //         <b>Doubts:</b> The formulas above uses $E^{*}_k$ to indicate the set of same-rank edges in a rank, $E^{**}_K$ to indicate the set of
-    //         non-same rank edges. How do I indicate this in a more understandable way? <br>
-    //         How to write the complexity for this? $E^{*}_k$ and $E^{**}_k$ are, together, the full set of edges in a rank. 
-    //         If we just write it as going through all the edges in a rank, the complexity would just be $O(|E| log (|E|))$.`)
+    d3.select('body')
+        .append('div')
+        .style('margin-bottom', '20px')
+        .html(`Applied to every pair of same-rank edge and non-same-rank edge in the same rank.<br> 
+            <br>
+            <b>Formula:</b> <br> 
+            $c_{u_1v_1, u_2v_2} + x_{u_1, u_2} + x_{v_2, u_1} \\geq 1 \\quad \\forall u_1v_1 \\in E^*_k, u_2v_2 \\in E^{**}_k, k \\in \\ell$ <br>
+            $c_{u_1v_1, u_2v_2} + x_{u_1, v_2} + x_{u_2, u_1} \\geq 1$ <br>
+            <br>
+            <b>Complexity:</b> <br>
+            O(num_two_rank_edges * num_same_rank_edges)<br>
+            <br>
+            <b>Intuition:</b> <br>
+            There's a crossing between a same-rank edge and a non-same-rank edge iff the source of the non-same-rank edge 
+            is exactly in-between the two ends of the same-rank edge.<br>
+            <br>
+            <b>Requirements</b>: Simple Transitivity<br>
+            <br>
+            <b>Doubts:</b> The formulas above uses $E^{*}_k$ to indicate the set of same-rank edges in a rank, $E^{**}_K$ to indicate the set of
+            non-same rank edges. How do I indicate this in a more understandable way? <br>
+            How to write the complexity for this? $E^{*}_k$ and $E^{**}_k$ are, together, the full set of edges in a rank. 
+            If we just write it as going through all the edges in a rank, the complexity would just be $O(|E| log (|E|))$.`)
 
-    // testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex')
-    //     .style('margin-top', '20px')
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
 
-    // for (test of testGenerator.genSameRankEdgesPlusTwoRankEdgesTest()){
-    //     drawTest(test, testRow);
-    // }
+    for (test of testGenerator.genSameRankEdgesPlusTwoRankEdgesTest()){
+        drawTest(test, testRow);
+    }
 
-    // // *********
-    // // ANCHOR GENERATION
-    // // *********
+    // *********
+    // ANCHOR GENERATION
+    // *********
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h1>Anchors</h1>')
+    d3.select('body')
+        .append('div')
+        .html('<h1>Anchors</h1>')
 
-    //     d3.select('body')
-    //     .append('div')
-    //     .style('margin-bottom', '20px')
-    //     .html(`Adding anchors is part of the preprocessing and isn't included in the LP formulation. 
-    //         Anchors are represented by semi-transparent nodes.<br> 
-    //         In edges that go over more than one rank, one anchor is added for every jumped rank.
-    //         <br>
-    //         <br>
-    //         <b>Todo:</b> remove results and subject to here.`)
+        d3.select('body')
+        .append('div')
+        .style('margin-bottom', '20px')
+        .html(`Adding anchors is part of the preprocessing and isn't included in the LP formulation. 
+            Anchors are represented by semi-transparent nodes.<br> 
+            In edges that go over more than one rank, one anchor is added for every jumped rank.
+            <br>
+            <br>
+            <b>Todo:</b> remove results and subject to here.`)
 
-    // testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex')
-    //     .style('margin-top', '20px')
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
 
-    // for (test of testGenerator.genSimpleAnchorTest()){
-    //     drawTest(test, testRow);
-    // }
+    for (test of testGenerator.genSimpleAnchorTest()){
+        drawTest(test, testRow);
+    }
 
-    // // *********
-    // // SINGLE RANK GROUPING
-    // // *********
+    // *********
+    // SINGLE RANK GROUPING
+    // *********
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h1>Single-rank grouping</h1>')
+    d3.select('body')
+        .append('div')
+        .html('<h1>Single-rank grouping</h1>')
 
-    // d3.select('body')
-    //     .append('div')
-    //     .style('margin-bottom', '20px')
-    //     .html(`This is needed to keep all the nodes in a group close together, without having external nodes between them.
-    //         Note that this formula can replace completely the transitivity constraints (Simple Transitivity) 
-    //         between nodes in and out of groups, 
-    //         which aren't needed if two of the nodes are inside a group and one is outside it, or viceversa.<br> 
-    //         <br>
-    //         <b>Formula:</b> <br> 
-    //         $x_{u_1, u_3} - x_{u_2, u_3} = 0 \\quad \\forall u_1, u_2 \\in g_1, \\forall u_3 \\not\\in g_1, \\forall g_1 \\in G$<br>
-    //         <br>
-    //         <b>Complexity:</b> <br>
-    //         $O(|N| log(|N| log(|N|)))$<br>
-    //         <br>
-    //         <b>Intuition:</b> <br>
-    //         If nodes $u_1$ and $u_2$ are in group $g_1$, and node $u_3$ is outside $g_1$, then either $u_3$ is above both $u_1$ and $u_2$, 
-    //         or below both of them.<br>
-    //         <br>
-    //         <b>Todo:</b> Not all meaningful combinations are shown here and below`)
+    d3.select('body')
+        .append('div')
+        .style('margin-bottom', '20px')
+        .html(`This is needed to keep all the nodes in a group close together, without having external nodes between them.
+            Note that this formula can replace completely the transitivity constraints (Simple Transitivity) 
+            between nodes in and out of groups, 
+            which aren't needed if two of the nodes are inside a group and one is outside it, or viceversa.<br> 
+            <br>
+            <b>Formula:</b> <br> 
+            $x_{u_1, u_3} - x_{u_2, u_3} = 0 \\quad \\forall u_1, u_2 \\in g_1, \\forall u_3 \\not\\in g_1, \\forall g_1 \\in G$<br>
+            <br>
+            <b>Complexity:</b> <br>
+            $O(|N| log(|N| log(|N|)))$<br>
+            <br>
+            <b>Intuition:</b> <br>
+            If nodes $u_1$ and $u_2$ are in group $g_1$, and node $u_3$ is outside $g_1$, then either $u_3$ is above both $u_1$ and $u_2$, 
+            or below both of them.<br>
+            <br>
+            <b>Todo:</b> Not all meaningful combinations are shown here and below`)
 
-    // testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex')
-    //     .style('margin-top', '20px')
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
 
-    // for (test of testGenerator.genGroupTest(2, 1)){
-    //     drawTest(test, testRow);
-    // }
+    for (test of testGenerator.genGroupTest(2, 1)){
+        drawTest(test, testRow);
+    }
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h3>Single-rank grouping (3 elems per group)</h3>')
+    d3.select('body')
+        .append('div')
+        .html('<h3>Single-rank grouping (3 elems per group)</h3>')
 
-    // testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex')
-    //     .style('margin-top', '20px')
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
 
-    // for (test of testGenerator.genGroupTest(3, 1)){
-    //     drawTest(test, testRow);
-    // }
+    for (test of testGenerator.genGroupTest(3, 1)){
+        drawTest(test, testRow);
+    }
 
-    // // *********
-    // // MULTI-RANK GROUPING
-    // // *********
+    // *********
+    // MULTI-RANK GROUPING
+    // *********
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h1>Multi-rank groups</h1>')
+    d3.select('body')
+        .append('div')
+        .html('<h1>Multi-rank groups</h1>')
 
-    // d3.select('body')
-    //     .append('div')
-    //     .style('margin-bottom', '20px')
-    //     .html(`Multi-rank grouping is implemented with the objective of keeping the group squared. It needs an additional preprocessing step:
-    //         every rank contained in a group must have the same number of nodes in the group. Every rank should then have the same number of nodes.
-    //         To obtain this, we add additional fake nodes.<br>
-    //         After this, another constraint is applied: <br> 
-    //         <br>
-    //         <b>Formula:</b> <br> 
-    //         $\\sum_{\\substack{{u_1} \\in g_1, {u_2} \\not\\in g_1 \\ u_1, u_2 \\in k}} x_{u_1, u_2} = 
-    //         \\sum_{\\substack{{u_3} \\in g_1, {u_4} \\not\\in g_1 \\ u_3, u_4 \\in k+1}} x_{u_3, u_4}$<br>
-    //         <br>
-    //         <b>Complexity:</b> <br>
-    //         <br>
-    //         <br>
-    //         <b>Intuition:</b> <br>
-    //         The distance of a node from the top of the visualization is computed by counting the nodes above it (through the $x$ variables). 
-    //         The sum of the distance of all the nodes in a given rank in a group should be consistent across all the ranks (in which the group has nodes).
-    //         In this way, the group keeps all nodes at the same general height across all ranks.<br>
-    //         <br>
-    //         <b>Requirements:</b> Simple Transitivity, Single-rank groups.<br>
-    //         <br>
-    //         <b>Todo:</b> Not all meaningful combinations are shown here and below. Compute complexity.`)
+    d3.select('body')
+        .append('div')
+        .style('margin-bottom', '20px')
+        .html(`Multi-rank grouping is implemented with the objective of keeping the group squared. It needs an additional preprocessing step:
+            every rank contained in a group must have the same number of nodes in the group. Every rank should then have the same number of nodes.
+            To obtain this, we add additional fake nodes.<br>
+            After this, another constraint is applied: <br> 
+            <br>
+            <b>Formula:</b> <br> 
+            $\\sum_{\\substack{{u_1} \\in g_1, {u_2} \\not\\in g_1 \\ u_1, u_2 \\in k}} x_{u_1, u_2} = 
+            \\sum_{\\substack{{u_3} \\in g_1, {u_4} \\not\\in g_1 \\ u_3, u_4 \\in k+1}} x_{u_3, u_4}$<br>
+            <br>
+            <b>Complexity:</b> <br>
+            <br>
+            <br>
+            <b>Intuition:</b> <br>
+            The distance of a node from the top of the visualization is computed by counting the nodes above it (through the $x$ variables). 
+            The sum of the distance of all the nodes in a given rank in a group should be consistent across all the ranks (in which the group has nodes).
+            In this way, the group keeps all nodes at the same general height across all ranks.<br>
+            <br>
+            <b>Requirements:</b> Simple Transitivity, Single-rank groups.<br>
+            <br>
+            <b>Todo:</b> Not all meaningful combinations are shown here and below. Compute complexity.`)
 
-    // testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex')
-    //     .style('margin-top', '20px')
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
 
-    // for (test of testGenerator.genMultiRankGroupTest()){
-    //     drawTest(test, testRow, 300);
-    // }
+    for (test of testGenerator.genMultiRankGroupTest()){
+        drawTest(test, testRow, 300);
+    }
 
-    // // *********
-    // // NESTED GROUPS
-    // // *********
+    // *********
+    // NESTED GROUPS
+    // *********
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h1>Nested groups</h1>')
+    d3.select('body')
+        .append('div')
+        .html('<h1>Nested groups</h1>')
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html(`Nested groups aren\'t really integrated into LP, this is just a test to show that they 
-    //             work fine with the current formulation. The key to keep them correct is adding anchor / 'fake' nodes where they should be.
-    //             It's important to note that fake nodes should be added starting from the innermost group. Note: sub-groups which aren't completely contained aren't supported.`)
+    d3.select('body')
+        .append('div')
+        .html(`Nested groups aren\'t really integrated into LP, this is just a test to show that they 
+                work fine with the current formulation. The key to keep them correct is adding anchor / 'fake' nodes where they should be.
+                It's important to note that fake nodes should be added starting from the innermost group. Note: sub-groups which aren't completely contained aren't supported.`)
 
-    // testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex')
-    //     .style('margin-top', '20px')
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
 
-    // for (test of testGenerator.genNestedGroupTest()){
-    //     drawTest(test, testRow, 300);
-    // }
+    for (test of testGenerator.genNestedGroupTest()){
+        drawTest(test, testRow, 300);
+    }
 
-    // // *********
-    // // BENDINESS REDUCTION
-    // // *********
+    // *********
+    // BENDINESS REDUCTION
+    // *********
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h1>Bendiness reduction</h1>')
+    d3.select('body')
+        .append('div')
+        .html('<h1>Bendiness reduction</h1>')
 
-    // d3.select('body')
-    //     .append('div')
-    //     .style('margin-bottom', '20px')
-    //     .html(`To straighten lines, we add one additional variable per node ($y$), one additional variable per edge ($bend$) to represent
-    //         its bendiness, and change the way in which nodes are represented on the plane: they are no more just represented
-    //         by squishing them all to the top, but have a precise vertical position (the $y$) that should be optimized to straighten the lines.
-    //         Therefore, we not only add constraints, but also edit the objective function to reflect the additional variables that need to be minimized.<br>
-    //         $w_1$ and $w_2$ are two arbitrary constants indicating the weight of the two parts of the function. If applied to same rank edges,
-    //         it keeps the ends of the same-rank edges close together. <br>
-    //         <br>
-    //         <b>Formula:</b> <br> 
-    //         Objective function: $\\textrm{Minimize}: w_1 \\sum_{k \\in \\ell}\; \\sum_{\\substack{u_1v_1, u_2v_2 \in E_k \\ u_1v_1 \\neq u_2v_2
-    //         }} c_{u_1v_1,u_2v_2} + w_2 \\sum_{u_1, u_2 \\in E} bend_{u_1, u_2}$<br>
-    //         <br>
-    //         Constraints (1): $abs(y_{u_1} - y_{u_2}) \\leq bend_{u_1, u_2}$ <br>
-    //         Constraints (1) linearized: <br>
-    //         $y_{u_1} - y_{u_2} \\leq bend_{u_1, u_2}$ <br>
-    //         $y_{u_2} - y_{u_1} \\leq bend_{u_1, u_2}$ <br>
-    //         <br>
-    //         <b>Intuition (1):</b> The bendiness of every edge is the difference between the two ends of the edge.<br>
-    //         <br>
-    //         Constraints (2): <br>
-    //         $y_{u_1} \\geq y_{u_2} * x_{u_1, u_2} + (\\text{buffer})*x_{u_1, u_2}$ <br>
-    //         $y_{u_2} \\geq y_{u_1} * x_{u_2, u_1} + (\\text{buffer})*x_{u_2, u_1}$ <br>
-    //         <br>
-    //         Constraints (2) linearized: <br>
-    //         $z_i - m * x_{u_2, u_1} \\leq 0 $ <br>
-    //         $z_i \\leq y_{u_2}$ <br>
-    //         $z_i - y_{u_2} + m * x_{u_2, u_1} \\geq - m $ <br>
-    //         $z_i \\geq 0$ <br>
-    //         $y_{u_1} - z_i - (\\text{buffer}) * x_{u_2, u_1} \\geq 0$ <br>
-    //         <br>
-    //         $z_i - m * x_{u_1, u_2} \\leq 0 $ <br>
-    //         $z_i \\leq y_{u_1}$ <br>
-    //         $z_i - y_{u_1} + m * x_{u_1, u_2} \\geq - m $ <br>
-    //         $z_i \\geq 0$ <br>
-    //         $y_{u_2} - z_i - (\\text{buffer}) * x_{u_1, u_2} \\geq 0$ <br>
-    //         <br>
-    //         <b>Intuition (2):</b> If $u_1$ is above $u_2$, then the vertical position of $u_2$ can't be above the one of $u_1$, and viceversa. The buffer
-    //         is needed just in case some distance is needed between the two nodes.<br>
-    //         <br>
-    //         <b>Complexity:</b> <br>
-    //         <br>
-    //         <b>Todo:</b> Better discuss buffer. Calculate complexity.`)
+    d3.select('body')
+        .append('div')
+        .style('margin-bottom', '20px')
+        .html(`To straighten lines, we add one additional variable per node ($y$), one additional variable per edge ($bend$) to represent
+            its bendiness, and change the way in which nodes are represented on the plane: they are no more just represented
+            by squishing them all to the top, but have a precise vertical position (the $y$) that should be optimized to straighten the lines.
+            Therefore, we not only add constraints, but also edit the objective function to reflect the additional variables that need to be minimized.<br>
+            $w_1$ and $w_2$ are two arbitrary constants indicating the weight of the two parts of the function. If applied to same rank edges,
+            it keeps the ends of the same-rank edges close together. <br>
+            <br>
+            <b>Formula:</b> <br> 
+            Objective function: $\\textrm{Minimize}: w_1 \\sum_{k \\in \\ell}\; \\sum_{\\substack{u_1v_1, u_2v_2 \in E_k \\ u_1v_1 \\neq u_2v_2
+            }} c_{u_1v_1,u_2v_2} + w_2 \\sum_{u_1, u_2 \\in E} bend_{u_1, u_2}$<br>
+            <br>
+            Constraints (1): $abs(y_{u_1} - y_{u_2}) \\leq bend_{u_1, u_2}$ <br>
+            Constraints (1) linearized: <br>
+            $y_{u_1} - y_{u_2} \\leq bend_{u_1, u_2}$ <br>
+            $y_{u_2} - y_{u_1} \\leq bend_{u_1, u_2}$ <br>
+            <br>
+            <b>Intuition (1):</b> The bendiness of every edge is the difference between the two ends of the edge.<br>
+            <br>
+            Constraints (2): <br>
+            $y_{u_1} \\geq y_{u_2} * x_{u_1, u_2} + (\\text{buffer})*x_{u_1, u_2}$ <br>
+            $y_{u_2} \\geq y_{u_1} * x_{u_2, u_1} + (\\text{buffer})*x_{u_2, u_1}$ <br>
+            <br>
+            Constraints (2) linearized: <br>
+            $z_i - m * x_{u_2, u_1} \\leq 0 $ <br>
+            $z_i \\leq y_{u_2}$ <br>
+            $z_i - y_{u_2} + m * x_{u_2, u_1} \\geq - m $ <br>
+            $z_i \\geq 0$ <br>
+            $y_{u_1} - z_i - (\\text{buffer}) * x_{u_2, u_1} \\geq 0$ <br>
+            <br>
+            $z_i - m * x_{u_1, u_2} \\leq 0 $ <br>
+            $z_i \\leq y_{u_1}$ <br>
+            $z_i - y_{u_1} + m * x_{u_1, u_2} \\geq - m $ <br>
+            $z_i \\geq 0$ <br>
+            $y_{u_2} - z_i - (\\text{buffer}) * x_{u_1, u_2} \\geq 0$ <br>
+            <br>
+            <b>Intuition (2):</b> If $u_1$ is above $u_2$, then the vertical position of $u_2$ can't be above the one of $u_1$, and viceversa. The buffer
+            is needed just in case some distance is needed between the two nodes.<br>
+            <br>
+            <b>Complexity:</b> <br>
+            <br>
+            <b>Todo:</b> Better discuss buffer. Calculate complexity.`)
 
-    // testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex')
-    //     .style('margin-top', '20px')
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
 
-    // for (test of testGenerator.genSimpleBendinessReductionTest()){
-    //     drawTest(test, testRow, 300);
-    // }
+    for (test of testGenerator.genSimpleBendinessReductionTest()){
+        drawTest(test, testRow, 300);
+    }
 
-    // // *********
-    // // GROUPING WITH BENDINESS REDUCTION
-    // // *********
+    // *********
+    // GROUPING WITH BENDINESS REDUCTION
+    // *********
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h1>Single-rank groups and bendiness reduction</h1>')
+    d3.select('body')
+        .append('div')
+        .html('<h1>Single-rank groups and bendiness reduction</h1>')
 
-    // d3.select('body')
-    //     .append('div')
-    //     .style('margin-bottom', '20px')
-    //     .html(`No change needed in the formulas.`)
+    d3.select('body')
+        .append('div')
+        .style('margin-bottom', '20px')
+        .html(`No change needed in the formulas.`)
 
-    // testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex')
-    //     .style('margin-top', '20px')
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
 
-    // for (test of testGenerator.genGroupBendinessReductionTest()){
-    //     drawTest(test, testRow);
-    // }
+    for (test of testGenerator.genGroupBendinessReductionTest()){
+        drawTest(test, testRow);
+    }
 
-    // // *********
-    // // MULTI-RANK GROUPING WITH BENDINESS REDUCTION
-    // // *********
+    // *********
+    // MULTI-RANK GROUPING WITH BENDINESS REDUCTION
+    // *********
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h1>Multi-rank groups and bendiness reduction</h1>')
+    d3.select('body')
+        .append('div')
+        .html('<h1>Multi-rank groups and bendiness reduction</h1>')
 
-    // d3.select('body')
-    //     .append('div')
-    //     .style('margin-bottom', '20px')
-    //     .html(`No anchors needed anymore. <br> 
-    //         <br>
-    //         <b>Formula:</b> <br> 
-    //         $y_{u_1} \\geq y\\_top_{g_1}$ <br>
-    //         $y_{u_1} \\leq y\\_bottom_{g_1} + \\text{buffer}$<br>
-    //         <br>
-    //         <b>Intuition:</b> All nodes in a group should be included within the top and bottom boundaries of the group.<br>
-    //         <br>
-    //         <b>Formula:</b> <br> 
-    //         $y_{u_1} \\leq y\\_top_{g_1} \\; || \\; y_{u_1} \\geq y\\_bottom_{g_1}$ <br>
-    //         <b>Formula (linearized):</b> <br>
-    //         $y_{u_1} - m * z_1 \\leq y\\_top_{g_1} - 1$ <br>
-    //         $- y_{u_1} + m * z_1 \\leq  m - y\\_bottom_{g_1}$ <br>
-    //         <br>
-    //         <b>Intuition:</b> Nodes outside the group (in the same ranks) should be either above or below the group.<br>
-    //         <br>
-    //         <b>Complexity:</b> <br>
-    //         <br>
-    //         <b>Requirements:</b> Bendiness reduction.<br>
-    //         <br>
-    //         <b>Todo:</b> Not all meaningful combinations are shown here and below. Compute complexity. Not sure if formulas are written correctly here. Write 
-    //         how the formulas are distributed ($\\forall u_1$...)`)
+    d3.select('body')
+        .append('div')
+        .style('margin-bottom', '20px')
+        .html(`No anchors needed anymore. <br> 
+            <br>
+            <b>Formula:</b> <br> 
+            $y_{u_1} \\geq y\\_top_{g_1}$ <br>
+            $y_{u_1} \\leq y\\_bottom_{g_1} + \\text{buffer}$<br>
+            <br>
+            <b>Intuition:</b> All nodes in a group should be included within the top and bottom boundaries of the group.<br>
+            <br>
+            <b>Formula:</b> <br> 
+            $y_{u_1} \\leq y\\_top_{g_1} \\; || \\; y_{u_1} \\geq y\\_bottom_{g_1}$ <br>
+            <b>Formula (linearized):</b> <br>
+            $y_{u_1} - m * z_1 \\leq y\\_top_{g_1} - 1$ <br>
+            $- y_{u_1} + m * z_1 \\leq  m - y\\_bottom_{g_1}$ <br>
+            <br>
+            <b>Intuition:</b> Nodes outside the group (in the same ranks) should be either above or below the group.<br>
+            <br>
+            <b>Complexity:</b> <br>
+            <br>
+            <b>Requirements:</b> Bendiness reduction.<br>
+            <br>
+            <b>Todo:</b> Not all meaningful combinations are shown here and below. Compute complexity. Not sure if formulas are written correctly here. Write 
+            how the formulas are distributed ($\\forall u_1$...)`)
 
-    // testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex')
-    //     .style('margin-top', '20px')
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
 
-    // for (test of testGenerator.genMultiRankGroupBendinessReductionTest()){
-    //     drawTest(test, testRow, 300);
-    // }
+    for (test of testGenerator.genMultiRankGroupBendinessReductionTest()){
+        drawTest(test, testRow, 300);
+    }
 
     // *********
     // GROUP + SIMPLIFY VARS
@@ -576,22 +587,22 @@
         drawTest(test, testRow, 300);
     }
 
-    // // *********
-    // // ISSUES TEST
-    // // *********
+    // *********
+    // ISSUES TEST
+    // *********
 
-    // d3.select('body')
-    //     .append('div')
-    //     .html('<h1>Issue!</h1>')
+    d3.select('body')
+        .append('div')
+        .html('<h1>Issue!</h1>')
 
-    // testRow = d3.select('body')
-    //     .append('div')
-    //     .style('display', 'flex')
-    //     .style('margin-top', '20px')
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
 
-    // for (test of testGenerator.genTestIssue1()){
-    //     drawTest(test, testRow, 300);
-    // }
+    for (test of testGenerator.genTestIssue1()){
+        drawTest(test, testRow, 300);
+    }
     
 </script>
 
