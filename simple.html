@@ -44,6 +44,21 @@
         flex-basis: 100%;
         height: 0;
     }
+
+    .definitionDiv {
+        position: fixed;
+        right: 5%;
+        transform: scale(0.8);
+        max-width: 20%;
+        /* text-align: right; */
+        background-color: white;
+        border-radius: 10px;
+        padding: 10px;
+    }
+
+    .definitionDiv td {
+        padding: 5px;
+    }
 </style>
 
 <body>
@@ -140,6 +155,98 @@
             }
         }
     }
+
+    properDefinitions = {
+        // decision vars
+        crossings: {
+            formula: "$c_{u_1v_1, u_2v_2}$",
+            type: "bool",
+            desc: "the number of crossings between edge $u_1v_1$ and $u_2v_2$"
+        },
+        precedence: {
+            formula: "$x_{u_1, u_2}$",
+            type: "bool",
+            desc: "equal to 1 if $u_1$ is above $u_2$, 0 otherwise"
+        },
+        bendiness: {
+            formula: "$bend_{u_1v_1, u_2v_2}$",
+            type: "int",
+            desc: "bendiness of edge $u_1v_1, u_2v_2$"
+        },
+        y: {
+            formula: "$y_{u_1}$",
+            type: "int",
+            desc: "vertical coordinate of node $u_1$"
+        },
+        y_top: {
+            formula: "$y\\_top_{g_1}$",
+            type: "int",
+            desc: "vertical topmost bound of group $g_1$"
+        },
+        y_bottom: {
+            formula: "$y\\_bottom_{g_1}$",
+            type: "int",
+            desc: "vertical bottommost bound of group $g_1$"
+        },
+        z: {
+            formula: "$z_i$",
+            type: "int",
+            desc: "Auxiliary constant. Used for linearization."
+        },
+        // constants
+        m: {
+            formula: "$m$",
+            type: "int",
+            desc: "Auxiliary constant. Predefined. Must be larger than the vertical span of the vis."
+        },
+        // sets
+        edges: {
+            formula: "$E_k$",
+            type: "set",
+            desc: "set of all edges in rank $k$"
+        },
+        nonSameRankEdges: {
+            formula: "$E^{**}_k$",
+            type: "set",
+            desc: "set of all non-same-rank edges in rank $k$"
+        },
+        sameRankEdges: {
+            formula: "$E^{*}_k$",
+            type: "set",
+            desc: "set of all same-rank edges in rank $k$"
+        },
+        nodes: {
+            formula: "$N_k$",
+            type: "set",
+            desc: "set of all nodes in rank $k$"
+        },
+        ranks: {
+            formula: "$\\ell$",
+            type: "set",
+            desc: "set of all ranks in graph $G$"
+        },
+        groups: {
+            formula: "$\\Gamma$",
+            type: "set",
+            desc: "set of all groups in graph $G$"
+        }
+
+    }
+
+    d3.select('body').append('div')
+        .attr('class', 'definitionDiv')
+        .html(() => {
+            let r = `<b>Definitions: </b><br><table>`
+            for (let elem in properDefinitions){
+                r += "<tr>"
+                for (let field in properDefinitions[elem]){
+                    r += "<td>" + properDefinitions[elem][field] + "</td>"
+                }
+                r += "</tr>"
+            }
+            r += "</table>"
+            return r;
+        })
     
     let testGenerator = new TestCaseGenerator();
 
@@ -462,7 +569,7 @@
             it keeps the ends of the same-rank edges close together. <br>
             <br>
             <b>Formula:</b> <br> 
-            Objective function: $\\textrm{Minimize}: w_1 \\sum_{k \\in \\ell}\; \\sum_{\\substack{u_1v_1, u_2v_2 \in E_k \\ u_1v_1 \\neq u_2v_2
+            Objective function: $\\textrm{Minimize}: w_1 \\sum_{k \\in \\ell}\; \\sum_{\\substack{u_1v_1, u_2v_2 \\in E_k \\ u_1v_1 \\neq u_2v_2
             }} c_{u_1v_1,u_2v_2} + w_2 \\sum_{u_1, u_2 \\in E} bend_{u_1, u_2}$<br>
             <br>
             Constraints (1): $abs(y_{u_1} - y_{u_2}) \\leq bend_{u_1, u_2}$ <br>
