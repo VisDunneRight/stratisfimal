@@ -23,3 +23,7 @@ class Attribute {
         return name;
     }
 }
+
+try {
+    module.exports = exports = Attribute;
+ } catch (e) {}

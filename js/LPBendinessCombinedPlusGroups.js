@@ -10,7 +10,7 @@ class LPBendinessCombinedPlusGroups {
         if (options == undefined){
             this.options = {
                 bendiness_reduction_active: true,
-                bendiness_reduction_type: "optimize_angles",
+                bendiness_reduction_type: "simple", // either "simple" or "optimize_angles"
                 crossings_reduction_active: true,
                 crossings_reduction_weight: 1,
                 bendiness_reduction_weight: 0.1,

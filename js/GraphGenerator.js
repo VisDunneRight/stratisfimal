@@ -18,7 +18,7 @@ class GraphGenerator {
     }
 
     generate(){
-        g = new Graph()
+        let g = new Graph()
         g.baseRowDistance = this.attributeDistribution[1] + 2;
 
         for (var i=1; i<this.d; i++){
@@ -37,7 +37,7 @@ class GraphGenerator {
     }
 
     generateTable(depth, index){
-        name = "T" + depth + "y" + index
+        let name = "T" + depth + "y" + index
         var newTable = new Table(name, name, false, depth);
 
         for (var i=0; i<this.attrDist(); i++){
@@ -143,7 +143,7 @@ class GraphGenerator {
         }
     }
 
-    generateInLayerJoins(){
+    generateInLayerJoins(g){
         for (var i=1; i<this.d; i++){
             let layer = g.tableIndex[i];
 
@@ -214,3 +214,7 @@ class GraphGenerator {
         this.generateRandomJoins(g);
     }
 }
+
+try {
+    module.exports = exports = GraphGenerator;
+ } catch (e) {}

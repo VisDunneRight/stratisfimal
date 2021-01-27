@@ -1,0 +1,244 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./lib/seedrandom.min.js"></script>
+  <script src="./lib/d3.v5.min.js"></script>
+  <script src="./lib/glpk.min.js"></script>
+
+  <link rel="stylesheet" href="./css/bootstrap.min.css">
+
+  <script src="./simple/simplegraph.js"></script>
+  <script src="./simple/simpleLp.js"></script>
+  <script src="./simple/testCaseGenerator.js"></script>
+
+  <script src="./js/GroupCreation.js"></script>
+</head>
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 5%;
+    }
+
+    svg {
+        margin: 1%;
+        background-color: white;
+    }
+
+    .modelDivClass {
+        font-size: xx-small;
+        white-space: pre-wrap;
+        font-family: "Lucida Console", Monaco, monospace;
+        background-color: #eee;
+        padding: 2%;
+        border-radius: 4px;
+        margin: 1%;
+        min-width: 150px;
+    }
+
+    .flexbreak {
+        flex-basis: 100%;
+        height: 0;
+    }
+
+    .definitionDiv {
+        position: fixed;
+        right: 5%;
+        transform: scale(0.8);
+        max-width: 20%;
+        /* text-align: right; */
+        background-color: white;
+        border-radius: 10px;
+        padding: 10px;
+    }
+
+    .definitionDiv td {
+        padding: 5px;
+    }
+</style>
+
+<body>
+    <!-- bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+</body>
+
+<script>
+
+    let drawTest = (test, testRow, svgheight = 200) => {
+
+        let mkx = (elem) => {
+            return "x_" + elem[0].id + "_" + elem[1].id
+        }
+
+        let div = testRow
+            .append('div')
+            .style('width', '25%')
+
+        let svg = div
+            .append('svg')
+            .style('width', '100%')
+            .style('height', svgheight + 'px')
+
+        if (test.algorithm != undefined){
+            let countCrossings = 0
+            for (let elem in test.algorithm.result){
+                if (elem.includes("c_")) countCrossings += test.algorithm.result[elem]
+            }
+
+            let countBendiness = 0
+            for (let elem in test.algorithm.result){
+                if (elem.includes("bend_")) countBendiness += Math.round(test.algorithm.result[elem])
+            }
+
+            let rt = div.append('div')
+                .attr('class', 'modelDivClass')
+                .html(  '<b>Constraints: <b> ' + test.algorithm.model.subjectTo.split("\n").length + '\n' +
+                        '<b>Variables: <b> ' + test.algorithm.model.bounds.split("\n").length + '\n' +
+                        '<b>Crossings: <b> ' + countCrossings + '\n' +
+                        '<b>Bendiness: <b> ' + countBendiness + '\n' +
+                        '<b>Time to model and solve: </b>' + test.algorithm.elapsedTime + '\n' +
+                        '<b>Time to solve: </b>' + test.algorithm.solveTime + '\n')
+        }
+
+        if (test.graph.groups.length != 0){
+            let rt = div.append('div')
+                .attr('class', 'modelDivClass')
+                .html('<b>groups<b>\n')
+
+            for (let group of test.graph.groups){
+                rt.append('text')
+                    .text('g' + group.id + ": " + group.nodes.map(n => n.id).join(", ") + "\n")
+            }
+        }
+
+        if (test.forceOrder != undefined && test.forceOrder.length > 0){
+            let rt = div.append('div')
+                .attr('class', 'modelDivClass')
+                .html('<b>forced vars<b>\n')
+
+            for (elem of test.forceOrder){
+                rt.append('text')
+                    .text(mkx(elem) + '\n')
+            }
+        }
+
+        if (test.algorithm != undefined){
+            if (!test.algorithm.model.minimize.includes('empty')){
+                div.append('div')
+                    .attr('class', 'modelDivClass')
+                    .html(test.algorithm.model.minimize.substring(0, test.algorithm.model.minimize.length - 1).replace('Minimize', '<b>Minimize</b>'))
+            }
+
+            div.append('div')
+                .attr('class', 'modelDivClass')
+                .html(test.algorithm.model.subjectTo.replace('Subject To', '<b>Subject To</b>'))
+                .style('max-height', '200px')
+                .style('overflow-y', 'scroll')
+
+            if (true){
+                let rt = div.append('div')
+                    .attr('class', 'modelDivClass')
+                    .html('<b>result</b>\n')
+                    .style('max-height', '200px')
+                    .style('overflow-y', 'scroll')
+
+                for (elem in test.algorithm.result){
+                    if (elem == "empty") continue;
+                    let r = rt.append('text')
+                        .html(elem + ": " + test.algorithm.result[elem] + '\n')
+
+                    if (test.forceOrder != undefined){
+                        let found = true;
+                        for (el of test.forceOrder){
+                            if (mkx(el) == elem){
+                                found = false;
+                            }
+                        }
+                        if (found) r.html("<b>" + elem + ": " + test.algorithm.result[elem] + '</b>\n')
+                    }
+                }
+            }
+        }
+
+        test.graph.draw(svg);
+
+        if (test.forceOrder != undefined){
+            for (o of test.forceOrder){
+                for (n of o){
+                    svg.selectAll('.node')
+                        .filter(no => no.id == n.id)
+                        .attr('fill', 'red')
+                }
+            }
+        }
+    }
+    
+    let testGenerator = new TestCaseGenerator();
+
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
+
+    for (test of testGenerator.genGroupCreationTest()){
+        addGroups(test.graph)
+        // test.graph.addAnchors()
+        let algorithm = new SimpleLp(test.graph);
+        algorithm.options.bendiness_reduction_active = true;
+        algorithm.options.simplify_for_groups_enabled = false;
+        algorithm.arrange();
+        algorithm.apply_solution();
+        test.algorithm = algorithm;
+        drawTest(test, testRow, 300);
+
+        algorithm = new SimpleLp(test.graph);
+        algorithm.options.bendiness_reduction_active = true;
+        algorithm.options.simplify_for_groups_enabled = true;
+        algorithm.arrange();
+        algorithm.apply_solution();
+        test.algorithm = algorithm;
+        drawTest(test, testRow, 300);
+
+        testRow.append('div')
+            .style('height', 'inherit')
+            .style('width', '2px')
+            .style('background-color', 'gray')
+    }
+
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
+
+    for (test of testGenerator.genGroupCreationTest2()){
+        addGroups(test.graph)
+        // test.graph.addAnchors()
+        let algorithm = new SimpleLp(test.graph);
+        algorithm.options.bendiness_reduction_active = true;
+        algorithm.options.simplify_for_groups_enabled = false;
+        algorithm.arrange();
+        algorithm.apply_solution();
+        test.algorithm = algorithm;
+        drawTest(test, testRow, 300);
+
+        algorithm = new SimpleLp(test.graph);
+        algorithm.options.bendiness_reduction_active = true;
+        algorithm.options.simplify_for_groups_enabled = true;
+        algorithm.arrange();
+        algorithm.apply_solution();
+        test.algorithm = algorithm;
+        drawTest(test, testRow, 300);
+
+        testRow.append('div')
+            .style('height', 'inherit')
+            .style('width', '2px')
+            .style('background-color', 'gray')
+    }
+    
+</script>
+
+</html>

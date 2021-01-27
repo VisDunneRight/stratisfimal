@@ -14,6 +14,7 @@
   <script type="text/javascript"
     src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fast-xml-parser/3.17.5/parser.min.js"></script>
 
 <!-- <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs=" crossorigin="anonymous"></script> -->
 </head>
@@ -132,10 +133,18 @@ grafo961.10
 grafo962.10
 grafo978.10`
 
-let processFile = (filename) => {
-    fetch('benchmarks/Rome-Lib/graficon10nodi/' + filename)
+graficon11nodi = `grafo324.11
+grafo408.11
+grafo749.11`
+
+let processFile = (filename, count=0) => {
+    fetch('benchmarks/Rome-Lib/graficon11nodi/' + filename)
     .then(response => response.text())
     .then(text => {
+        d3.select("body")
+            .append("div")
+            .text(count)
+
         let svg = d3.select("body").append("svg")
             .attr("width", 1500)
             .attr("height", 200)
@@ -157,26 +166,31 @@ let processFile = (filename) => {
             g.addEdge({nodes: [n1, n2]});
         }
 
-        let updateDepths = (startnode) => {
-            if (startnode.visited) return;
-            startnode.visited = true;
-            let childEdges = g.edges.filter(e => e.nodes[0] == startnode || e.nodes[1] == startnode)
-
-            for (let edge of childEdges){
-                let n2 = edge.nodes.find(n => n != startnode);
-                if (n2.visited) continue;
-                if (n2.depth < startnode.depth + 1 || true) {
-                    g.nodeIndex[n2.depth].splice(g.nodeIndex[n2.depth].indexOf(n2), 1);
-                    n2.depth = startnode.depth + 1;
-                    while (g.nodeIndex.length <= n2.depth) g.nodeIndex.push([]);
-                    g.nodeIndex[n2.depth].push(n2);
-                    updateDepths(n2);
-                }
-            }
+        let moveToDepth = (node, newDepth) => {
+            g.nodeIndex[node.depth].splice(g.nodeIndex[node.depth].indexOf(node), 1);
+            node.depth = newDepth;
+            while (g.nodeIndex.length <= node.depth) g.nodeIndex.push([]);
+            g.nodeIndex[node.depth].push(node);
         }
 
-        for (let startnode of g.nodes){
-            updateDepths(startnode);
+        startnode = g.nodes.find(n => n.id == "u1");
+        startnode.visited = true;
+        curIndex = 0;
+        while(g.nodeIndex[curIndex] != undefined){
+            if (curIndex == 0){
+                for (let node of g.nodes){
+                    if (node == startnode) continue;
+                    moveToDepth(node, node.depth + 1)
+                }
+            } else {
+                let edgeSet = g.edges.filter(e => (e.nodes[0].depth < curIndex && e.nodes[1].depth == curIndex) || (e.nodes[1].depth < curIndex && e.nodes[0].depth == curIndex))
+                let nodeSet = g.nodeIndex[curIndex].filter(n => edgeSet.find(e => e.nodes[0] == n || e.nodes[1] == n) == undefined)
+                for (let node of nodeSet){
+                    moveToDepth(node, node.depth+1)
+                }
+            }
+            curIndex++;
+            if (curIndex == 10) break;
         }
 
         for (let edge of g.edges){
@@ -188,16 +202,22 @@ let processFile = (filename) => {
         g.addAnchors();
 
         let algorithm = new SimpleLp(g);
-        // algorithm.options.bendiness_reduction_active = true;
+        algorithm.options.bendiness_reduction_active = false;
+        // algorithm.verbose = true;
         algorithm.arrange();
+        console.log(algorithm.model.subjectTo)
+        
         algorithm.apply_solution();
 
-        g.draw(svg, 50, 30);
+        g.draw(svg, 60, 30);
     })
 }
 
-for (filename of graficon10nodi.split('\n')){
-    processFile(filename);
+let count = 0
+for (filename of graficon11nodi.split('\n')){
+    count++;
+    // if (count < 30 || count > 30) continue; 
+    processFile(filename, count);
 }
 
 </script>

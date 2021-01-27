@@ -1,0 +1,124 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./lib/seedrandom.min.js"></script>
+  <script src="./lib/d3.v5.min.js"></script>
+  <script src="./lib/glpk.min.js"></script>
+
+  <link rel="stylesheet" href="./css/bootstrap.min.css">
+
+  <script src="./simple/simplegraph.js"></script>
+  <script src="./simple/simpleLp.js"></script>
+  <script src="./simple/testCaseGenerator.js"></script>
+
+</head>
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 5%;
+    }
+
+    svg {
+        margin: 1%;
+        background-color: white;
+    }
+
+    .modelDivClass {
+        font-size: xx-small;
+        white-space: pre-wrap;
+        font-family: "Lucida Console", Monaco, monospace;
+        background-color: #eee;
+        padding: 2%;
+        border-radius: 4px;
+        margin: 1%;
+        min-width: 150px;
+    }
+
+    .flexbreak {
+        flex-basis: 100%;
+        height: 0;
+    }
+
+    .definitionDiv {
+        position: fixed;
+        right: 5%;
+        transform: scale(0.8);
+        max-width: 20%;
+        /* text-align: right; */
+        background-color: white;
+        border-radius: 10px;
+        padding: 10px;
+    }
+
+    .definitionDiv td {
+        padding: 5px;
+    }
+</style>
+
+<body>
+    <!-- bootstrap -->
+</body>
+
+<script>
+
+    let drawTest = (test, testRow, svgheight = 200, svgwidth = 200, nodeXdist = 50, nodeYdist = 50) => {
+
+        let mkx = (elem) => {
+            return "x_" + elem[0].id + "_" + elem[1].id
+        }
+
+        let div = testRow
+            .append('div')
+            // .style('width', '20%')
+
+        let svg = div
+            .append('svg')
+            .style('width', svgwidth + 'px')
+            .style('height', svgheight + 'px')
+
+        test.graph.draw(svg, nodeXdist, nodeYdist);
+
+        let colors = ['#303E3F', '#A3B9B6']
+
+        svg.selectAll('path')
+            .attr('stroke', colors[1])
+            .attr('stroke-width', 3)
+
+        svg.selectAll('circle')
+            .attr('stroke', '#303E3F')
+            .attr('stroke-width', 0)
+            .attr('fill', colors[0])
+
+        svg.selectAll('text')
+            .attr('fill', colors[0])
+            .style('font-size', '0.7em')
+            .style("font-weight", "bold")
+
+        svg.selectAll('rect')
+            .attr('stroke', colors[0])
+            .attr('stroke-width', 4)
+            .attr("rx", 10)
+            .attr("ry", 10)
+            .attr("stroke-dasharray", "4 2")
+    }
+    
+    let testGenerator = new TestCaseGenerator();
+
+    // *********
+    // SIMPLE INTERSECTION
+    // *********
+
+    let testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex') 
+
+    for (test of testGenerator.genBigGraph()){
+        drawTest(test, testRow, 500, 500);
+    }
+    
+</script>
+
+</html>

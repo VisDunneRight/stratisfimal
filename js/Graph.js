@@ -370,3 +370,6 @@ class Graph {
     }
 }
 
+try {
+    module.exports = exports = Graph;
+ } catch (e) {}

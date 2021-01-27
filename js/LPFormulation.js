@@ -14,8 +14,11 @@ class LPFormulation {
         let model = {}
 
         this.fillModel(model)
-        let prob = this.modelToString(model)
+        this.model = model;
 
+        let startTime2 = new Date().getTime()
+
+        let prob = this.modelToString(model)
 
         // solve
         let result = {}, objective, i;
@@ -47,6 +50,7 @@ class LPFormulation {
         this.apply_solution(result)
 
         this.elapsedTime = new Date().getTime() - startTime
+        this.solveTime = new Date().getTime() - startTime2
         
     }
 

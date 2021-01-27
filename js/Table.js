@@ -30,3 +30,7 @@ class Table {
         }
     }
 }
+
+try {
+    module.exports = exports = Table;
+ } catch (e) {}

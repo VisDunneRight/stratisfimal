@@ -35,7 +35,7 @@ class SimpleGraph {
     }
 
     addGroup(group){
-        group.id = this.groupIdCounter++;
+        if (group.id == undefined) group.id = this.groupIdCounter++;
         this.groups.push(group);
     }
 
@@ -187,3 +187,6 @@ class SimpleGraph {
     }
 }
 
+try {
+    module.exports = exports = SimpleGraph;
+ } catch (e) {}

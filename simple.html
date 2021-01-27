@@ -339,7 +339,7 @@
             doesn't scale that much, but it's ugly.<br> 
             <br>
             <b>Formula:</b> <br> 
-            $c_{u_1v_1, u_2v_2} + x_{u_2, u_1} + x_{v_1, u_2} + x_{v_2, v_1} \\geq 1 \\quad \\forall u_1v_1, u_2v_2 \\in E^*_k$<br>
+            $c_{u_1v_1, u_2v_2} + x_{u_2, u_1} + x_{v_1, u_2} + x_{v_2, v_1} \\geq 1 \\quad \\forall u_1v_1, u_2v_2 \\in E^*_k, u_1v_1 \\neq u_2v_2, k \\in \\ell$<br>
             $c_{u_1v_1, u_2v_2} + x_{v_2, u_1} + x_{v_1, v_2} + x_{u_2, v_1} \\geq 1$<br>
             $c_{u_1v_1, u_2v_2} + x_{u_1, u_2} + x_{v_2, u_1} + x_{v_1, v_2} \\geq 1$<br>
             $c_{u_1v_1, u_2v_2} + x_{v_1, u_2} + x_{v_2, v_1} + x_{u_1, v_2} \\geq 1$<br>
@@ -349,7 +349,7 @@
             $c_{u_1v_1, u_2v_2} + x_{u_1, v_2} + x_{u_2, u_1} + x_{v_1, u_2} \\geq 1$<br>
             <br>
             <b>Complexity:</b> <br>
-            $O(|E| log(|E|))$ <br>
+            $O(|E|^2)$ <br>
             <br>
             <b>Intuition:</b> <br>
             There's a crossing between two-same rank edges if nodes are in specific configurations. One example is: if $u_1$ is above $u_2$, $u_2$ is above $v_1$ and $v_1$ is above $v_2$, there's a crossing.<br>

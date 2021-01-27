@@ -1,0 +1,218 @@
+
+Gurobi 9.1.0 (mac64, Python) logging started Tue Jan 12 19:24:27 2021
+
+Using license file /Users/dibartolomeo.s/gurobi.lic
+Set parameter LogFile to value gurobi.log
+Academic license - for non-commercial use only - expires 2021-02-05
+
+Gurobi 9.1.0 (mac64, gurobi_cl) logging started Tue Jan 12 19:24:43 2021
+
+Using license file /Users/dibartolomeo.s/gurobi.lic
+Set parameter LogFile to value gurobi.log
+Academic license - for non-commercial use only - expires 2021-02-05
+
+Gurobi 9.1.0 (mac64, gurobi_cl) logging started Tue Jan 12 19:25:18 2021
+
+Using license file /Users/dibartolomeo.s/gurobi.lic
+Set parameter LogFile to value gurobi.log
+Academic license - for non-commercial use only - expires 2021-02-05
+
+Gurobi Optimizer version 9.1.0 build v9.1.0rc0 (mac64)
+Copyright (c) 2020, Gurobi Optimization, LLC
+
+
+Error 10012: Unknown file type for file './gurobi_problems/1.txt'
+
+
+Gurobi 9.1.0 (mac64, gurobi_cl) logging started Tue Jan 12 19:25:43 2021
+
+Using license file /Users/dibartolomeo.s/gurobi.lic
+Set parameter LogFile to value gurobi.log
+Academic license - for non-commercial use only - expires 2021-02-05
+
+Gurobi Optimizer version 9.1.0 build v9.1.0rc0 (mac64)
+Copyright (c) 2020, Gurobi Optimization, LLC
+
+Read LP format model from file ./gurobi_problems/1.lp
+Reading time = 0.00 seconds
+: 44 rows, 36 columns, 132 nonzeros
+Thread count: 4 physical cores, 8 logical processors, using up to 8 threads
+Optimize a model with 44 rows, 36 columns and 132 nonzeros
+Model fingerprint: 0x2aa0ccaf
+Variable types: 0 continuous, 36 integer (36 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Found heuristic solution: objective 2.0000000
+Presolve removed 20 rows and 16 columns
+Presolve time: 0.01s
+Presolved: 24 rows, 20 columns, 72 nonzeros
+Found heuristic solution: objective 0.0000000
+Variable types: 0 continuous, 20 integer (20 binary)
+
+Explored 0 nodes (0 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 2: 0 2 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 0.000000000000e+00, best bound 0.000000000000e+00, gap 0.0000%
+
+Gurobi 9.1.0 (mac64, gurobi_cl) logging started Tue Jan 12 19:26:40 2021
+
+Using license file /Users/dibartolomeo.s/gurobi.lic
+Set parameter LogFile to value gurobi.log
+Academic license - for non-commercial use only - expires 2021-02-05
+
+Gurobi Optimizer version 9.1.0 build v9.1.0rc0 (mac64)
+Copyright (c) 2020, Gurobi Optimization, LLC
+
+Read LP format model from file ./gurobi_problems/1.lp
+Reading time = 0.00 seconds
+: 44 rows, 36 columns, 132 nonzeros
+Thread count: 4 physical cores, 8 logical processors, using up to 8 threads
+Optimize a model with 44 rows, 36 columns and 132 nonzeros
+Model fingerprint: 0x2aa0ccaf
+Variable types: 0 continuous, 36 integer (36 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Found heuristic solution: objective 2.0000000
+Presolve removed 20 rows and 16 columns
+Presolve time: 0.00s
+Presolved: 24 rows, 20 columns, 72 nonzeros
+Found heuristic solution: objective 0.0000000
+Variable types: 0 continuous, 20 integer (20 binary)
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 2: 0 2 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 0.000000000000e+00, best bound 0.000000000000e+00, gap 0.0000%
+
+Wrote result file './gurobi_solutions/1.sol'
+
+
+Gurobi 9.1.0 (mac64, gurobi_cl) logging started Tue Jan 12 19:38:48 2021
+
+Using license file /Users/dibartolomeo.s/gurobi.lic
+Set parameter LogFile to value gurobi.log
+Academic license - for non-commercial use only - expires 2021-02-05
+
+Gurobi Optimizer version 9.1.0 build v9.1.0rc0 (mac64)
+Copyright (c) 2020, Gurobi Optimization, LLC
+
+Read LP format model from file ./gurobi_problems/1.lp
+Reading time = 0.00 seconds
+: 772 rows, 359 columns, 2316 nonzeros
+Thread count: 4 physical cores, 8 logical processors, using up to 8 threads
+Optimize a model with 772 rows, 359 columns and 2316 nonzeros
+Model fingerprint: 0x49d0e88c
+Variable types: 0 continuous, 359 integer (359 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Found heuristic solution: objective 56.0000000
+Presolve removed 84 rows and 69 columns
+Presolve time: 0.01s
+Presolved: 688 rows, 290 columns, 2064 nonzeros
+Found heuristic solution: objective 30.0000000
+Variable types: 0 continuous, 290 integer (290 binary)
+
+Root relaxation: objective 0.000000e+00, 126 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0       0.0000000    0.00000  0.00%     -    0s
+
+Explored 0 nodes (126 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 3: 0 30 56 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 0.000000000000e+00, best bound 0.000000000000e+00, gap 0.0000%
+
+Wrote result file './gurobi_solutions/1.sol'
+
+
+Gurobi 9.1.0 (mac64, gurobi_cl) logging started Tue Jan 12 19:39:16 2021
+
+Using license file /Users/dibartolomeo.s/gurobi.lic
+Set parameter LogFile to value gurobi.log
+Academic license - for non-commercial use only - expires 2021-02-05
+
+Gurobi Optimizer version 9.1.0 build v9.1.0rc0 (mac64)
+Copyright (c) 2020, Gurobi Optimization, LLC
+
+Warning: lp file contains 4 repeated variable(s) in constraints, grouped them, 4 cancellation
+Read LP format model from file ./gurobi_problems/1.lp
+Reading time = 0.00 seconds
+: 1256 rows, 521 columns, 3768 nonzeros
+Thread count: 4 physical cores, 8 logical processors, using up to 8 threads
+Optimize a model with 1256 rows, 521 columns and 3768 nonzeros
+Model fingerprint: 0xfb0f7255
+Variable types: 0 continuous, 521 integer (521 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Found heuristic solution: objective 104.0000000
+Presolve removed 86 rows and 76 columns
+Presolve time: 0.01s
+Presolved: 1170 rows, 445 columns, 3510 nonzeros
+Found heuristic solution: objective 69.0000000
+Variable types: 0 continuous, 445 integer (445 binary)
+
+Root relaxation: objective 0.000000e+00, 219 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0    0.00000    0  168   69.00000    0.00000   100%     -    0s
+H    0     0                      48.0000000    0.00000   100%     -    0s
+H    0     0                      42.0000000    0.00000   100%     -    0s
+H    0     0                      23.0000000    0.00000   100%     -    0s
+     0     0    3.33333    0  178   23.00000    3.33333  85.5%     -    0s
+H    0     0                       7.0000000    3.33333  52.4%     -    0s
+H    0     0                       6.0000000    3.33333  44.4%     -    0s
+H    0     0                       5.0000000    3.33333  33.3%     -    0s
+H    0     0                       4.0000000    3.33333  16.7%     -    0s
+
+Cutting planes:
+  Gomory: 1
+  Zero half: 9
+
+Explored 1 nodes (502 simplex iterations) in 0.06 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 9: 4 5 6 ... 104
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 4.000000000000e+00, best bound 4.000000000000e+00, gap 0.0000%
+
+Wrote result file './gurobi_solutions/1.sol'
+
+
+Gurobi 9.1.0 (mac64, gurobi_cl) logging started Tue Jan 12 19:40:02 2021
+
+Using license file /Users/dibartolomeo.s/gurobi.lic
+Set parameter LogFile to value gurobi.log
+Academic license - for non-commercial use only - expires 2021-02-05
+
+Gurobi Optimizer version 9.1.0 build v9.1.0rc0 (mac64)
+Copyright (c) 2020, Gurobi Optimization, LLC
+
+
+Error 10003: Unable to open file 'help' for input
+

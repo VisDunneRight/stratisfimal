@@ -175,6 +175,28 @@ let drawGraph = (svg, g, algorithm = undefined) => {
             .style('font-family', 'Arial')
             .attr('class', 'crossing_count')
 
+        if (algorithm.solveTime != undefined){
+            d3.select(svg.node().parentNode)
+                .append('div').append('text')
+                .text('solve time: ' + algorithm.solveTime + 'ms')
+                .style('font-family', 'Arial')
+                .attr('class', 'crossing_count')
+        }
+
+        if (algorithm.model != undefined){
+            d3.select(svg.node().parentNode)
+                .append('div').append('text')
+                .text('constraints: ' + algorithm.model.subjectTo.split("\n").length)
+                .style('font-family', 'Arial')
+                .attr('class', 'crossing_count')
+          
+            d3.select(svg.node().parentNode)
+                .append('div').append('text')
+                .text('variables: ' + algorithm.model.bounds.split("\n").length)
+                .style('font-family', 'Arial')
+                .attr('class', 'crossing_count')
+        }
+       
         if (algorithm.iterations != undefined){
 
             d3.select(svg.node().parentNode)
@@ -218,4 +240,121 @@ let drawGraph = (svg, g, algorithm = undefined) => {
                 .text('▶️')
         }
     }
+}
+
+let drawGraphSimple = (svg, g, algorithm = undefined) => {
+    let line = d3.line()
+        .curve(d3.curveBasis);
+
+    let straightline = d3.line()
+
+    if (algorithm.options.bendiness_reduction_active == false){
+        for (let d of g.nodeIndex){
+            for (let node of d){
+                node.y = d.indexOf(node);
+            }
+        }
+
+        for (let group of g.groups){
+            for (let group2 of g.groups){
+                if (group == group2) continue;
+                if (group.nodes[0].depth != group2.nodes[0].depth) continue;
+                if (group.nodes[0].y < group2.nodes[0].y) {
+                    for (let node of group2.nodes){
+                        node.y += 2;
+                    }
+                }
+            }
+        }
+    }
+
+    visg = svg.append('g')
+        .attr('transform', 'translate(20, ' + (20) + ')')
+
+    for (group of g.groups){
+        let topmax = Math.min.apply(0, group.nodes.map(n => n.y))
+        let topnode = group.nodes.find(n => n.y == topmax)
+
+        for (let node of group.nodes){
+            node.y += 1
+        }
+
+        visg.append('rect')
+            .attr('y', (topnode.y-1) * attr_height)
+            .attr('x', topnode.depth * depth_distance)
+            .attr('width', table_width)
+            .attr('height', attr_height)
+            .attr('fill', '#000')
+
+        visg.append('text')
+            .attr('y', (topnode.y-1) * attr_height + attr_height/2 + 3)
+            .attr('x', topnode.depth * depth_distance + table_width/2)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', 'x-small')
+            .attr('fill', 'white')
+            .text(group.id)
+    }
+
+    for (node of g.nodes){
+        visg.append('rect')
+            .attr('y', node.y * attr_height)
+            .attr('x', node.depth * depth_distance)
+            .attr('width', table_width)
+            .attr('height', attr_height)
+            .attr('fill', '#ccc')
+            .attr('stroke', '#fff')
+            .attr('stroke-width', '1')
+
+        visg.append('text')
+            .attr('y', node.y * attr_height + attr_height/2 + 3)
+            .attr('x', node.depth * depth_distance + table_width/2)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', 'x-small')
+            .text(node.id)
+    }
+
+    for (edge of g.edges){
+        visg.append('path')
+            .attr('stroke', 'black')
+            .attr('fill', 'none')
+            .attr('d', d => {
+                first = [edge.nodes[0].depth * depth_distance + table_width, edge.nodes[0].y * attr_height + attr_height/2]
+                second = [edge.nodes[1].depth * depth_distance, edge.nodes[1].y * attr_height + attr_height/2]
+                return line(
+                    [first, 
+                    [first[0] + depth_distance*0.2, first[1]],
+                    [second[0] + (edge.nodes[0].depth == edge.nodes[1].depth ? 1 : -1)*depth_distance*0.2, second[1]],
+                    second]
+                )
+            })  
+    }
+
+    if (algorithm != undefined && algorithm.elapsedTime != undefined){
+        d3.select(svg.node().parentNode)
+            .append('div').append('text')
+            .text('time: ' + algorithm.elapsedTime + 'ms')
+            .style('font-family', 'Arial')
+            .attr('class', 'crossing_count')
+
+        if (algorithm.solveTime != undefined){
+            d3.select(svg.node().parentNode)
+                .append('div').append('text')
+                .text('solve time: ' + algorithm.solveTime + 'ms')
+                .style('font-family', 'Arial')
+                .attr('class', 'crossing_count')
+        }
+
+        d3.select(svg.node().parentNode)
+            .append('div').append('text')
+            .text('constraints: ' + algorithm.model.subjectTo.split("\n").length)
+            .style('font-family', 'Arial')
+            .attr('class', 'crossing_count')
+          
+        d3.select(svg.node().parentNode)
+            .append('div').append('text')
+            .text('variables: ' + algorithm.model.bounds.split("\n").length)
+            .style('font-family', 'Arial')
+            .attr('class', 'crossing_count')
+    }
+
 }

@@ -7,7 +7,8 @@ class SimpleLp {
         this.mip = true;
         this.zcount = 0;
         this.zintcount = 0;
-        this.m = 40;
+        this.m = 50;
+        this.inclusion_graph = this.build_inclusion_graph();
 
         this.options = {
             crossings_reduction_weight: 1,
@@ -20,15 +21,19 @@ class SimpleLp {
 
     async arrange(){
 
+        this.startTime = new Date().getTime()
+
         // TODO: temporary fix
         if (this.options.crossings_reduction_active == false && this.options.bendiness_reduction_active == false) return;
 
-        let startTime = new Date().getTime()
-        
         this.makeModel()
+
+        let startTime2 = new Date().getTime()
+        
         this.solve()
 
-        this.elapsedTime = new Date().getTime() - startTime 
+        this.elapsedTime = new Date().getTime() - this.startTime 
+        this.solveTime = new Date().getTime() - startTime2
     }
 
     makeModel(){
@@ -36,13 +41,84 @@ class SimpleLp {
 
         if (this.model.minimize.length <= 10) {
             this.model.minimize = this.model.minimize.substring(0, this.model.minimize.length - 1)
-            this.model.minimize += 'empty\n';
+            this.model.minimize += 'empty\n\n';
         }
 
         if (this.model.subjectTo.length <= 12) {
             this.model.subjectTo += 'empty = 1\n';
         }
+    }
 
+    build_inclusion_graph(){
+        let root = {
+            id: 'root',
+            children: [],
+            parent: undefined,
+            depth: 0
+        }
+
+        let nodes = [];
+        this.g.groups = this.g.groups.sort((a, b) => a.nodes.length < b.nodes.length)
+
+        for (let group of this.g.groups){
+            let newnode;
+
+            if (nodes.find(gr => gr.id == group.id) == undefined) {
+                newnode = {id: group.id, type: 'group', children: [], size: group.nodes.length, parent: undefined}
+                nodes.push(newnode);
+            } else {
+                newnode = nodes.find(gr => gr.id == group.id)
+            }
+
+            let parentGroups = this.g.groups.filter(gr => group.nodes.every(e => gr.nodes.includes(e)) && gr != group)
+
+            if (parentGroups.length == 0) {
+                newnode.parent = root;
+                root.children.push(newnode);
+            } else {
+                let minP = Math.min.apply(0, parentGroups.map(gr => gr.nodes.length))
+                let minPid = parentGroups.find(gr => gr.nodes.length == minP)
+                
+                let newnewnode;
+
+                if (nodes.find(gr => gr.id == minPid.id) == undefined){
+                    newnewnode = {id: minPid, type: 'group', children: [], size: minPid.nodes.length, parent: undefined};
+                    nodes.push(newnewnode);
+                } else newnewnode = nodes.find(gr => gr.id == minPid.id);
+
+                newnewnode.children.push(newnode);
+                newnode.parent = newnewnode;
+            }
+        }
+
+        for (let node of this.g.nodes){
+            let parentGroups = this.g.groups.filter(gr => gr.nodes.includes(node))
+            let minP = Math.min.apply(0, parentGroups.map(gr => gr.nodes.length))
+            let minPid = parentGroups.find(gr => gr.nodes.length == minP)
+
+            let newNode = {id: node.id, type: 'node'}
+            nodes.push(newNode);
+            if (parentGroups.length < 1) {
+                newNode.parent = root;
+                root.children.push(newNode);
+            } else {
+                newNode.parent = nodes.find(gr => gr.id == minPid.id)
+                newNode.parent.children.push(newNode);
+            }
+        }
+
+        let assignDepth = (curnode) => {
+            if (curnode.children == undefined || curnode.children.length == 0) return;
+            for (let node of curnode.children){
+                node.depth = curnode.depth + 1;
+                assignDepth(node);
+            }
+        }
+        assignDepth(root);
+
+        this.inclusion_graph_flat = nodes;
+
+        return root;
     }
 
     solve(){
@@ -75,6 +151,8 @@ class SimpleLp {
                 this.result[glp_get_col_name(lp, i)] = glp_get_col_prim (lp, i);
             }
         }
+
+        // console.log(this.modelString)
     }
 
     fillModel(){
@@ -87,9 +165,16 @@ class SimpleLp {
 
         this.addForcedOrders();
 
+        if (this.verbose) console.log("Adding transitivity..." + (new Date().getTime() - this.startTime))
+
         this.addTransitivity();
 
-        this.addMultiRankGroupConstraints();
+        if (this.verbose) console.log("Adding multi-rank group constraints..." + (new Date().getTime() - this.startTime))
+
+        if (!this.options.bendiness_reduction_active) 
+            this.addMultiRankGroupConstraints();
+
+        if (this.verbose) console.log("Adding crossings..." + (new Date().getTime() - this.startTime))
 
         this.addCrossingsToSubjectTo();
         this.addCrossingsToMinimize();
@@ -143,7 +228,7 @@ class SimpleLp {
         for (let k = 0; k < this.g.nodeIndex.length; k++){
             let layerEdges = this.g.edges.filter(e => e.nodes[0].depth == k);
 
-            // nlogn
+            
             for (let i = 0; i < layerEdges.length; i++){
                 let u1v1 = layerEdges[i];
 
@@ -158,12 +243,17 @@ class SimpleLp {
                     if (u1 == u2 || v1 == v2) continue;
 
                     if (!this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)){
+
+                        if (this.areElementsComparable(u1v1.nodes[0], u1v1.nodes[1]) && 
+                            this.areElementsComparable(u2v2.nodes[0], u2v2.nodes[1]) && 
+                            !this.areElementsComparable(u1v1.nodes[0], u2v2.nodes[0]) &&
+                            !this.areElementsComparable(u1v1.nodes[1], u2v2.nodes[1])) continue;
+
                         let p1 = this.mkc(u1, v1, u2, v2);
                         let finalsum = 1 + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, v2)[1]
                         this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u2, u1)[0] + this.mkxDict(" + ", v1, v2)[0]
                         this.model.subjectTo += " >= " + finalsum + "\n"
 
-                        p1 = this.mkc(u1, v1, u2, v2)
                         finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v2, v1)[1]
                         this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, v1)[0]
                         this.model.subjectTo += " >= " + finalsum + "\n"
@@ -182,6 +272,8 @@ class SimpleLp {
                         let sv = theSameRankEdge.nodes[1];
                         let no = theOtherEdge.nodes[0];
 
+                        if (!this.areElementsComparable(su, no) && !this.areElementsComparable(sv, no)) continue;
+
                         let p1 = this.mkc(u1, v1, u2, v2)
                         let finalsum = 1 + this.mkxDict(" + ", no.id, su.id)[1] + this.mkxDict(" + ", sv.id, no.id)[1]
                         let tmp = p1 + "" + this.mkxDict(" + ", no.id, su.id)[0] + this.mkxDict(" + ", sv.id, no.id)[0]
@@ -194,38 +286,71 @@ class SimpleLp {
                         this.model.subjectTo += tmp;
 
                     } else if (this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2)) {
+
+                        if (this.areElementsComparable(u1v1.nodes[0], u1v1.nodes[1]) && 
+                            this.areElementsComparable(u2v2.nodes[0], u2v2.nodes[1]) && 
+                            !this.areElementsComparable(u1v1.nodes[0], u2v2.nodes[0]) &&
+                            !this.areElementsComparable(u1v1.nodes[1], u2v2.nodes[1])) continue;
+
+                        let viable = (x1, x2, x3) => {
+                            let z1 = this.mkxDict(" + ", x1[0], x1[1])[0].substring(3)
+                            let z2 = this.mkxDict(" + ", x2[0], x2[1])[0].substring(3)
+                            let z3 = this.mkxDict(" + ", x3[0], x3[1])[0].substring(3)
+                            
+                            if (z1 != z2 && z1 != z3 && z2 != z3)
+                            return true;
+                            else return false;
+                        }
+
+                        let finalsum;
                         let p1 = this.mkc(u1, v1, u2, v2)
-                        let finalsum = 1 + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, u2)[1] + this.mkxDict(" + ", v2, v1)[1]
-                        this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u2, u1)[0] + this.mkxDict(" + ", v1, u2)[0] + this.mkxDict(" + ", v2, v1)[0]
-                        this.model.subjectTo += " >= " + finalsum + "\n"
+                        if (viable([u2, u1], [v1, u2], [v2, v1])){
+                                finalsum = 1 + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, u2)[1] + this.mkxDict(" + ", v2, v1)[1]
+                                this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u2, u1)[0] + this.mkxDict(" + ", v1, u2)[0] + this.mkxDict(" + ", v2, v1)[0]
+                                this.model.subjectTo += " >= " + finalsum + "\n"
+                        }
 
-                        finalsum = 1 + this.mkxDict(" + ", v2, u1)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u2, v1)[1]
-                        this.model.subjectTo += p1 + "" + this.mkxDict(" + ", v2, u1)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", u2, v1)[0]
-                        this.model.subjectTo += " >= " + finalsum + "\n"
+                        if (viable([v2, u1], [v1, v2], [u2, v1])){
+                            finalsum = 1 + this.mkxDict(" + ", v2, u1)[1] + this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u2, v1)[1]
+                            this.model.subjectTo += p1 + "" + this.mkxDict(" + ", v2, u1)[0] + this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", u2, v1)[0]
+                            this.model.subjectTo += " >= " + finalsum + "\n"
+                        }
 
-                        finalsum = 1 +                      this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v2, u1)[1] + this.mkxDict(" + ", v1, v2)[1]
-                        this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, u1)[0] + this.mkxDict(" + ", v1, v2)[0]
-                        this.model.subjectTo += " >= " + finalsum + "\n"
+                        if (viable([u1, u2], [v2, u1], [v1, v2])){
+                            finalsum = 1 +                      this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v2, u1)[1] + this.mkxDict(" + ", v1, v2)[1]
+                            this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, u1)[0] + this.mkxDict(" + ", v1, v2)[0]
+                            this.model.subjectTo += " >= " + finalsum + "\n"
+                        }
 
-                        finalsum = 1 +                      this.mkxDict(" + ", v1, u2)[1] + this.mkxDict(" + ", v2, v1)[1] + this.mkxDict(" + ", u1, v2)[1]
-                        this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", v1, u2)[0] + this.mkxDict(" + ", v2, v1)[0] + this.mkxDict(" + ", u1, v2)[0]
-                        this.model.subjectTo += " >= " + finalsum + "\n"
+                        if (viable([v1, u2], [v2, v1], [u1, v2])){
+                            finalsum = 1 +                      this.mkxDict(" + ", v1, u2)[1] + this.mkxDict(" + ", v2, v1)[1] + this.mkxDict(" + ", u1, v2)[1]
+                            this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", v1, u2)[0] + this.mkxDict(" + ", v2, v1)[0] + this.mkxDict(" + ", u1, v2)[0]
+                            this.model.subjectTo += " >= " + finalsum + "\n"
+                        }
 
-                        finalsum = 1 +                      this.mkxDict(" + ", u2, v1)[1] + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v2, u1)[1]
-                        this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", u2, v1)[0] + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, u1)[0]
-                        this.model.subjectTo += " >= " + finalsum + "\n"
+                        if (viable([u2, v1], [u1, u2], [v2, u1])){
+                            finalsum = 1 +                      this.mkxDict(" + ", u2, v1)[1] + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v2, u1)[1]
+                            this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", u2, v1)[0] + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, u1)[0]
+                            this.model.subjectTo += " >= " + finalsum + "\n"
+                        }
 
-                        finalsum = 1 +                      this.mkxDict(" + ", v2, v1)[1] + this.mkxDict(" + ", u1, v2)[1] + this.mkxDict(" + ", u2, u1)[1]
-                        this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", v2, v1)[0] + this.mkxDict(" + ", u1, v2)[0] + this.mkxDict(" + ", u2, u1)[0]
-                        this.model.subjectTo += " >= " + finalsum + "\n"
+                        if (viable([v2, v1], [u1, v2], [u2, u1])){
+                            finalsum = 1 +                      this.mkxDict(" + ", v2, v1)[1] + this.mkxDict(" + ", u1, v2)[1] + this.mkxDict(" + ", u2, u1)[1]
+                            this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", v2, v1)[0] + this.mkxDict(" + ", u1, v2)[0] + this.mkxDict(" + ", u2, u1)[0]
+                            this.model.subjectTo += " >= " + finalsum + "\n"
+                        }
 
-                        finalsum = 1 +                      this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u2, v1)[1] + this.mkxDict(" + ", u1, u2)[1]
-                        this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", u2, v1)[0] + this.mkxDict(" + ", u1, u2)[0]
-                        this.model.subjectTo += " >= " + finalsum + "\n"
+                        if (viable([v1, v2], [u2, v1], [u1, u2])){
+                            finalsum = 1 +                      this.mkxDict(" + ", v1, v2)[1] + this.mkxDict(" + ", u2, v1)[1] + this.mkxDict(" + ", u1, u2)[1]
+                            this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", v1, v2)[0] + this.mkxDict(" + ", u2, v1)[0] + this.mkxDict(" + ", u1, u2)[0]
+                            this.model.subjectTo += " >= " + finalsum + "\n"
+                        }
 
-                        finalsum = 1 +                      this.mkxDict(" + ", u1, v2)[1] + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, u2)[1]
-                        this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", u1, v2)[0] + this.mkxDict(" + ", u2, u1)[0] + this.mkxDict(" + ", v1, u2)[0]
-                        this.model.subjectTo += " >= " + finalsum + "\n"
+                        if (viable([u1, v2], [u2, u1], [v1, u2])){
+                            finalsum = 1 +                      this.mkxDict(" + ", u1, v2)[1] + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, u2)[1]
+                            this.model.subjectTo += p1 + "" +   this.mkxDict(" + ", u1, v2)[0] + this.mkxDict(" + ", u2, u1)[0] + this.mkxDict(" + ", v1, u2)[0]
+                            this.model.subjectTo += " >= " + finalsum + "\n"
+                        }
                     }
                 }
             }
@@ -322,6 +447,40 @@ class SimpleLp {
                     this.model.subjectTo += "y_" + node.id + " - ybottom_" + group.id + " <= -1\n" 
                 }
 
+                // find all groups spanning across the same ranks
+                for (let group2 of this.g.groups){
+                    if (group == group2) continue;
+                    if (!this.areElementsComparable(group, group2)) continue;
+
+                    let groupranks = new Set(group.nodes.map(n => n.depth))
+                    let group2ranks = new Set(group2.nodes.map(n => n.depth))
+
+                    let commonranks = new Set([...groupranks].filter(x => group2ranks.has(x)));
+                    if (commonranks.size > 0) {
+                        // either g2.top > g1.bottom or g2.bottom < g1.top
+                        if (!this.options.simplify_for_groups_enabled){
+                            this.model.subjectTo += "ybottom_" + group2.id + " - " + this.m + " zint_" + this.zintcount + " - ytop_" + group.id + " < 0\n";
+                            this.model.subjectTo += "- ytop_" + group2.id + " + " + this.m + " zint_" + this.zintcount + " + ybottom_" + group.id + " <= " + (this.m) + "\n";
+
+                            this.zintcount += 1;
+                        } else {
+                            let p = this.mkxDict(" - ", 'g' + group.id, 'g' + group2.id, this.m, false)[0]
+                            let finalsum = this.mkxDict(" - ", 'g' + group.id, 'g' + group2.id, this.m, false)[1]
+                            let p2 = this.mkxDict(" + ", 'g' + group.id, 'g' + group2.id, this.m, false)[0]
+                            let finalsum2 = this.mkxDict(" + ", 'g' + group.id, 'g' + group2.id, this.m, false)[1]
+                            // this.model.subjectTo += "ybottom_" + group2.id + " - " + this.m + " zint_" + this.zintcount + " - ytop_" + group.id + " < 0\n";
+                            // this.model.subjectTo += "- ytop_" + group2.id + " + " + this.m + " zint_" + this.zintcount + " + ybottom_" + group.id + " <= " + (this.m) + "\n";
+                            
+                            this.model.subjectTo += "ybottom_" + group2.id + "" + p + " - ytop_" + group.id + " < " + (-finalsum) + "\n";
+                            this.model.subjectTo += "- ytop_" + group2.id + "" + p2 + " + ybottom_" + group.id + " <= " + (this.m + finalsum2) + "\n";
+                        }
+                        
+                    }
+                }
+
+                // minimize group span
+                this.model.subjectTo += "ybottom_" + group.id + " - ytop_" + group.id + " <= " + group.nodes.length + "\n"
+
                 // every node not in the group should be out of the boundaries of the group, 
                 // either above ytop or below ybottom
                 if (!this.options.simplify_for_groups_enabled){
@@ -358,6 +517,14 @@ class SimpleLp {
         return Math.abs(this.g.groups.filter(gr => gr.nodes.includes(node)).length - this.g.groups.filter(gr => group.nodes.every(n => gr.nodes.includes(n)) && gr != group).length) == 0
     }
 
+    areElementsComparable(el1, el2){
+        let el1node = this.inclusion_graph_flat.find(el => el.id == el1.id);
+        let el2node = this.inclusion_graph_flat.find(el => el.id == el2.id);
+
+        if (el1node.parent.children.includes(el2node)) return true;
+        else return false;
+    }
+
     addTransitivity(){
 
         let addGroupConstraint = (ingroup1, ingroup2, outgroup) => {
@@ -372,21 +539,30 @@ class SimpleLp {
 
             for (let i=0; i<layerNodes.length; i++){
                 let u1 = layerNodes[i].id;
+                let nu1 = layerNodes[i];
 
                 for (let j = i+1; j < layerNodes.length; j++){
                     let u2 = layerNodes[j].id;
+                    let nu2 = layerNodes[j];
 
                     for (let m = j + 1; m < layerNodes.length; m++){
                         let u3 = layerNodes[m].id;
+                        let nu3 = layerNodes[m];
 
                         // groups
-                        if (this.g.groups.find(g => g.nodes.find(n => n.id == u1) && g.nodes.find(n => n.id == u2) && !g.nodes.find(n => n.id == u3))){
+                        if (this.g.groups.find(g => g.nodes.includes(nu1) 
+                            && g.nodes.includes(nu2) 
+                            && !g.nodes.includes(nu3))){
                             if (!this.options.simplify_for_groups_enabled) 
                                 addGroupConstraint(u1, u2, u3)
-                        } else if (this.g.groups.find(g => g.nodes.find(n => n.id == u1) && g.nodes.find(n => n.id == u3) && !g.nodes.find(n => n.id == u2))) {
+                        } else if (this.g.groups.find(g => g.nodes.includes(nu1) 
+                            && g.nodes.includes(nu3) 
+                            && !g.nodes.includes(nu2))) {
                             if (!this.options.simplify_for_groups_enabled) 
                                 addGroupConstraint(u1, u3, u2)
-                        } else if (this.g.groups.find(g => g.nodes.find(n => n.id == u2) && g.nodes.find(n => n.id == u3) && !g.nodes.find(n => n.id == u1))) {
+                        } else if (this.g.groups.find(g => g.nodes.includes(nu2) 
+                            && g.nodes.includes(nu3) 
+                            && !g.nodes.includes(nu1))) {
                             if (!this.options.simplify_for_groups_enabled) 
                                 addGroupConstraint(u2, u3, u1)
                         } else {
@@ -443,17 +619,17 @@ class SimpleLp {
                         let finalsum = 0;
 
                         for (let n2 of nodesNotInGroupInR1){
-                            tmp += this.mkxDict(" + ", 'g' + group.id, n2.id, 1, false)[0]
-                            finalsum += this.mkxDict(" + ", 'g' + group.id, n2.id, 1, false)[1]
+                            tmp += this.mkxDict(" + ", 'g' + group.id, n2.id, 1, true)[0]
+                            finalsum += this.mkxDict(" + ", 'g' + group.id, n2.id, 1, true)[1]
                         }
 
                         for (let n2 of nodesNotInGroupInR2){
-                            tmp += this.mkxDict(" - ", 'g' + group.id, n2.id, 1, false)[0]
-                            finalsum -= this.mkxDict(" + ", 'g' + group.id, n2.id, 1, false)[1]
+                            tmp += this.mkxDict(" - ", 'g' + group.id, n2.id, 1, true)[0]
+                            finalsum -= this.mkxDict(" + ", 'g' + group.id, n2.id, 1, true)[1]
                         }
                         
                         tmp += " = " + finalsum + "\n"
-                        this.model.subjectTo += tmp;
+                        if (tmp.length > 5) this.model.subjectTo += tmp;
 
                     } else {
                         let nodesInGroupInR1 = group.nodes.filter(n => n.depth == r1);
@@ -476,8 +652,9 @@ class SimpleLp {
                                 finalsum -= this.mkxDict(" + ", n1.id, n2.id)[1]
                             }
                         }
+
                         tmp += " = " + finalsum + "\n"
-                        this.model.subjectTo += tmp;
+                        if (tmp.length > 5) this.model.subjectTo += tmp;
                     }
                 }
             }
@@ -510,6 +687,17 @@ class SimpleLp {
                             if (this.isNodeComparableToGroup(a, gr)) bid = 'g' + gr.id;
                         }
                     }
+
+                    // this has to be reworked, it probably can't catch all cases
+                    if (this.g.groups.filter(g => g.nodes.find(n => n.id == a.id)).length > 0 && this.g.groups.filter(g => g.nodes.find(n => n.id == b.id)).length > 0){
+                        let g1 = this.g.groups.find(g => g.nodes.find(n => n.id == a.id))
+                        let g2 = this.g.groups.find(g => g.nodes.find(n => n.id == b.id))
+
+                        if (g1 != g2 && this.areElementsComparable(g1, g2)) {
+                            aid = 'g' + g1.id;
+                            bid = 'g' + g2.id;
+                        }
+                    }
                 }
                 
                 if (this.result["x_" + aid + "_" + bid] == 0) return 1;
@@ -523,11 +711,14 @@ class SimpleLp {
         // bendiness
         // **********
         if (this.options.bendiness_reduction_active){
-            console.log(this.result)
+            // console.log(this.result)
             for (let node of this.g.nodes){
                 let val = this.result["y_" + node.id]              
                 node.y = val;
             }
+
+            let min_y = Math.min.apply(0, this.g.nodes.map(n => n.y))
+            this.g.nodes.map(n => {n.y -= min_y; return n})
         }
     }
 
@@ -568,17 +759,22 @@ class SimpleLp {
         let accumulator = 0
 
         if (this.options.simplify_for_groups_enabled && replaceForGroupsEnabled){
-            if (this.g.groups.find(g => g.nodes.find(n => n.id == u1) && !g.nodes.find(n => n.id == u2))) {
-                let groupSet = this.g.groups.filter(g => g.nodes.find(n => n.id == u1) && !g.nodes.find(n => n.id == u2));
-                let biggestGroupInGroupSet = Math.max.apply(0, groupSet.map(gr => gr.nodes.length));
-                u1 = 'g' + groupSet.find(gr => gr.nodes.length == biggestGroupInGroupSet).id;
-            }
-            if (this.g.groups.find(g => g.nodes.find(n => n.id == u2) && !g.nodes.find(n => n.id == u1))) {
-                let groupSet = this.g.groups.filter(g => g.nodes.find(n => n.id == u2) && !g.nodes.find(n => n.id == u1));
-                let biggestGroupInGroupSet = Math.max.apply(0, groupSet.map(gr => gr.nodes.length));
-                u2 = 'g' + groupSet.find(gr => gr.nodes.length == biggestGroupInGroupSet).id;
-            }
-                
+            // console.log("1: ", u1, u2)
+
+            let u1_inclusion_graph_node = this.inclusion_graph_flat.find(n => n.id == u1.replace("g", ""))
+            let u2_inclusion_graph_node = this.inclusion_graph_flat.find(n => n.id == u2.replace("g", ""))
+            // console.log(u1, u2, this.areElementsComparable(u1_inclusion_graph_node, u2_inclusion_graph_node), this.inclusion_graph)
+
+            // console.log(u1, u2, this.inclusion_graph_flat, u1_inclusion_graph_node, u2_inclusion_graph_node)
+
+            let r = this.findClosestSibling(u1_inclusion_graph_node, u2_inclusion_graph_node);
+            
+            if (r[0].type == 'group') u1 = "g" + r[0].id
+            else u1 = r[0].id
+            if (r[1].type == 'group') u2 = "g" + r[1].id
+            else u2 = r[1].id
+
+            // console.log("r:", u1, u2)
         } 
 
         let oppsign = " - "
@@ -600,6 +796,15 @@ class SimpleLp {
         }
 
         return [res, accumulator * mult];
+    }
+
+    findClosestSibling(u1, u2){
+        if (this.areElementsComparable(u1, u2)) return [u1, u2];
+        else {
+            if (u1.depth > u2.depth) return this.findClosestSibling(u1.parent, u2);
+            else if (u1.depth == u2.depth) return this.findClosestSibling(u1.parent, u2.parent);
+            else return this.findClosestSibling(u1, u2.parent);
+        }
     }
 
     writeForGurobi(){
@@ -629,3 +834,7 @@ class SimpleLp {
             })
     }
 }
+
+try {
+    module.exports = exports = SimpleLp;
+ } catch (e) {}

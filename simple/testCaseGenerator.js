@@ -33,7 +33,7 @@ class TestCaseGenerator {
         }
     }
 
-    genRandomGraph (seed, maxNodesPerRank, maxDepth, childProb, randProb, selfProb) {
+    genRandomGraph (seed, maxNodesPerRank, maxDepth, childProb, randProb, selfProb, groupsEnabled = false, groupSpawnProb = 0.5, groupInclusionProb, groupExpandProb) {
         let g = new SimpleGraph();
 
         let s = {name: 's', depth: 0}
@@ -72,7 +72,43 @@ class TestCaseGenerator {
 
         addChildren(s);
 
+        if (groupsEnabled){
+            for (let node of g.nodes){
+                if (this.rng() < groupSpawnProb){
+                    let group = {nodes: [node]}
+                    let curDepth = node.depth;
+
+                    let groupsInWhichNodeIsContained = new Set(g.groups.filter(gr => gr.nodes.includes(node)))
+
+                    do {
+                        for (let n2 of g.nodeIndex[curDepth].filter(n => n != node)){
+                            let groupsInWhichN2IsContained = new Set(g.groups.filter(gr => gr.nodes.includes(n2)))
+
+                            if (!this.eqSet(groupsInWhichNodeIsContained, groupsInWhichN2IsContained)) continue;
+                            
+                            if (this.rng() < groupInclusionProb){
+                                // console.log(node.name, groupsInWhichNodeIsContained, n2.name, groupsInWhichN2IsContained, g.groups);
+                                group.nodes.push(n2);
+                            }
+                        }
+
+                        curDepth += 1
+                    } while (this.rng() < groupExpandProb && curDepth < g.nodeIndex.length)
+                    
+                    if (group.nodes.length > 1)
+                        g.addGroup(group)
+                }
+            }
+        }
+
         return g;
+    }
+
+
+    eqSet(as, bs) {
+        if (as.size !== bs.size) return false;
+        for (var a of as) if (!bs.has(a)) return false;
+        return true;
     }
 
 
@@ -376,7 +412,7 @@ class TestCaseGenerator {
         }
     }
 
-    * genSimpleBendinessReductionTest(){
+    * genSimpleBendinessReductionTest(bendiness_active=true){
         for (let i=0; i<4; i++){
             if (i == 0){
                 let g = new SimpleGraph();
@@ -392,7 +428,7 @@ class TestCaseGenerator {
                 g.addEdge({nodes:[s, u3] })
     
                 let algorithm = new SimpleLp(g);
-                algorithm.options.bendiness_reduction_active = true;
+                algorithm.options.bendiness_reduction_active = bendiness_active;
     
                 let forceOrder = [
                 ];
@@ -413,7 +449,7 @@ class TestCaseGenerator {
                 let g = this.genRandomGraph("caat", maxNodesPerRank, maxDepth, 0.6, 0.2, 0.1)
 
                 let algorithm = new SimpleLp(g);
-                algorithm.options.bendiness_reduction_active = true;
+                algorithm.options.bendiness_reduction_active = bendiness_active;
                 algorithm.arrange();
                 algorithm.apply_solution();
 
@@ -426,7 +462,7 @@ class TestCaseGenerator {
                 let g = this.genRandomGraph("AAA", maxNodesPerRank, maxDepth, 0.6, 0.2, 0.2)
 
                 let algorithm = new SimpleLp(g);
-                algorithm.options.bendiness_reduction_active = true;
+                algorithm.options.bendiness_reduction_active = bendiness_active;
                 algorithm.arrange();
                 algorithm.apply_solution();
 
@@ -439,7 +475,7 @@ class TestCaseGenerator {
                 let g = this.genRandomGraph("eee", maxNodesPerRank, maxDepth, 0.6, 0.2, 0.2)
 
                 let algorithm = new SimpleLp(g);
-                algorithm.options.bendiness_reduction_active = true;
+                algorithm.options.bendiness_reduction_active = bendiness_active;
                 algorithm.arrange();
                 algorithm.apply_solution();
 
@@ -449,7 +485,7 @@ class TestCaseGenerator {
     }
 
     * genGroupBendinessReductionTest(){
-        for (let i=0; i<1; i++){
+        for (let i=0; i<2; i++){
             
             if (i == 0){
                 let g = new SimpleGraph();
@@ -484,11 +520,37 @@ class TestCaseGenerator {
     
                 yield {graph: g, algorithm: algorithm, forceOrder: forceOrder}; 
             } 
+            if (i == 1){
+                let maxNodesPerRank = 4;
+                let maxDepth = 4;
+                let g = this.genRandomGraph("hello", maxNodesPerRank, maxDepth, 0.6, 0.2, 0.2)
+
+                let group = {nodes: [g.nodes[3], g.nodes[6], g.nodes[7]]}
+                g.addGroup(group);
+
+                group = {nodes: [g.nodes[8], g.nodes[5]]}
+                g.addGroup(group);
+    
+                let algorithm = new SimpleLp(g);
+                algorithm.options.bendiness_reduction_active = true;
+    
+                let forceOrder = [
+                ];
+                
+                for (let f of forceOrder){
+                    algorithm.forceOrder(f[0], f[1]);
+                }
+    
+                algorithm.arrange();
+                algorithm.apply_solution();
+    
+                yield {graph: g, algorithm: algorithm, forceOrder: forceOrder}; 
+            } 
         }
     }
 
     * genMultiRankGroupBendinessReductionTest(){
-        for (let i=0; i<1; i++){
+        for (let i=0; i<2; i++){
             
             if (i == 0){
                 let g = new SimpleGraph();
@@ -512,6 +574,30 @@ class TestCaseGenerator {
                 g.addEdge({nodes:[s, u4]})
 
                 let group = {nodes: [u1, v1, v3]}
+                g.addGroup(group);
+    
+                let algorithm = new SimpleLp(g);
+                algorithm.options.bendiness_reduction_active = true;
+    
+                let forceOrder = [
+                ];
+                
+                for (let f of forceOrder){
+                    algorithm.forceOrder(f[0], f[1]);
+                }
+    
+                algorithm.arrange();
+                algorithm.apply_solution();
+    
+                yield {graph: g, algorithm: algorithm, forceOrder: forceOrder}; 
+            } 
+
+            if (i == 1){
+                let maxNodesPerRank = 4;
+                let maxDepth = 4;
+                let g = this.genRandomGraph("eee", maxNodesPerRank, maxDepth, 0.6, 0.2, 0.2)
+
+                let group = {nodes:[g.nodes[2], g.nodes[4]]}
                 g.addGroup(group);
     
                 let algorithm = new SimpleLp(g);
@@ -805,6 +891,183 @@ class TestCaseGenerator {
     
                 yield {graph: g, algorithm: algorithm, forceOrder: forceOrder}; 
             } 
+        }
+    }
+
+    * collapseVis(){
+        for (let i=0; i<2; i++){
+            
+            if (i == 0){
+                let g = new SimpleGraph();
+            
+                let u1 = {name: 'u1', depth: 0}
+                let u2 = {name: 'u2', depth: 1}
+                let u3 = {name: 'u3', depth: 1}
+                let u4 = {name: 'u4', depth: 2}
+                let u5 = {name: 'u5', depth: 2}
+                let u6 = {name: 'u6', depth: 1}
+                let u7 = {name: 'u7', depth: 3}
+                let u8 = {name: 'u8', depth: 2}
+                let u9 = {name: 'u9', depth: 3}
+    
+                g.addNodes([u1, u2, u3, u4, u5, u6, u7, u8, u9])
+                g.addEdge({nodes:[u1, u2]})
+                g.addEdge({nodes:[u2, u5]})
+                g.addEdge({nodes:[u2, u4]})
+                g.addEdge({nodes:[u1, u3]})
+                g.addEdge({nodes:[u1, u6]})
+                g.addEdge({nodes:[u8, u7]})
+                g.addEdge({nodes:[u6, u8]})
+                g.addEdge({nodes:[u8, u9]})
+
+                let group = {nodes: [u2, u4, u5, u3]}
+                g.addGroup(group);
+
+                group = {nodes: [u8, u7, u9]}
+                g.addGroup(group);
+                group = {nodes: [u7, u9]}
+                g.addGroup(group);
+    
+                let algorithm = new SimpleLp(g);
+                algorithm.options.bendiness_reduction_active = true;
+    
+                let forceOrder = [
+                ];
+                
+                for (let f of forceOrder){
+                    algorithm.forceOrder(f[0], f[1]);
+                }
+    
+                algorithm.arrange();
+                algorithm.apply_solution();
+    
+                yield {graph: g, algorithm: algorithm, forceOrder: forceOrder}; 
+            } 
+
+            if (i == 1){
+                let g = new SimpleGraph();
+            
+                let s = {name: 'G', depth: 0}
+                let u1 = {name: 'u1', depth: 1}
+                // let u2 = {name: 'u2', depth: 1}
+                let u3 = {name: 'u3', depth: 2}
+                let u6 = {name: 'u6', depth: 1}
+
+                let u2 = {name: 'u2', depth: 2}
+                let u4 = {name: 'u4', depth: 2}
+                let u5 = {name: 'u5', depth: 2}
+
+                let u8 = {name: 'u8', depth: 2}
+                let u7 = {name: 'u7', depth: 3}
+                let u9 = {name: 'u9', depth: 3}
+
+                let g1 = {name: 'g1', depth: 1}
+                let g2 = {name: 'g2', depth: 1}
+
+                let g3 = {name: 'g3', depth: 2}
+    
+                g.addNodes([s, u1, u6, g1, g2, u2, u3, u4, u5, u8, g3, u7, u9])
+                g.addEdge({nodes:[s, u1]})
+                g.addEdge({nodes:[g1, u3]})
+                g.addEdge({nodes:[s, u6]})
+                g.addEdge({nodes:[s, g1]})
+                g.addEdge({nodes:[s, g2]})
+                g.addEdge({nodes:[g1, u2]})
+                g.addEdge({nodes:[g1, u4]})
+                g.addEdge({nodes:[g1, u5]})
+
+                g.addEdge({nodes:[g2, u8]})
+                g.addEdge({nodes:[g2, g3]})
+                g.addEdge({nodes:[g3, u7]})
+                g.addEdge({nodes:[g3, u9]})
+    
+                let algorithm = new SimpleLp(g);
+                algorithm.options.bendiness_reduction_active = true;
+    
+                let forceOrder = [
+                ];
+                
+                for (let f of forceOrder){
+                    algorithm.forceOrder(f[0], f[1]);
+                }
+    
+                algorithm.arrange();
+                algorithm.apply_solution();
+    
+                yield {graph: g, algorithm: algorithm, forceOrder: forceOrder}; 
+            } 
+        }
+    }
+
+    * genBigGraph(){
+        let maxNodesPerRank = 4;
+        let maxDepth = 6;
+
+        let g = this.genRandomGraph("ccvfdaat", maxNodesPerRank, maxDepth, 0.6, 0.05, 0.01, true, 0.5, 0.2, 0.7)
+
+        let algorithm = new SimpleLp(g);
+        algorithm.options.bendiness_reduction_active = true;
+        algorithm.arrange();
+        algorithm.apply_solution();
+
+        yield {graph: g, algorithm: algorithm}; 
+    }
+
+    * genGroupCreationTest(){
+        for (let i=0; i<4; i++){
+            if (i == 0){
+                let maxNodesPerRank = 3;
+                let maxDepth = 4;
+    
+                let g = this.genRandomGraph("paat", maxNodesPerRank, maxDepth, 0.6, 0.2, 0.1)
+    
+                yield {graph: g}; 
+            }
+            if (i == 1){
+                let maxNodesPerRank = 5;
+                let maxDepth = 4;
+    
+                let g = this.genRandomGraph("caat", maxNodesPerRank, maxDepth, 0.6, 0.2, 0.1)
+    
+                yield {graph: g}; 
+            }
+            if (i == 2){
+                let maxNodesPerRank = 4;
+                let maxDepth = 4;
+    
+                let g = this.genRandomGraph("AAA", maxNodesPerRank, maxDepth, 0.6, 0.2, 0.2)
+    
+                yield {graph: g}; 
+            }
+            if (i == 3){
+                let maxNodesPerRank = 4;
+                let maxDepth = 4;
+    
+                let g = this.genRandomGraph("eee", maxNodesPerRank, maxDepth, 0.6, 0.2, 0.2)
+    
+                yield {graph: g}; 
+            }
+        }
+    }
+
+    * genGroupCreationTest2(){
+        for (let i=0; i<2; i++){
+            if (i == 0){
+                let maxNodesPerRank = 5;
+                let maxDepth = 7;
+    
+                let g = this.genRandomGraph("abc", maxNodesPerRank, maxDepth, 0.6, 0.3, 0.05)
+    
+                yield {graph: g}; 
+            }
+            if (i == 1){
+                let maxNodesPerRank = 5;
+                let maxDepth = 6;
+    
+                let g = this.genRandomGraph("aaaaab", maxNodesPerRank, maxDepth, 0.6, 0.2, 0.1)
+    
+                yield {graph: g}; 
+            }
         }
     }
 }

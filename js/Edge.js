@@ -193,3 +193,7 @@ class Edge {
         return Math.abs(res);
     }
 }
+
+try {
+    module.exports = exports = Edge;
+ } catch (e) {}

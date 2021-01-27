@@ -133,7 +133,7 @@
                 break;
             case 'l':
                 depth = 14;
-                tableDistribution = [5, 8];
+                tableDistribution = [5, 7];
                 cur_svg_width = svg_width_l;
                 cur_svg_height = svg_height_l;
                 break;
@@ -164,11 +164,14 @@
                 //g = lpTest()
                 runLpWorker(g, rowDiv, cur_svg_width, cur_svg_height)
                 break;
+            case 'lp_new':
+                runSimpleLpWorker(g, rowDiv, cur_svg_width, cur_svg_height)
+                break;
             default:
                 break;
         }
 
-        if (algorithmName != 'lp'){
+        if (algorithmName != 'lp' && algorithmName != 'lp_new'){
             g.setExactWeights()
             g.sortGraph()
 
@@ -183,7 +186,6 @@
 
             drawGraph(svg, g, algorithm)
         }
-        
     }
 
     let form = document.createElement("div")
@@ -283,32 +285,25 @@
         makeGraphWithAlgorithm(rowDiv, seed, 'l', 'modified gansner')
 
         // ***
-        // GANSNER WITH SAME RANK EDGES
-        // ***
-
-        // d3.select('body').append('div')
-        //     .text("Modified Gansner including same-rank edges")
-        //     .attr('class', 'algorithm_header')
-
-        // d3.select('body').append('tspan')
-        //     .attr('class', 'algorithm_explanation')
-        //     .html("Here, the median is computed by taking into account same-rank edges.")
-            
-        // rowDiv = d3.select('body').append('div')
-        //     .style('width', '200%')
-        //     .style('height', svg_height)
-        //     .style('display', 'flex')
-        //     .attr('class', 'rowDiv')
-
-        //makeGraphWithAlgorithm(rowDiv, seed, 's', 'gansner same rank')
-        // makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'gansner same rank')
-        // makeGraphWithAlgorithm(rowDiv, seed, 'm', 'gansner same rank')
-        //makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'modified gansner')
-        //makeGraphWithAlgorithm(rowDiv, seed, 'l', 'modified gansner')
-
-        // ***
         // LINEAR PROGRAMMING
         // ***
+
+        d3.select('body').append('div')
+            .text("New LP formulation")
+            .attr('class', 'algorithm_header')
+
+        rowDiv = d3.select('body').append('div')
+            .style('width', '200%')
+            .style('height', svg_height)
+            .style('display', 'flex')
+            .attr('class', 'rowDiv')
+
+        makeGraphWithAlgorithm(rowDiv, seed, 's', 'lp_new')
+        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'lp_new')
+        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'lp_new')
+        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'lp_new')
+        makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp_new')
+
 
         d3.select('body').append('div')
             .text("Linear programming formulation")
@@ -325,6 +320,7 @@
         makeGraphWithAlgorithm(rowDiv, seed, 'm', 'lp')
         makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'lp')
         makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp')
+        
     }
 
     async function runLpWorker(g, rowDiv, cur_svg_width, cur_svg_height) {
@@ -361,6 +357,37 @@
                     .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
 
             drawGraph(svg, g, algorithm)
+        });
+
+        setTimeout(() => {
+            myWorker.terminate()
+            if (!finished) console.log('worker terminated')
+        }, 1000000);
+    }
+
+    async function runSimpleLpWorker(g, rowDiv, cur_svg_width, cur_svg_height) {
+        let myWorker = new Worker('./js/worker.js')
+        myWorker.postMessage({'cmd': 'lp_simple', 'graph': g});
+        let finished = false;
+
+        let algorithm;
+
+        myWorker.addEventListener('message', (msg) => {
+            finished = true;
+            algorithm = msg.data.algorithm;
+
+            let g = msg.data.graph
+
+            svg = rowDiv
+                    .append('div')
+                    .style('width', '20%')
+                    .append('svg')
+                    .attr('class', 'vis-svg')
+                    .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                    .attr("preserveAspectRatio", "xMinYMin meet")
+                    .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
+
+            drawGraphSimple(svg, g, algorithm)
         });
 
         setTimeout(() => {
