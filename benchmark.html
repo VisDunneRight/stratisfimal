@@ -10,10 +10,9 @@
   <script src="./simple/simplegraph.js"></script>
   <script src="./simple/simpleLp.js"></script>
   <script src="./simple/testCaseGenerator.js"></script>
+  <script src="./js/GroupCreation.js"></script>
 
-  <script type="text/javascript"
-    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
-  </script>
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fast-xml-parser/3.17.5/parser.min.js"></script>
 
 <!-- <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs=" crossorigin="anonymous"></script> -->
@@ -137,17 +136,397 @@ graficon11nodi = `grafo324.11
 grafo408.11
 grafo749.11`
 
-let processFile = (filename, count=0) => {
-    fetch('benchmarks/Rome-Lib/graficon11nodi/' + filename)
+graficon20nodi = `grafo1002.20
+grafo1007.20
+grafo1024.20
+grafo1036.20
+grafo1110.20
+grafo1113.20
+grafo117.20
+grafo121.20
+grafo1649.20
+grafo1651.20
+grafo1673.20
+grafo1676.20
+grafo1690.20
+grafo1716.20
+grafo1733.20
+grafo1755.20
+grafo1757.20
+grafo1761.20
+grafo1764.20
+grafo1801.20
+grafo1837.20
+grafo1855.20
+grafo1860.20
+grafo1873.20
+grafo190.20
+grafo1901.20
+grafo1916.20
+grafo1931.20
+grafo2056.20
+grafo2122.20
+grafo215.20
+grafo2151.20
+grafo2166.20
+grafo2202.20
+grafo2209.20
+grafo2213.20
+grafo2246.20
+grafo2268.20
+grafo2272.20
+grafo2282.20
+grafo2284.20
+grafo2317.20
+grafo2347.20
+grafo2351.20
+grafo2382.20
+grafo2396.20
+grafo2422.20
+grafo244.20
+grafo251.20
+grafo2545.20
+grafo2554.20
+grafo2564.20
+grafo2611.20
+grafo2670.20
+grafo270.20
+grafo2701.20
+grafo2718.20
+grafo2763.20
+grafo2767.20
+grafo2776.20
+grafo291.20
+grafo2922.20
+grafo298.20
+grafo2989.20
+grafo2995.20
+grafo3017.20
+grafo3049.20
+grafo3051.20
+grafo3052.20
+grafo318.20
+grafo348.20
+grafo369.20
+grafo413.20
+grafo429.20
+grafo434.20
+grafo495.20
+grafo502.20
+grafo508.20
+grafo521.20
+grafo523.20
+grafo535.20
+grafo561.20
+grafo568.20
+grafo679.20
+grafo698.20
+grafo755.20
+grafo786.20
+grafo873.20
+grafo874.20
+grafo875.20
+grafo904.20
+grafo940.20
+grafo980.20`
+
+graficon15nodi = `grafo1013.15
+grafo1017.15
+grafo1025.15
+grafo1030.15
+grafo1043.15
+grafo1062.15
+grafo1081.15
+grafo1093.15
+grafo1107.15
+grafo1111.15
+grafo1124.15
+grafo1129.15
+grafo1136.15
+grafo1138.15
+grafo1139.15
+grafo1140.15
+grafo1142.15
+grafo1439.15
+grafo1618.15
+grafo1695.15
+grafo1700.15
+grafo1738.15
+grafo1772.15
+grafo1778.15
+grafo1782.15
+grafo1808.15
+grafo1829.15
+grafo187.15
+grafo1883.15
+grafo1888.15
+grafo195.15
+grafo1961.15
+grafo197.15
+grafo1970.15
+grafo1971.15
+grafo1982.15
+grafo204.15
+grafo2118.15
+grafo2157.15
+grafo2160.15
+grafo2169.15
+grafo221.15
+grafo2216.15
+grafo2219.15
+grafo2225.15
+grafo2232.15
+grafo2233.15
+grafo2252.15
+grafo2264.15
+grafo2266.15
+grafo2280.15
+grafo2286.15
+grafo2296.15
+grafo2311.15
+grafo2318.15
+grafo2327.15
+grafo2331.15
+grafo2352.15
+grafo236.15
+grafo2377.15
+grafo239.15
+grafo2403.15
+grafo2409.15
+grafo2414.15
+grafo2432.15
+grafo2448.15
+grafo2459.15
+grafo2468.15
+grafo247.15
+grafo2481.15
+grafo2482.15
+grafo2486.15
+grafo2487.15
+grafo2502.15
+grafo2514.15
+grafo253.15
+grafo2560.15
+grafo2568.15
+grafo2570.15
+grafo2574.15
+grafo2580.15
+grafo2586.15
+grafo2591.15
+grafo2597.15
+grafo2609.15
+grafo2613.15
+grafo2619.15
+grafo2626.15
+grafo268.15
+grafo2681.15
+grafo2705.15
+grafo2709.15
+grafo2730.15
+grafo2740.15
+grafo2752.15
+grafo2783.15
+grafo2791.15
+grafo2797.15
+grafo2806.15
+grafo2817.15
+grafo288.15
+grafo2883.15
+grafo2887.15
+grafo2895.15
+grafo2903.15
+grafo2911.15
+grafo2921.15
+grafo2928.15
+grafo295.15
+grafo297.15
+grafo304.15
+grafo321.15
+grafo323.15
+grafo330.15
+grafo331.15
+grafo337.15
+grafo338.15
+grafo340.15
+grafo379.15
+grafo382.15
+grafo386.15
+grafo391.15
+grafo396.15
+grafo399.15
+grafo419.15
+grafo463.15
+grafo467.15
+grafo475.15
+grafo480.15
+grafo483.15
+grafo496.15
+grafo497.15
+grafo500.15
+grafo516.15
+grafo518.15
+grafo534.15
+grafo549.15
+grafo550.15
+grafo556.15
+grafo558.15
+grafo582.15
+grafo583.15
+grafo585.15
+grafo590.15
+grafo602.15
+grafo607.15
+grafo615.15
+grafo657.15
+grafo658.15
+grafo670.15
+grafo674.15
+grafo697.15
+grafo707.15
+grafo710.15
+grafo722.15
+grafo725.15
+grafo729.15
+grafo735.15
+grafo739.15
+grafo778.15
+grafo780.15
+grafo783.15
+grafo787.15
+grafo803.15
+grafo806.15
+grafo809.15
+grafo815.15
+grafo825.15
+grafo855.15
+grafo879.15
+grafo886.15
+grafo905.15
+grafo913.15
+grafo939.15
+grafo947.15
+grafo948.15
+grafo965.15
+grafo982.15
+grafo985.15`
+
+let drawTest = (test, testRow, title = "", svgheight = 300) => {
+
+    let mkx = (elem) => {
+        return "x_" + elem[0].id + "_" + elem[1].id
+    }
+
+    let div = testRow
+        .append('div')
+        .style('width', '100%')
+
+    div.append("div")
+        .style("text-align", "center")
+        .text(title)
+
+    let svg = div
+        .append('svg')
+        .style('width', '100%')
+        .style('height', svgheight + 'px')
+
+    if (test.algorithm != undefined){
+        let countCrossings = 0
+        for (let elem in test.algorithm.result){
+            if (elem.includes("c_")) countCrossings += test.algorithm.result[elem]
+        }
+
+        let countBendiness = 0
+        for (let elem in test.algorithm.result){
+            if (elem.includes("bend_")) countBendiness += Math.round(test.algorithm.result[elem])
+        }
+
+        let rt = div.append('div')
+            .attr('class', 'modelDivClass')
+            .html(  '<b>Constraints: <b> ' + test.algorithm.model.subjectTo.split("\n").length + '\n' +
+                    '<b>Variables: <b> ' + test.algorithm.model.bounds.split("\n").length + '\n' +
+                    '<b>Crossings: <b> ' + countCrossings + '\n' +
+                    '<b>Bendiness: <b> ' + countBendiness + '\n' +
+                    '<b>Time to model and solve: </b>' + test.algorithm.elapsedTime + '\n' +
+                    '<b>Time to solve: </b>' + test.algorithm.solveTime + '\n')
+    }
+
+    if (test.graph.groups.length != 0){
+        let rt = div.append('div')
+            .attr('class', 'modelDivClass')
+            .html('<b>groups<b>\n')
+
+        for (let group of test.graph.groups){
+            rt.append('text')
+                .text('g' + group.id + ": " + group.nodes.map(n => n.id).join(", ") + "\n")
+        }
+    }
+
+    if (test.forceOrder != undefined && test.forceOrder.length > 0){
+        let rt = div.append('div')
+            .attr('class', 'modelDivClass')
+            .html('<b>forced vars<b>\n')
+
+        for (elem of test.forceOrder){
+            rt.append('text')
+                .text(mkx(elem) + '\n')
+        }
+    }
+
+    if (test.algorithm != undefined){
+        if (!test.algorithm.model.minimize.includes('empty')){
+            div.append('div')
+                .attr('class', 'modelDivClass')
+                .html(test.algorithm.model.minimize.substring(0, test.algorithm.model.minimize.length - 1).replace('Minimize', '<b>Minimize</b>'))
+        }
+
+        div.append('div')
+            .attr('class', 'modelDivClass')
+            .html(test.algorithm.model.subjectTo.replace('Subject To', '<b>Subject To</b>'))
+            .style('max-height', '200px')
+            .style('overflow-y', 'scroll')
+
+        if (true){
+            let rt = div.append('div')
+                .attr('class', 'modelDivClass')
+                .html('<b>result</b>\n')
+                .style('max-height', '200px')
+                .style('overflow-y', 'scroll')
+
+            for (elem in test.algorithm.result){
+                if (elem == "empty") continue;
+                let r = rt.append('text')
+                    .html(elem + ": " + test.algorithm.result[elem] + '\n')
+
+                if (test.forceOrder != undefined){
+                    let found = true;
+                    for (el of test.forceOrder){
+                        if (mkx(el) == elem){
+                            found = false;
+                        }
+                    }
+                    if (found) r.html("<b>" + elem + ": " + test.algorithm.result[elem] + '</b>\n')
+                }
+            }
+        }
+    }
+
+    test.graph.draw(svg, 50, 30);
+
+    if (test.forceOrder != undefined){
+        for (o of test.forceOrder){
+            for (n of o){
+                svg.selectAll('.node')
+                    .filter(no => no.id == n.id)
+                    .attr('fill', 'red')
+            }
+        }
+    }
+}
+
+let processFile = (filename, foldername, count=0) => {
+    fetch('benchmarks/Rome-Lib/' + foldername + '/' + filename)
     .then(response => response.text())
     .then(text => {
-        d3.select("body")
-            .append("div")
-            .text(count)
-
-        let svg = d3.select("body").append("svg")
-            .attr("width", 1500)
-            .attr("height", 200)
 
         let g = new SimpleGraph();
 
@@ -201,23 +580,61 @@ let processFile = (filename, count=0) => {
 
         g.addAnchors();
 
+        let testRow = d3.select("body").append("div")
+            .style("display", "flex")
+
+        testRow
+            .append("div")
+            .text(count)
+
+        // let svg = testRow.append("svg")
+        //     .attr("width", 1500)
+        //     .attr("height", 200)
+
         let algorithm = new SimpleLp(g);
-        algorithm.options.bendiness_reduction_active = false;
-        // algorithm.verbose = true;
+        algorithm.options.bendiness_reduction_active = true;
         algorithm.arrange();
-        console.log(algorithm.model.subjectTo)
-        
         algorithm.apply_solution();
 
-        g.draw(svg, 60, 30);
+        let test = {algorithm: algorithm, graph: g}
+        drawTest(test, testRow, "no groups")
+
+        // g.draw(svg, 60, 30);
+
+        // svg = testRow.append("svg")
+        //     .attr("width", 1500)
+        //     .attr("height", 200)
+
+        addGroups(g);
+
+        algorithm = new SimpleLp(g);
+        algorithm.options.bendiness_reduction_active = true;
+        algorithm.options.simplify_for_groups_enabled = false;
+        algorithm.arrange();
+        algorithm.apply_solution();
+
+        test = {algorithm: algorithm, graph: g}
+        drawTest(test, testRow, "groups, no collapse")
+
+        algorithm = new SimpleLp(g);
+        algorithm.options.bendiness_reduction_active = true;
+        algorithm.options.simplify_for_groups_enabled = true;
+        algorithm.arrange();
+        algorithm.apply_solution();
+
+        test = {algorithm: algorithm, graph: g}
+        drawTest(test, testRow, "groups + collapse enabled")
+
+        // g.draw(svg, 60, 30);
     })
 }
 
 let count = 0
-for (filename of graficon11nodi.split('\n')){
+for (filename of graficon10nodi.split('\n')){
     count++;
-    // if (count < 30 || count > 30) continue; 
-    processFile(filename, count);
+    // if (count < 20 || count > 20) continue; 
+    // if (count > 10) break;
+    processFile(filename, 'graficon10nodi', count);
 }
 
 </script>

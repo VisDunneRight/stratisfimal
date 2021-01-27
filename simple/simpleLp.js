@@ -249,6 +249,14 @@ class SimpleLp {
                             !this.areElementsComparable(u1v1.nodes[0], u2v2.nodes[0]) &&
                             !this.areElementsComparable(u1v1.nodes[1], u2v2.nodes[1])) continue;
 
+                        // special condition which makes a crossing unsolvable
+                        if (this.g.groups.find(gr => gr.nodes.includes(u1v1.nodes[0]) && gr.nodes.includes(u2v2.nodes[1]) && !gr.nodes.includes(u1v1.nodes[1]) && !gr.nodes.includes(u2v2.nodes[0])) &&
+                            this.g.groups.find(gr => gr.nodes.includes(u1v1.nodes[1]) && gr.nodes.includes(u2v2.nodes[0]) && !gr.nodes.includes(u1v1.nodes[0]) && !gr.nodes.includes(u2v2.nodes[1]))){
+                                let p1 = this.mkc(u1, v1, u2, v2);
+                                this.model.subjectTo += p1 + " = 1\n";
+                                continue;
+                        }
+
                         let p1 = this.mkc(u1, v1, u2, v2);
                         let finalsum = 1 + this.mkxDict(" + ", u2, u1)[1] + this.mkxDict(" + ", v1, v2)[1]
                         this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u2, u1)[0] + this.mkxDict(" + ", v1, v2)[0]
@@ -257,6 +265,7 @@ class SimpleLp {
                         finalsum = 1 + this.mkxDict(" + ", u1, u2)[1] + this.mkxDict(" + ", v2, v1)[1]
                         this.model.subjectTo += p1 + "" + this.mkxDict(" + ", u1, u2)[0] + this.mkxDict(" + ", v2, v1)[0]
                         this.model.subjectTo += " >= " + finalsum + "\n"
+
                     } else if ((this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)) || (!this.isSameRankEdge(u1v1) && this.isSameRankEdge(u2v2))){
                         let theSameRankEdge, theOtherEdge;
                         if (this.isSameRankEdge(u1v1)) {
