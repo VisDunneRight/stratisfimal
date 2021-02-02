@@ -606,6 +606,7 @@ let processFile = (filename, foldername, count=0) => {
         //     .attr("height", 200)
 
         addGroups(g);
+        // g.addAnchors();
 
         algorithm = new SimpleLp(g);
         algorithm.options.bendiness_reduction_active = true;
@@ -632,7 +633,7 @@ let processFile = (filename, foldername, count=0) => {
 let count = 0
 for (filename of graficon10nodi.split('\n')){
     count++;
-    // if (count < 20 || count > 20) continue; 
+    // if (count < 2 || count > 2) continue; 
     // if (count > 10) break;
     processFile(filename, 'graficon10nodi', count);
 }

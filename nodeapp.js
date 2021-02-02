@@ -6,6 +6,7 @@ global.Attribute = require('./js/Attribute.js')
 global.Edge = require('./js/Edge.js')
 var GraphGenerator = require('./js/GraphGenerator.js')
 var seedrandom = require('./lib/seedrandom.min.js')
+addGroups = require('./js/GroupCreation.js')
 
 fs = require('fs');
 var exec = require('child_process').exec, child;
@@ -76,8 +77,7 @@ async function sh(cmd) {
     });
 }
 
-async function readRomeLib (i, filename) {
-    let text = fs.readFileSync(filename, 'utf-8')
+function buildGraphFromTextFile (text, doAddGroups, bendiness_reduction_active = false) {
     let g = new SimpleGraph();
 
     for (let n of text.split("#")[0].split('\n')){
@@ -119,7 +119,7 @@ async function readRomeLib (i, filename) {
             }
         }
         curIndex++;
-        if (curIndex == 10) break;
+        // if (curIndex == 10) break;
     }
 
     for (let edge of g.edges){
@@ -129,14 +129,23 @@ async function readRomeLib (i, filename) {
     }
 
     g.addAnchors();
+    if (doAddGroups) addGroups(g);
+    if (doAddGroups && !bendiness_reduction_active) g.addAnchors();
+    return g;
+}
+
+async function readRomeLib (i, filename, doAddGroups, bendiness_reduction_active, simplify_for_groups_enabled) {
+    let text = fs.readFileSync(filename, 'utf-8')
+    let g = buildGraphFromTextFile(text, doAddGroups, bendiness_reduction_active);
 
     let algorithm = new SimpleLp(g);
     algorithm.verbose = false;
-    algorithm.options.bendiness_reduction_active = true;
-    algorithm.options.simplify_for_groups_enabled = true;
+    algorithm.options.bendiness_reduction_active = bendiness_reduction_active;
+    algorithm.options.simplify_for_groups_enabled = simplify_for_groups_enabled;
     algorithm.makeModel();
 
     if (algorithm.model.subjectTo.includes("empty")) console.log(filename)
+    // console.log("num nodes: " + g.nodes.length, "num edges: " + g.edges.length, "num vars: " + algorithm.model.bounds.split("\n").length, "num constraints: " + algorithm.model.subjectTo.split("\n").length)
 
     let fname = "./gurobi_problems/" + i + ".lp"
     fs.writeFileSync(fname, algorithm.writeForGurobi(), function(err){
@@ -196,18 +205,15 @@ function cleanup(){
     fs.mkdirSync("./gurobi_solutions")
 }
 
-async function mainRomeLib(){
+async function testRomeLib(testname, doAddGroups, bendiness_reduction_active, simplify_for_groups_enabled, maxfilesPerNum = 10, timeout = 100, bounds=[10, 81]){
+    cleanup();
 
-    let maxfilesPerNum = 10;
-
-    // cleanup();
-
-    for (let num=51; num<61; num++){
+    for (let num=bounds[0]; num<bounds[1]; num+=10){
         let basepath = "benchmarks/Rome-Lib/graficon" + num + "nodi/"
         var files = fs.readdirSync(basepath);
     
         for (let i=0; i<files.length; i++){
-            let graph = await Promise.resolve(readRomeLib(num + "_" + i, basepath + files[i]));
+            let graph = await Promise.resolve(readRomeLib(num + "_" + i, basepath + files[i], doAddGroups, bendiness_reduction_active, simplify_for_groups_enabled));
             if (i>maxfilesPerNum) break;
             if (i%100 == 0) console.log("created graph " + (num + "_" + i) + " with " + graph.nodes.length + " nodes, " + graph.edges.length + " edges and " + graph.groups.length + " groups.");
         }
@@ -215,7 +221,7 @@ async function mainRomeLib(){
         for (let i=0; i<files.length; i++){
             if (i%100 == 0) console.log("solving " + num + "_" + i)
             if (i>maxfilesPerNum) break;
-            let { stdout } = await sh("gurobi_cl TimeLimit=100 ResultFile=./gurobi_solutions/" + (num + "_" + i) + ".sol LogFile=./gurobi_solutions/" + (num + "_" + i) + ".log ./gurobi_problems/" + (num + "_" + i) + ".lp")
+            let { stdout } = await sh("gurobi_cl TimeLimit=" + timeout + " ResultFile=./gurobi_solutions/" + (num + "_" + i) + ".sol LogFile=./gurobi_solutions/" + (num + "_" + i) + ".log ./gurobi_problems/" + (num + "_" + i) + ".lp")
         }
     }
 
@@ -232,6 +238,8 @@ async function mainRomeLib(){
             resultLine = content.find(l => l.includes("Solved"));
             resultTime = parseFloat(resultLine.split(" ")[5]);
         } else resultTime = parseFloat(resultLine.split(" ")[7]);
+        let errorLine = content.find(l => l.includes("infeasible"))
+        if (errorLine != undefined) console.log("ERROR: ", file, "is infeasible")
         // console.log(resultLine)
 
         let n = file.split("_")[0]
@@ -241,10 +249,123 @@ async function mainRomeLib(){
     }
 
     let resultstring = JSON.stringify(times)
-    fs.writeFileSync('result_times_bendiness.json', resultstring, () => {});
-
-    // console.log("average: " + times.reduce((a, b) => a + b, 0)/files.length)
+    fs.writeFileSync('result_times_' + testname + '.json', resultstring, () => {});
 }
 
+async function mainRomeLib(){
+    // testRomeLib('nogroups_mincrossing', false, false, false, 10, 10, [10, 81])
+    // testRomeLib('nogroups_minbendiness', false, true, false, 10, 10, [10, 81])
+    // testRomeLib('groups_nocollapse_mincrossing', true, false, false, 10, 10, [10, 81])
+    // testRomeLib('groups_nocollapse_minbendiness', true, true, false, 10, 10, [10, 81])
+    testRomeLib('groups_collapse_mincrossing', true, false, true, 10, 50, [10, 101])
+    // testRomeLib('groups_collapse_minbendiness', true, true, true, 10, 10, [10, 81])
+
+
+    // testRomeLib('nogroups_mincrossing_big', false, false, false, 25, 180, [10, 101])
+    // testRomeLib('nogroups_minbendiness_big', false, true, false, 25, 180, [10, 101])
+    // testRomeLib('groups_nocollapse_mincrossing_big2', true, false, false, 25, 180, [70, 81])
+    // testRomeLib('groups_nocollapse_minbendiness_big', true, true, false, 25, 180, [10, 101])
+    // testRomeLib('groups_collapse_mincrossing_big2', true, false, true, 25, 180, [10, 101])
+    // testRomeLib('groups_collapse_minbendiness_big', true, true, true, 25, 180, [10, 101])
+}
+
+function printResults(){
+    function getAvg(grades) {
+        const total = grades.reduce((acc, c) => acc + c, 0);
+        return total / grades.length;
+    }
+
+    const median = arr => {
+        const mid = Math.floor(arr.length / 2),
+          nums = [...arr].sort((a, b) => a - b);
+        return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+      };
+
+    const printData = (d1) => {
+        for (let elem in d1){
+            tmp = d1[elem].filter(n => n < 180) 
+            console.log(elem + ' nodes: ' + getAvg(tmp))
+            console.log('percent unsolved: ', d1[elem].filter(n => n>=100).length / d1[elem].length)
+        }
+    }
+
+    console.log("No groups, min crossing")
+    let d1 = fs.readFileSync('result_times_nogroups_mincrossing_big.json', 'utf-8')
+    d1 = JSON.parse(d1);
+    printData(d1)
+
+    console.log("\nNo groups, min bendiness")
+    d2 = fs.readFileSync('result_times_nogroups_minbendiness_big.json', 'utf-8')
+    d2 = JSON.parse(d2);
+    printData(d2)
+
+    console.log("\nGroups, no collapse, min crossing")
+    d3 = fs.readFileSync('result_times_groups_nocollapse_mincrossing_big.json', 'utf-8')
+    d3 = JSON.parse(d3);
+    printData(d3)
+
+    console.log("\nGroups, no collapse, min bendiness")
+    d4 = fs.readFileSync('result_times_groups_nocollapse_minbendiness_big.json', 'utf-8')
+    d4 = JSON.parse(d4);
+    printData(d4)
+
+    console.log("\nGroups, collapse, min crossing")
+    d5 = fs.readFileSync('result_times_groups_collapse_mincrossing_big.json', 'utf-8')
+    d5 = JSON.parse(d5);
+    printData(d5)
+
+    console.log("\nGroups, collapse, min bendiness")
+    d6 = fs.readFileSync('result_times_groups_collapse_minbendiness_big.json', 'utf-8')
+    d6 = JSON.parse(d6);
+    printData(d6)
+
+    let addStats = (el) => {
+        let s = ""
+        if (el != undefined) {
+            if (el.filter(n => n < 180).length != 0) s += (Math.round(median(el.filter(n => n < 180))*100)/100) + "\t& "
+            else s += "-\t&"
+            if (el.filter(n => n>=180).length != 0)
+                s += (Math.round((el.filter(n => n>=180).length/el.length)*100)) + "\\%\t& "
+            else s+= "\t&"
+        }
+        else s += "\t&\t& "
+        return s;
+    }
+
+    console.log("\n")
+    for (let i=10; i<101; i+=10){
+        let stres = i + "\t& "
+        stres += addStats(d1[i])
+        stres += addStats(d2[i])
+        stres += addStats(d3[i])
+        stres += addStats(d4[i])
+        stres += addStats(d5[i])
+        stres += addStats(d6[i])
+        
+        console.log(stres.slice(0, stres.length - 2) + "\\\\")
+    }
+}
+
+function printOneModel(nodenum, modelnum){
+    let basepath = "benchmarks/Rome-Lib/graficon" + nodenum + "nodi/"
+    var files = fs.readdirSync(basepath);
+
+    for (let i=0; i<files.length; i++){
+        if (i == modelnum) {
+            let text = fs.readFileSync(basepath + files[i], 'utf-8')
+            let g = buildGraphFromTextFile(text, true);
+            let algorithm = new SimpleLp(g);
+            algorithm.verbose = false;
+            algorithm.options.bendiness_reduction_active = false;
+            algorithm.options.simplify_for_groups_enabled = true;
+            algorithm.makeModel();
+            // console.log(algorithm)
+            console.log("num nodes: " + g.nodes.length, "num edges: " + g.edges.length, "num vars: " + algorithm.model.bounds.split("\n").length, "num constraints: " + algorithm.model.subjectTo.split("\n").length)
+        }
+    }
+}
+
+// printOneModel(80, 0);
 mainRomeLib();
+// printResults();
   

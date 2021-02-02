@@ -186,3 +186,7 @@ addGroups = (graph) => {
        graph.addGroup(group);
    }
 }
+
+try {
+    module.exports = exports = addGroups;
+ } catch (e) {}

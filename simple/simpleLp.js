@@ -649,12 +649,16 @@ class SimpleLp {
 
                         let tmp = ""
                         let finalsum = 0;
+
                         for (let n1 of nodesInGroupInR1){
                             for (let n2 of nodesNotInGroupInR1){
                                 tmp += this.mkxDict(" + ", n1.id, n2.id)[0]
                                 finalsum += this.mkxDict(" + ", n1.id, n2.id)[1]
                             }
                         } 
+
+                        // console.log(nodesNotInGroupInR1, nodesNotInGroupInR2)
+
                         for (let n1 of nodesInGroupInR2){
                             for (let n2 of nodesNotInGroupInR2){
                                 tmp += this.mkxDict(" - ", n1.id, n2.id)[0]

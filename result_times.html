@@ -91,7 +91,7 @@
     //Read the data
     d3.json("result_times_bendiness.json", function(data) {
 
-        console.log(data);
+        // console.log(data);
 
         // Add X axis
         var x = d3.scaleLinear()
@@ -143,5 +143,250 @@
         }
 
     })
+
+    d3.select("#my_dataviz").append("div").html("<br>")
+    
+    var drawlinecharts = (svg3, title, dataname1, dataname2, limit=181, labels=["CM + BR", "CM"]) => {
+      //Read the data
+      d3.json(dataname1, function(data) {
+        d3.json(dataname2, function(data2) {
+          var x = d3.scaleLinear()
+            .domain([10, 100])
+            .range([ 0, width ]);
+
+          var y = d3.scaleLog()
+            .domain([0.01, limit])
+            .range([ height, 0]);
+
+          svg3.append("g")
+            .call(d3.axisLeft(y));
+
+          svg3.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+
+          svg3.append("text")
+            .attr("transform", "translate(" + (width/2) + ", " + (20) + ")")
+            .attr("text-anchor", "middle")
+            .style("font-family", "Arial")
+            .style("font-size", "small")
+            .text(title)
+
+          svg3.append("text")
+            .attr("transform", "translate(-30," + (height/2) + ")rotate(-90)")
+            .attr("text-anchor", "middle")
+            .style("font-family", "Arial")
+            .style("font-size", "x-small")
+            .text("time (seconds)")
+
+          svg3.append("text")
+            .attr("transform", "translate(" + (width/2) + "," + (height + 30) + ")")
+            .attr("text-anchor", "middle")
+            .style("font-family", "Arial")
+            .style("font-size", "x-small")
+            .text("number of nodes")
+
+          const asc = arr => arr.sort((a, b) => a - b);
+
+          const quantile = (arr, q) => {
+              const sorted = asc(arr);
+              const pos = (sorted.length - 1) * q;
+              const base = Math.floor(pos);
+              const rest = pos - base;
+              if (sorted[base + 1] !== undefined) {
+                  return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+              } else {
+                  return sorted[base];
+              }
+          };
+
+          const median = arr => {
+            const mid = Math.floor(arr.length / 2),
+              nums = [...arr].sort((a, b) => a - b);
+            return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+          };
+
+          const line = d3.line().curve(d3.curveBasis)
+
+          let arr1 = []
+          let arr2 = []
+          let arr3 = []
+          let arr12 = []
+          let arr22 = []
+          let arr32 = []
+
+          for (let nodenum in data){
+              el = data[nodenum]
+              el = data[nodenum].filter(n => n <= limit)
+              arr1.push([x(nodenum), y(median(el) + 0.01)])
+              arr2.push([x(nodenum), y(quantile(el, .25) + 0.01)])
+              arr3.push([x(nodenum), y(quantile(el, .75) + 0.01)])
+          }
+
+          arr2.push(arr2[arr2.length-1])
+          arr2.push(arr1[arr1.length-1])
+          arr2.push(arr3[arr3.length-1])
+
+          for (let nodenum in data2){
+              el = data2[nodenum]
+              el = data2[nodenum].filter(n => n <= limit)
+              // if (el.length < 2 && nodenum == 100) continue;
+              // console.log(nodenum, el, median(el))
+              if (!isNaN(median(el))) arr12.push([x(nodenum), y(median(el) + 0.01)])
+              if (!isNaN(quantile(el, .25))) arr22.push([x(nodenum), y(quantile(el, .25) + 0.01)])
+              if (!isNaN(quantile(el, .75))) arr32.push([x(nodenum), y(quantile(el, .75) + 0.01)])
+          }
+
+          arr22.push(arr22[arr22.length-1])
+          arr22.push(arr12[arr12.length-1])
+          arr22.push(arr32[arr32.length-1])
+
+          // console.log(arr22, arr32)
+
+          svg3.append("path")
+            .attr('stroke-width', 3)
+            .attr('fill', 'none')
+            .attr('stroke', '#69b3a2')
+            .attr('d', line(arr1))
+
+          svg3.append("path")
+            .attr('stroke-width', 3)
+            .attr('fill', 'none')
+            .attr('stroke', '#69b3a2')
+            .attr('fill', '#69b3a2')
+            .attr('opacity', .3)
+            .attr('d', line(arr2.concat(arr3.reverse())))
+
+          svg3.append("path")
+            .attr('stroke-width', 3)
+            .attr('fill', 'none')
+            .attr('stroke', 'red')
+            .attr('d', line(arr12))
+
+          svg3.append("path")
+            .attr('stroke-width', 3)
+            .attr('fill', 'none')
+            .attr('stroke', 'red')
+            .attr('fill', 'red')
+            .attr('opacity', .3)
+            .attr('d', line(arr22.concat(arr32.reverse())))
+
+          g = svg3.append('g')
+            .attr('transform', 'translate(' + (width-45) + ')')
+
+          g.append('circle')
+            .attr('fill', 'red')
+            .attr('r', 5)
+            .attr('cx', 0)
+            .attr('cy', 0)
+
+          g.append('text')
+            .attr('x', 7)
+            .attr('y', 5)
+            .attr('font-family', 'arial')
+            .attr('font-size', 'small')
+            .text(labels[0])
+
+          g.append('circle')
+            .attr('fill', '#69b3a2')
+            .attr('r', 5)
+            .attr('cx', 0)
+            .attr('cy', 15)
+
+          g.append('text')
+            .attr('x', 7)
+            .attr('y', 20)
+            .attr('font-family', 'arial')
+            .attr('font-size', 'small')
+            .text(labels[1])
+        })
+      })
+    }
+
+    svg5 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawlinecharts(svg5, "no groups", "result_times_nogroups_mincrossing_big.json", "result_times_nogroups_minbendiness_big.json")
+
+    svg4 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawlinecharts(svg4, "groups, no collapse", "result_times_groups_nocollapse_mincrossing_big.json", "result_times_groups_nocollapse_minbendiness_big.json")
+
+    svg3 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawlinecharts(svg3, "groups, collapse", "result_times_groups_collapse_mincrossing_big.json", "result_times_groups_collapse_minbendiness_big.json")
+
+    d3.select("#my_dataviz")
+      .append("div")
+      .html("<br>")
+
+    svg6 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawlinecharts(svg6, "no groups", "result_times_nogroups_mincrossing.json", "result_times_nogroups_minbendiness.json", 10)
+
+    svg7 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawlinecharts(svg7, "groups, no collapse", "result_times_groups_nocollapse_mincrossing.json", "result_times_groups_nocollapse_minbendiness.json", 10)
+
+    svg8 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawlinecharts(svg8, "groups, collapse", "result_times_groups_collapse_mincrossing.json", "result_times_groups_collapse_minbendiness.json", 10)
+
+    svg9 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawlinecharts(svg9, "no collapse vs collapse (crossings)", "result_times_groups_nocollapse_mincrossing.json", "result_times_groups_collapse_mincrossing.json", 51, ["no collapse", "collapse"])
+
+    svg9 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawlinecharts(svg9, "no collapse vs collapse (bendiness)", "result_times_groups_nocollapse_minbendiness.json", "result_times_groups_collapse_minbendiness.json", 11, ["no collapse", "collapse"])
+
+    
     
     </script>
