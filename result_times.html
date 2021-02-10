@@ -206,7 +206,7 @@
             return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
           };
 
-          const line = d3.line().curve(d3.curveBasis)
+          const line = d3.line()//.curve(d3.curveBasis)
 
           let arr1 = []
           let arr2 = []
@@ -275,7 +275,7 @@
             .attr('transform', 'translate(' + (width-45) + ')')
 
           g.append('circle')
-            .attr('fill', 'red')
+            .attr('fill', '#69b3a2')
             .attr('r', 5)
             .attr('cx', 0)
             .attr('cy', 0)
@@ -288,7 +288,7 @@
             .text(labels[0])
 
           g.append('circle')
-            .attr('fill', '#69b3a2')
+            .attr('fill', 'red')
             .attr('r', 5)
             .attr('cx', 0)
             .attr('cy', 15)

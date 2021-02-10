@@ -8,14 +8,18 @@ class SimpleLp {
         this.zcount = 0;
         this.zintcount = 0;
         this.m = 50;
-        this.inclusion_graph = this.build_inclusion_graph();
+
+        graph.inclusion_graph = graph.build_inclusion_graph()
+        this.inclusion_graph = graph.inclusion_graph;
+        this.inclusion_graph_flat = graph.inclusion_graph_flat;
 
         this.options = {
             crossings_reduction_weight: 1,
             crossings_reduction_active: true,
             bendiness_reduction_weight: 0.1,
             bendiness_reduction_active: false,
-            simplify_for_groups_enabled: true
+            simplify_for_groups_enabled: true,
+            keep_groups_rect: true
         };
     }
 
@@ -49,78 +53,6 @@ class SimpleLp {
         }
     }
 
-    build_inclusion_graph(){
-        let root = {
-            id: 'root',
-            children: [],
-            parent: undefined,
-            depth: 0
-        }
-
-        let nodes = [];
-        this.g.groups = this.g.groups.sort((a, b) => a.nodes.length < b.nodes.length)
-
-        for (let group of this.g.groups){
-            let newnode;
-
-            if (nodes.find(gr => gr.id == group.id) == undefined) {
-                newnode = {id: group.id, type: 'group', children: [], size: group.nodes.length, parent: undefined}
-                nodes.push(newnode);
-            } else {
-                newnode = nodes.find(gr => gr.id == group.id)
-            }
-
-            let parentGroups = this.g.groups.filter(gr => group.nodes.every(e => gr.nodes.includes(e)) && gr != group)
-
-            if (parentGroups.length == 0) {
-                newnode.parent = root;
-                root.children.push(newnode);
-            } else {
-                let minP = Math.min.apply(0, parentGroups.map(gr => gr.nodes.length))
-                let minPid = parentGroups.find(gr => gr.nodes.length == minP)
-                
-                let newnewnode;
-
-                if (nodes.find(gr => gr.id == minPid.id) == undefined){
-                    newnewnode = {id: minPid, type: 'group', children: [], size: minPid.nodes.length, parent: undefined};
-                    nodes.push(newnewnode);
-                } else newnewnode = nodes.find(gr => gr.id == minPid.id);
-
-                newnewnode.children.push(newnode);
-                newnode.parent = newnewnode;
-            }
-        }
-
-        for (let node of this.g.nodes){
-            let parentGroups = this.g.groups.filter(gr => gr.nodes.includes(node))
-            let minP = Math.min.apply(0, parentGroups.map(gr => gr.nodes.length))
-            let minPid = parentGroups.find(gr => gr.nodes.length == minP)
-
-            let newNode = {id: node.id, type: 'node'}
-            nodes.push(newNode);
-            if (parentGroups.length < 1) {
-                newNode.parent = root;
-                root.children.push(newNode);
-            } else {
-                newNode.parent = nodes.find(gr => gr.id == minPid.id)
-                newNode.parent.children.push(newNode);
-            }
-        }
-
-        let assignDepth = (curnode) => {
-            if (curnode.children == undefined || curnode.children.length == 0) return;
-            for (let node of curnode.children){
-                node.depth = curnode.depth + 1;
-                assignDepth(node);
-            }
-        }
-        assignDepth(root);
-
-        this.inclusion_graph_flat = nodes;
-
-        return root;
-    }
-
     solve(){
         let prob = this.modelToString(this.model)
         this.modelString = prob;
@@ -151,8 +83,6 @@ class SimpleLp {
                 this.result[glp_get_col_name(lp, i)] = glp_get_col_prim (lp, i);
             }
         }
-
-        // console.log(this.modelString)
     }
 
     fillModel(){
@@ -171,7 +101,7 @@ class SimpleLp {
 
         if (this.verbose) console.log("Adding multi-rank group constraints..." + (new Date().getTime() - this.startTime))
 
-        if (!this.options.bendiness_reduction_active) 
+        if (!this.options.bendiness_reduction_active && this.options.keep_groups_rect) 
             this.addMultiRankGroupConstraints();
 
         if (this.verbose) console.log("Adding crossings..." + (new Date().getTime() - this.startTime))
@@ -228,7 +158,6 @@ class SimpleLp {
         for (let k = 0; k < this.g.nodeIndex.length; k++){
             let layerEdges = this.g.edges.filter(e => e.nodes[0].depth == k);
 
-            
             for (let i = 0; i < layerEdges.length; i++){
                 let u1v1 = layerEdges[i];
 
@@ -244,10 +173,14 @@ class SimpleLp {
 
                     if (!this.isSameRankEdge(u1v1) && !this.isSameRankEdge(u2v2)){
 
-                        if (this.areElementsComparable(u1v1.nodes[0], u1v1.nodes[1]) && 
+                        // special condition which makes a crossing impossible
+                        if ((this.options.keep_groups_rect || this.options.simplify_for_groups_enabled) && 
+                            this.areElementsComparable(u1v1.nodes[0], u1v1.nodes[1]) && 
                             this.areElementsComparable(u2v2.nodes[0], u2v2.nodes[1]) && 
                             !this.areElementsComparable(u1v1.nodes[0], u2v2.nodes[0]) &&
-                            !this.areElementsComparable(u1v1.nodes[1], u2v2.nodes[1])) continue;
+                            !this.areElementsComparable(u1v1.nodes[1], u2v2.nodes[1])) {
+                                continue;
+                            }
 
                         // special condition which makes a crossing unsolvable
                         if (this.g.groups.find(gr => gr.nodes.includes(u1v1.nodes[0]) && gr.nodes.includes(u2v2.nodes[1]) && !gr.nodes.includes(u1v1.nodes[1]) && !gr.nodes.includes(u2v2.nodes[0])) &&

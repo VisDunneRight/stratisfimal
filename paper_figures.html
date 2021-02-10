@@ -83,7 +83,7 @@
 
         let colors = ['#303E3F', '#A3B9B6']
 
-        svg.selectAll('path')
+        svg.selectAll('.edgepath')
             .attr('stroke', colors[1])
             .attr('stroke-width', 3)
 
@@ -97,12 +97,12 @@
             .style('font-size', '0.7em')
             .style("font-weight", "bold")
 
-        svg.selectAll('rect')
-            .attr('stroke', colors[0])
-            .attr('stroke-width', 4)
-            .attr("rx", 10)
-            .attr("ry", 10)
-            .attr("stroke-dasharray", "4 2")
+        // svg.selectAll('rect')
+        //     .attr('stroke', colors[0])
+        //     .attr('stroke-width', 4)
+        //     .attr("rx", 10)
+        //     .attr("ry", 10)
+        //     .attr("stroke-dasharray", "4 2")
     }
     
     let testGenerator = new TestCaseGenerator();

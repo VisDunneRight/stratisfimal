@@ -510,7 +510,9 @@ let drawTest = (test, testRow, title = "", svgheight = 300) => {
         }
     }
 
-    test.graph.draw(svg, 50, 30);
+    let maxdepth = Math.max.apply(0, test.graph.nodes.map(n => n.depth))
+
+    test.graph.draw(svg, 10*(10-maxdepth), 30);
 
     if (test.forceOrder != undefined){
         for (o of test.forceOrder){
@@ -592,11 +594,16 @@ let processFile = (filename, foldername, count=0) => {
         //     .attr("height", 200)
 
         let algorithm = new SimpleLp(g);
+        algorithm.arrange();
+        let test = {algorithm: algorithm, graph: g}
+        drawTest(test, testRow, "nothing")
+
+        algorithm = new SimpleLp(g);
         algorithm.options.bendiness_reduction_active = true;
         algorithm.arrange();
         algorithm.apply_solution();
 
-        let test = {algorithm: algorithm, graph: g}
+        test = {algorithm: algorithm, graph: g}
         drawTest(test, testRow, "no groups")
 
         // g.draw(svg, 60, 30);
@@ -611,6 +618,7 @@ let processFile = (filename, foldername, count=0) => {
         algorithm = new SimpleLp(g);
         algorithm.options.bendiness_reduction_active = true;
         algorithm.options.simplify_for_groups_enabled = false;
+        algorithm.options.keep_groups_rect = false;
         algorithm.arrange();
         algorithm.apply_solution();
 
@@ -620,6 +628,7 @@ let processFile = (filename, foldername, count=0) => {
         algorithm = new SimpleLp(g);
         algorithm.options.bendiness_reduction_active = true;
         algorithm.options.simplify_for_groups_enabled = true;
+        algorithm.options.keep_groups_rect = false;
         algorithm.arrange();
         algorithm.apply_solution();
 
@@ -633,7 +642,7 @@ let processFile = (filename, foldername, count=0) => {
 let count = 0
 for (filename of graficon10nodi.split('\n')){
     count++;
-    // if (count < 2 || count > 2) continue; 
+    // if (count < 42 || count > 42) continue; 
     // if (count > 10) break;
     processFile(filename, 'graficon10nodi', count);
 }
