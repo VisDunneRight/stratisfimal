@@ -35,15 +35,15 @@ let drawGraph = (svg, g, algorithm = undefined) => {
         .attr('d', d3.line()([[0, 0], [0, 10], [10, 5]]))
         .attr('stroke', 'black');
 
-    // temp grid indicator
-    for (let i in [ ... Array(10).keys()]){
-        visg.append('path')
-            .attr('stroke-width', 1)
-            .attr('stroke', '#ccc')
-            .attr('fill', 'none')
-            .style("stroke-dasharray", ("5, 3"))
-            .attr('d', straightline([[0, attr_height*g.baseRowDistance*i], [1000, attr_height*g.baseRowDistance*i]]))
-    }
+    // // temp grid indicator
+    // for (let i in [ ... Array(10).keys()]){
+    //     visg.append('path')
+    //         .attr('stroke-width', 1)
+    //         .attr('stroke', '#ccc')
+    //         .attr('fill', 'none')
+    //         .style("stroke-dasharray", ("5, 3"))
+    //         .attr('d', straightline([[0, attr_height*g.baseRowDistance*i], [1000, attr_height*g.baseRowDistance*i]]))
+    // }
 
     // *****
     // tables
@@ -141,10 +141,14 @@ let drawGraph = (svg, g, algorithm = undefined) => {
         .attr('d', d => {
             first = get_1st_coord(d)
             second = get_2nd_coord(d)
+
+            let curveFactor = 0.2;
+            if (d.leftTable.depth == d.rightTable.depth) curveFactor = ((Math.abs(d.leftTable.weight - d.rightTable.weight)/3))*0.18
+
             return line(
                 [first, 
-                [first[0] + depth_distance*0.2, first[1]],
-                [second[0] + (d.leftTable.depth == d.rightTable.depth ? 1 : -1)*depth_distance*0.2, second[1]],
+                [first[0] + depth_distance*curveFactor, first[1]],
+                [second[0] + (d.leftTable.depth == d.rightTable.depth ? 1 : -1)*depth_distance*curveFactor, second[1]],
                 second]
             )
         })

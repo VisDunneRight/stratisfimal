@@ -1,0 +1,365 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./lib/seedrandom.min.js"></script>
+  <script src="./lib/d3.v5.min.js"></script>
+  <script src="./lib/glpk.min.js"></script>
+
+  <link rel="stylesheet" href="./css/bootstrap.min.css">
+
+  <script src="./simple/simplegraph.js"></script>
+  <script src="./simple/simpleLp.js"></script>
+  <script src="./simple/testCaseGenerator.js"></script>
+
+  <script src="./js/GroupCreation.js"></script>
+</head>
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 5%;
+    }
+
+    svg {
+        margin: 1%;
+        background-color: white;
+    }
+
+    .modelDivClass {
+        font-size: xx-small;
+        white-space: pre-wrap;
+        font-family: "Lucida Console", Monaco, monospace;
+        background-color: #eee;
+        padding: 2%;
+        border-radius: 4px;
+        margin: 1%;
+        min-width: 150px;
+    }
+
+    .flexbreak {
+        flex-basis: 100%;
+        height: 0;
+    }
+
+    .definitionDiv {
+        position: fixed;
+        right: 5%;
+        transform: scale(0.8);
+        max-width: 20%;
+        /* text-align: right; */
+        background-color: white;
+        border-radius: 10px;
+        padding: 10px;
+    }
+
+    .definitionDiv td {
+        padding: 5px;
+    }
+</style>
+
+<body>
+    <!-- bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+</body>
+
+<script>
+
+    let drawTest = (test, testRow, svgheight = 200) => {
+
+        let mkx = (elem) => {
+            return "x_" + elem[0].id + "_" + elem[1].id
+        }
+
+        let div = testRow
+            .append('div')
+            .style('width', '25%')
+
+        let svg = div
+            .append('svg')
+            .style('width', '100%')
+            .style('height', svgheight + 'px')
+
+        if (test.algorithm != undefined){
+            let countCrossings = 0
+            for (let elem in test.algorithm.result){
+                if (elem.includes("c_")) countCrossings += test.algorithm.result[elem]
+            }
+
+            let countBendiness = 0
+            for (let elem in test.algorithm.result){
+                if (elem.includes("bend_")) countBendiness += Math.round(test.algorithm.result[elem])
+            }
+
+            let rt = div.append('div')
+                .attr('class', 'modelDivClass')
+                .html(  '<b>Constraints: <b> ' + test.algorithm.model.subjectTo.split("\n").length + '\n' +
+                        '<b>Variables: <b> ' + test.algorithm.model.bounds.split("\n").length + '\n' +
+                        '<b>Crossings: <b> ' + countCrossings + '\n' +
+                        '<b>Bendiness: <b> ' + countBendiness + '\n' +
+                        '<b>Time to model and solve: </b>' + test.algorithm.elapsedTime + '\n' +
+                        '<b>Time to solve: </b>' + test.algorithm.solveTime + '\n')
+        }
+
+        if (test.graph.groups.length != 0){
+            let rt = div.append('div')
+                .attr('class', 'modelDivClass')
+                .html('<b>groups<b>\n')
+
+            for (let group of test.graph.groups){
+                rt.append('text')
+                    .text('g' + group.id + ": " + group.nodes.map(n => n.id).join(", ") + "\n")
+            }
+        }
+
+        if (test.forceOrder != undefined && test.forceOrder.length > 0){
+            let rt = div.append('div')
+                .attr('class', 'modelDivClass')
+                .html('<b>forced vars<b>\n')
+
+            for (elem of test.forceOrder){
+                rt.append('text')
+                    .text(mkx(elem) + '\n')
+            }
+        }
+
+        if (test.algorithm != undefined){
+            if (!test.algorithm.model.minimize.includes('empty')){
+                div.append('div')
+                    .attr('class', 'modelDivClass')
+                    .html(test.algorithm.model.minimize.substring(0, test.algorithm.model.minimize.length - 1).replace('Minimize', '<b>Minimize</b>'))
+            }
+
+            div.append('div')
+                .attr('class', 'modelDivClass')
+                .html(test.algorithm.model.subjectTo.replace('Subject To', '<b>Subject To</b>'))
+                .style('max-height', '200px')
+                .style('overflow-y', 'scroll')
+
+            if (true){
+                let rt = div.append('div')
+                    .attr('class', 'modelDivClass')
+                    .html('<b>result</b>\n')
+                    .style('max-height', '200px')
+                    .style('overflow-y', 'scroll')
+
+                for (elem in test.algorithm.result){
+                    if (elem == "empty") continue;
+                    let r = rt.append('text')
+                        .html(elem + ": " + test.algorithm.result[elem] + '\n')
+
+                    if (test.forceOrder != undefined){
+                        let found = true;
+                        for (el of test.forceOrder){
+                            if (mkx(el) == elem){
+                                found = false;
+                            }
+                        }
+                        if (found) r.html("<b>" + elem + ": " + test.algorithm.result[elem] + '</b>\n')
+                    }
+                }
+            }
+        }
+
+        test.graph.draw(svg);
+
+        if (test.forceOrder != undefined){
+            for (o of test.forceOrder){
+                for (n of o){
+                    svg.selectAll('.node')
+                        .filter(no => no.id == n.id)
+                        .attr('fill', 'red')
+                }
+            }
+        }
+    }
+
+    let gansner = (graph) => {
+        let init_order = () => {
+            let or = [];
+            for (let rank of graph.nodeIndex){
+                let ra = [];
+                for (let node of rank){
+                    ra.push({id: node.id});
+                }
+                or.push(ra);
+            }
+            return or;
+        }
+
+        let copy_order = (order) => {
+            let or = [];
+            for (let rank of order){
+                let ra = [];
+                for (let node of rank){
+                    ra.push({id: node.id});
+                }
+                or.push(ra);
+            }
+            return or;
+        }
+
+        let median_value = (v, otherrank, direction) => {
+            let n1index = direction == "even"? 0 : 1;
+            let n2index = direction == "even"? 1 : 0;
+
+            let incoming_edges = graph.edges.filter(e => e.nodes[n2index].id == v.id && e.nodes[0].depth != e.nodes[1].depth)
+            let p = incoming_edges.map(e => e.nodes[n1index]).map(n => order[otherrank].indexOf(order[otherrank].find(nn => nn.id == n.id)))
+            let m = Math.floor(p.length / 2);
+
+            if (p.length == 0) return -1;
+            else if (p.length % 2 == 1) return p[m];
+            else if (p.length == 2) return (p[0] + p[1])/2;
+            else {
+                left = p[m-1] - p[0];
+                right = p[p.length -1] - p[m];
+                return (p[m-1]*right + p[m]*left)/(left + right);
+            }
+        }
+
+        let wmedian = (order, iter) => {
+            if (iter%2 == 0){
+                for (let r=1; r<order.length; r++){
+                    for (let v of order[r]){
+                        v.median = median_value(v, r-1, "even");
+                    }
+                    order[r] = order[r].sort((a, b) => a.median > b.median)
+                }
+            } else {
+                for (let r=order.length - 2; r>=0; r--){
+                    for (let v of order[r]){
+                        v.median = median_value(v, r+1, "odd");
+                    }
+                    order[r] = order[r].sort((a, b) => a.median > b.median)
+                }
+            }
+        }
+
+        let crossing = (order) => {
+            let r = 0
+            for (let i=0; i<order.length; i++){
+                let rankEdges = graph.edges.filter(e => e.nodes[0].depth == i)
+
+                if (order[i + 1] == undefined) continue;
+
+                for (let j=0; j<rankEdges.length; j++){
+                    let e1 = rankEdges[j];
+
+                    if (e1.nodes[0].depth == e1.nodes[1].depth) continue
+
+                    for (let k=j+1; k<rankEdges.length; k++){
+                        let e2 = rankEdges[k];
+
+                        if (e2.nodes[0].id == e1.nodes[0].id || e2.nodes[1].id == e1.nodes[1].id) continue;
+                        if (e2.nodes[0].depth == e2.nodes[1].depth) continue
+
+                        let e1s = order[i].indexOf(
+                            order[i].find(n => n.id == e1.nodes[0].id))
+                        let e2s = order[i].indexOf(
+                            order[i].find(n => n.id == e2.nodes[0].id))
+                        let e1t = order[i + 1].indexOf(
+                            order[i + 1].find(n => n.id == e1.nodes[1].id))
+                        let e2t = order[i + 1].indexOf(
+                            order[i + 1].find(n => n.id == e2.nodes[1].id))
+
+                        if (e1s > e2s && e1t < e2t) r+=1;
+                        if (e1s < e2s && e1t > e2t) r+=1;
+                    }
+                }
+            }
+            return r;
+        }
+
+        let swapArrayElements = function(arr, indexA, indexB) {
+            let temp = arr[indexA];
+            arr[indexA] = arr[indexB];
+            arr[indexB] = temp;
+        };
+
+        let transpose = (order) => {
+            let neworder = copy_order(order);
+            let improved = true;
+
+            while(improved){
+                improved = false;
+                for (let r=0; r<neworder.length; r++){
+                    for (let i=0; i<neworder[r].length-1; i++){
+                        let v = neworder[r][i];
+                        let w = neworder[r][i + 1];
+                        let crossings_vw = crossing(neworder);
+                        let order_b = copy_order(neworder);
+                        swapArrayElements(order_b[r], i, i+1);
+                        
+                        let crossings_wv = crossing(order_b);
+                        if (crossings_wv < crossings_vw){
+                            improved = true;
+                            // console.log("swapped", v.id, w.id, crossing(neworder), crossing(order_b));
+                            neworder = copy_order(order_b);
+                        } 
+                    }
+                }
+                return neworder;
+            }
+        }
+
+        let order = init_order()
+        let best = copy_order(order);
+        let max_iterations = 4;
+
+        for (let i=0; i<max_iterations; i++){
+            wmedian(order, i);
+            // console.log("crossings wmedian", crossing(order), "prev best", crossing(best))
+            order = transpose(order);
+            // console.log("crossings transpose", crossing(order), "prev best", crossing(best))
+            if (crossing(order) < crossing(best)){
+                best = copy_order(order);
+                // console.log("found new best", crossing(best))
+            } 
+        }
+
+        for (let i=0; i<graph.nodeIndex.length; i++){
+            graph.nodeIndex[i].sort((a, b) => {
+                let pos_a = best[i].indexOf(best[i].find(n => n.id == a.id))
+                let pos_b = best[i].indexOf(best[i].find(n => n.id == b.id))
+
+                return pos_a > pos_b;
+            })
+        }
+    }
+    
+    let testGenerator = new TestCaseGenerator();
+
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+        .style('margin-top', '20px')
+
+    let count = 0;
+    for (test of testGenerator.genGroupCreationTest2()){
+        // addGroups(test.graph)
+
+        gansner(test.graph);
+        drawTest(test, testRow, 300);
+
+        algorithm = new SimpleLp(test.graph);
+        algorithm.options.bendiness_reduction_active = false;
+        algorithm.options.simplify_for_groups_enabled = true;
+        algorithm.arrange();
+        algorithm.apply_solution();
+        test.algorithm = algorithm;
+        drawTest(test, testRow, 300);
+
+        testRow.append('div')
+            .style('height', 'inherit')
+            .style('width', '2px')
+            .style('background-color', 'gray')
+
+        if (count++ > 0) break;
+    }
+    
+</script>
+
+</html>

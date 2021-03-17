@@ -81,7 +81,7 @@ class Gansner {
     }
 
     arrangeRight(g){
-        for (let i=g.maxDepth-1; i>0; i--){
+        for (let i=g.maxDepth-2; i>0; i--){
             let layerTables = g.tableIndex[i];
             let layerEdges = g.edgeIndex[i];
 
@@ -101,7 +101,7 @@ class Gansner {
                         .filter(e => e.leftAttribute == attribute  && e.leftTable.depth != e.rightTable.depth)
                         .map(e => parseFloat(e.rightAttribute.weight))
 
-                    if (tableWeights.length != 0) 
+                    if (tableWeights.length != 0 && attributeWeights.length != 0) 
                         attribute.weight = this.median(tableWeights) + this.median(attributeWeights)/table.attributes.length
                 
                 }

@@ -1,402 +1,400 @@
-<!doctype html>
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="https://getbootstrap.com/docs/4.0/assets/img/favicons/favicon.ico">
 
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
-  <script src="https://d3js.org/d3.v5.min.js"></script>
-</head>
+    <title>Placeholder title</title>
 
-<script
-    src="https://code.easypz.io/easypz.latest.min.js">
-</script>
-<script src="./lib/glpk.min.js"></script>
+    <link href="./css/neumorph.min.css" rel="stylesheet">
 
-<style>
-    body {
-        font-family: Arial, Helvetica, sans-serif;
-        margin: 5%;
-        background-color: beige;
+    <link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/starter-template/">
+
+    <!-- Bootstrap core CSS -->
+    <link href="./css/bootstrap.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="./css/starter-template.css" rel="stylesheet">
+
+    <script src="./lib/seedrandom.min.js"></script>
+    <script src="./lib/d3.v5.min.js"></script>
+    <script src="./lib/glpk.min.js"></script>
+
+    <script src="./simple/simplegraph.js"></script>
+    <script src="./simple/simpleLp.js"></script>
+    <script src="./simple/testCaseGenerator.js"></script>
+
+    <script src="./js/GroupCreation.js"></script>
+    <script src="./js/readFromJson.js"></script>
+    <script src="./js/GroupCreation.js"></script>
+
+    <style>
+      #randomgroupGenDiv{
+        margin-bottom: 2em;
+      }
+
+      .roundedCornerImg{
+      /* width:350px;height:200px; */
+      /* border: solid 1px #555; */
+      background-color: #eed;
+      /* box-shadow: 10px -10px 5px  rgba(0,0,0,0.6);
+      -moz-box-shadow: 10px -10px 5px  rgba(0,0,0,0.6);
+      -webkit-box-shadow: 10px -10px 5px  rgba(0,0,0,0.6);
+      -o-box-shadow: 10px -10px 5px  rgba(0,0,0,0.6); */
+      border-radius:25px;
+      margin: 20px;
     }
 
-    svg {
-        margin: 1%;
-        background-color: white;
+    pre {
+      background-color: #ddd;
+      border-radius: 10px;
+      margin: 20px;
+      padding: 10px;
     }
 
-    .algorithm_header {
-        font-size: 2em;
-        font-weight: bold;
-        margin-top: 100px;
-        margin-bottom: 20px;
+    .premodel {
+      white-space: pre-wrap;
+      font-size: x-small;
+      text-align: left;
+      max-height: 400px;
     }
+    </style>
+  </head>
 
-    .rowDiv {
-        margin-top: 20px;
-    }
+  <body>
 
-</style>
+    <!-- <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+      <a class="navbar-brand" href="#">Navbar</a>
+      <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-<body>
+      <div class="navbar-collapse collapse" id="navbarsExampleDefault" style="">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+          
+          <li class="nav-item">
+            <a class="nav-link" href="#">Link</a>
+          
+          <li class="nav-item">
+            <a class="nav-link disabled" href="#">Disabled</a>
+          
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="http://example.com/" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown</a>
+            <div class="dropdown-menu" aria-labelledby="dropdown01">
+              <a class="dropdown-item" href="#">Action</a>
+              <a class="dropdown-item" href="#">Another action</a>
+              <a class="dropdown-item" href="#">Something else here</a>
+            </div>
+          
+        </ul>
+        form class="form-inline my-2 my-lg-0">
+          <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
+          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form> 
+      </div>
+    </nav> -->
+
+    <main role="main" class="container">
+
+      <div class="starter-template">
+        <h1>Placeholder project name!</h1>
+        <p>The layout of a graph deeply influences how readable a graph is to humans. 
+          When trying to find a suitable algorithm for graph layout, one can decide to either focus on scalability or optimality. 
+          In this paper, we focus on the latter, which is especially important as optimal solutions are not only the best attainable result, but they can also be used as a baseline to test the effectiveness of methods which do not guarantee optimality (such as methods based on heuristics, which instead focus on scalability). 
+          In the past, efforts towards optimal graph layout algorithms have been centered on crossing reduction, but graphs can have a wide number of properties which may need to be taken into account, and there are more readability criteria other than having the smallest possible number of crossings.
+          We make an important step towards achieving this goal by proposing a modular integer linear programming formulation for layered graphs that can take into account a number of readability criteria suggested in the past (e.g. crossing reduction, edge bendiness, nested and multi-rank grouping) that can all be solved simultaneously. 
+          Our method can be adapted to numerous, different use cases due to its modularity, which allows for modules to be cherry-picked according to which features are needed.</p>
+        <br><br>
+          <svg id="graph1" viewBox="0 0 350 250"></svg>
+
+          <h1>Features:</h1>
+
+            Crossing reduction in layered graphs <br>
+            Bendiness reduction <br>
+            Manages single-rank, multi-rank and nested groups <br>
+            Always finds the optimal solution <br>
+
+        
+          <h1 style="margin-top: 2em;">Resources</h1>
+        <div class="row"><img src="./images/screenshot1.png" class="col-sm np-element roundedCornerImg"><img src="./images/screenshot2.png" class="col-sm np-element roundedCornerImg"></div>
+        <a href="./simple.html">All formulas explained</a>, with examples, full formulations and edge cases.<br>
+        <div class="row"><img src="./images/screenshot3.png" class="col-sm np-element roundedCornerImg"><img src="./images/screenshot4.png" class="col-sm np-element roundedCornerImg"></div>
+        <a href="./benchmark.html">The method applied to the first 79 graphs in Rome-Lib</a>, comparing various configurations. <br>
+        <div class="row"><img src="./images/screenshot5.png" class="col-sm np-element roundedCornerImg"><img src="./images/screenshot6.png" class="col-sm np-element roundedCornerImg"></div>
+        <a href="./qv.html">Comparison against other layout algorithms applied to queryvis</a><br>
+
+        <h1 style="margin-top: 2em">Try it yourself</h1>
+        <p><i>Note: the result is computed in your browser, so it might take some time.</i></p><br>
+
+        <div id="accordion">
+          <div id="randomGroupGenDiv" class="card">
+            <div class="card-header" id="headingOne">
+              <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" onclick="readfromJson=!readfromJson" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                  Generate a random graph
+                </button>
+              </h5>
+            </div>
+
+            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+              <div class="card-body">
+                <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon1">Seed</span>
+                  </div>
+                  <input type="text" class="form-control" placeholder="seed" aria-label="seed" aria-describedby="basic-addon1" onchange="sandboxOptions.seed = this.value">
+                </div>
+      
+                <div style="display: inline-flex; width:100%">
+                  <div class="col-sm">Max depth</div>
+                  <input style="margin-left: 5%; margin-right:5%; width:100%" class="col-md" type="range" class="form-range" id="maxDepth" min="2" max="7" step="1" value="" onchange="sandboxOptions.maxDepth = this.value; document.getElementById('maxdval').innerHTML = this.value;">
+                  <div id='maxdval' class="col-sm">4</div>
+                </div>
+      
+                <div style="display: inline-flex; width: 100%">
+                  <div class="col-sm">Max nodes per rank</div>
+                  <input class="col-md" style="margin-left: 5%; margin-right:5%; width:100%" type="range" class="form-range" id="maxNodesPerDepth" min="2" max="5" step="1" value="" onchange="sandboxOptions.maxNodesPerRank = this.value; document.getElementById('maxrval').innerHTML = this.value;">
+                  <div id='maxrval' class="col-sm">4</div>
+                </div>
+      
+                <div style="display: inline-flex; width: 100%">
+                  <div class="col-sm">Node distribution</div>
+                  <input class="col-md" style="margin-left: 5%; margin-right:5%; width:100%" type="range" class="form-range" id="nodeDistribution" min="0.2" max="1" step="0.1" value="" onchange="sandboxOptions.children_prob = this.value; document.getElementById('ndval').innerHTML = this.value;">
+                  <div id='ndval' class="col-sm">4</div>
+                </div>
+      
+                <div style="display: inline-flex; width: 100%">
+                  <div class="col-sm">Random edge distribution</div>
+                  <input class="col-md" style="margin-left: 5%; margin-right:5%; width:100%" type="range" class="form-range" id="randomEdgeDistribution" min="0" max="0.5" step="0.1" value="" onchange="sandboxOptions.random_edge_prob = this.value; document.getElementById('aeval').innerHTML = this.value;">
+                  <div id='aeval' class="col-sm">4</div>
+                </div>
+      
+                <div style="display: inline-flex; width: 100%">
+                  <div class="col-sm">Same-rank edge distribution</div>
+                  <input class="col-md" style="margin-left: 5%; margin-right:5%; width:100%" type="range" class="form-range" id="sameRankEdgeDistribution" min="0" max="0.1" step="0.01" value="" onchange="sandboxOptions.same_rank_edge_prob = this.value; document.getElementById('seval').innerHTML = this.value;">
+                  <div id='seval' class="col-sm">4</div>
+                </div>
+    
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="card-header" id="headingTwo">
+                <h5 class="mb-0">
+                  <button class="btn btn-link collapsed" onclick="readfromJson=!readfromJson" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                    Read from JSON
+                  </button>
+                </h5>
+              </div>
+              <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+                <div class="card-body">
+                  Edit this JSON graph description or paste a new one: <br>
+                  <pre contenteditable="true" id="jsonDescription", style="text-align: left">
+{
+  "nodes": [
+    {"id": "u1"},
+    {"id": "u2"},
+    {"id": "u3"},
+    {"id": "u4"}
+  ],
+  "edges": [
+    {"nodes": ["u1", "u2"]},
+    {"nodes": ["u1", "u3"]},
+    {"nodes": ["u2", "u4"]}
+  ]
+}
+                  </pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <br><br>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="checkboxbendinessreduction" onclick="sandboxOptions.crossing_reduction_active = this.checked">
+          <label class="form-check-label" for="flexCheckDefault">
+            Enable crossing reduction
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="checkboxcrossingreduction" onclick="sandboxOptions.bendiness_reduction_active = this.checked">
+          <label class="form-check-label" for="flexCheckDefault">
+            Enable bendiness reduction
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="checkboxfindgroups" onclick="sandboxOptions.autogroups = this.checked">
+          <label class="form-check-label" for="flexCheckDefault">
+            Find groups automatically
+          </label>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-block" style="margin-top: 2em" onclick="genSandbox()">Generate and solve</button> <br>
+
+        <svg id="graphsandbox" style="margin-top: 2em" viewBox="0 0 300 300"></svg>
+
+        <div class="row">
+          <div class="col-md"><b>Model:</b><pre class="premodel" id="modelpre"></pre></div>
+          <div class="col-md"><b>Result:</b><pre class="premodel" id="resultpre"></pre></div>
+        </div>
+
+        <h1 style="margin-top: 2em">Usage</h1>
+
+        <div style="text-align: left;">Start by reading a graph from a JSON file:
+          <pre><code>let g = readFromJson(file);</code></pre>
+
+          Automatically find groups of nodes (optional):
+          <pre><code>addGroups(g);</code></pre>
+
+          Initialize the algorithm:
+          <pre><code>let algorithm = new SimpleLp(g);</code></pre>
+
+          Set options for the algorithm:
+          <pre><code>let options = {crossings_reduction_weight: 1,
+  crossings_reduction_active: true,
+  bendiness_reduction_weight: 0.1,
+  bendiness_reduction_active: false,
+  simplify_for_groups_enabled: true,
+  keep_groups_rect: true
+}
+
+algorithm.options = options;</code></pre>
+
+        Run it:
+        <pre><code>algorithm.arrange();</code></pre>
+
+        Apply the solution:
+        <pre><code>algorithm.apply_solution();</code></pre>
+
+        Draw:
+        <pre><code>g.draw(svg);</code></pre>
+        <div>
+
+        <h1 style="margin-top: 2em">Acknowledgements</h1> 
+        <p><a href="https://d3js.org/">d3</a>, svg management library used for drawing the graphs.</p>
+        <p><a href="https://github.com/hgourvest/glpk.js">glpk.js</a>, GNU Linear Programming Kit for Javascript.</p>
+
+
+      </div>
+
+    </main><!-- /.container -->
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="./lib/jquery-3.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <!-- <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery-slim.min.js"><\/script>')</script> -->
+    <script src="./lib/popper.js"></script>
+    <script src="./lib/bootstrap.js"></script>
+  
 </body>
 
-<script src="./dist/dist.js"></script>
 <script>
-    const svg_height = 300
-    const svg_width = 600
 
-    const svg_height_s = 300
-    const svg_width_s = 600
-    const svg_height_m = 800
-    const svg_width_m = 1600
-    const svg_height_l = 1600
-    const svg_width_l = 3200
+    let testGenerator = new TestCaseGenerator();
 
-    const attr_height = 15
-    const table_width = 70
-    const depth_distance = 150
-    const header_height = 20
-    var table_vert_space = 100
+    let maxNodesPerRank = 4;
+    let maxDepth = 7;
 
-    lpTest = () => {
-        g = new Graph()
-        t = new Table("a", "a", true, 0)
-        b = new Table("b", "b", true, 1)
-        c = new Table("c", "c", true, 1)
+    let g = testGenerator.genRandomGraph("aae", maxNodesPerRank, maxDepth, 0.7, 0.3, 0.05)
 
-        g.addTable(t)
-        g.addTable(b)
-        g.addTable(c)
-
-        a1 = new Attribute(t, "a1")
-        t.attributes.push(a1)
-        a2 = new Attribute(t, "a2")
-        t.attributes.push(a2)
-        b1 = new Attribute(b, "b1")
-        b.attributes.push(b1)
-        b2 = new Attribute(b, "b2")
-        b.attributes.push(b2)
-        b21 = new Attribute(b, "b3")
-        b.attributes.push(b21)
-        b4 = new Attribute(b, "b4")
-        b.attributes.push(b4)
-
-        c1 = new Attribute(c, "c1")
-        c.attributes.push(c1)
-
-        g.setExactWeights()
-        g.sortGraph()
-
-        e = new Edge(t, a1, b, b2)
-        g.addEdge(e)
-        e = new Edge(t, a2, b, b1)
-        g.addEdge(e)
-        e = new Edge(t, a1, b, b4)
-        g.addEdge(e)
-
-        e = new Edge(t, a1, c, c1)
-        g.addEdge(e)
-
-        let algorithm = new LPFormulation(g)
-        algorithm.arrange()
-
-        return g
-    }
-
-    async function makeGraphWithAlgorithm(rowDiv, seed, size, algorithmName = undefined) {
-        let depth, tableDistribution, cur_svg_width, cur_svg_height, algorithm;
-
-        switch (size) {
-            case 's':
-                depth = 4;
-                tableDistribution = [2, 3];
-                cur_svg_width = svg_width_s;
-                cur_svg_height = svg_height_s;
-                break;
-            case 'sm':
-                depth = 7;
-                tableDistribution = [3, 5];
-                cur_svg_width = svg_width_m*0.7;
-                cur_svg_height = svg_height_m*0.7;
-                break;
-            case 'm':
-                depth = 10;
-                tableDistribution = [3, 6];
-                cur_svg_width = svg_width_m;
-                cur_svg_height = svg_height_m;
-                break;
-            case 'ml':
-                depth = 12;
-                tableDistribution = [4, 7];
-                cur_svg_width = svg_width_l*0.6;
-                cur_svg_height = svg_height_l*0.6;
-                break;
-            case 'l':
-                depth = 14;
-                tableDistribution = [5, 7];
-                cur_svg_width = svg_width_l;
-                cur_svg_height = svg_height_l;
-                break;
-        }
-
-        g = new GraphGenerator(depth, seed, tableDistribution)
-        g = g.generate()
+    let svg = d3.select("#graph1")
+        .attr("width", "50%")
+        .attr("height", "300px")
         
-        g.setExactWeights()
-        g.sortGraph()
+    let svghtml = document.getElementById("graph1")
 
-        switch (algorithmName) {
-            case 'sweep':
-                algorithm = new Sweep(g)
-                algorithm.arrange()
-                break;
-            case 'modified gansner':
-                algorithm = new Gansner(g)
-                algorithm.arrange()
-                break;
-            case 'gansner same rank':
-                algorithm = new GansnerSameRank(g)
-                algorithm.arrange()
-                break;
-            case 'lp':
-                //algorithm = new LPFormulation(g)
-                //algorithm.arrange()
-                //g = lpTest()
-                runLpWorker(g, rowDiv, cur_svg_width, cur_svg_height)
-                break;
-            case 'lp_new':
-                runSimpleLpWorker(g, rowDiv, cur_svg_width, cur_svg_height)
-                break;
-            default:
-                break;
-        }
+    algorithm = new SimpleLp(g);
+    algorithm.options.bendiness_reduction_active = true;
+    algorithm.options.simplify_for_groups_enabled = true;
+    algorithm.arrange();
+    algorithm.apply_solution();
 
-        if (algorithmName != 'lp' && algorithmName != 'lp_new'){
-            g.setExactWeights()
-            g.sortGraph()
+    // console.log(svghtml.getBBox().width)
 
-            svg = rowDiv
-                    .append('div')
-                    .style('width', '20%')
-                    .append('svg')
-                    .attr('class', 'vis-svg')
-                    .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                    .attr("preserveAspectRatio", "xMinYMin meet")
-                    .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
+    g.draw(svg, 60, 30);
 
-            drawGraph(svg, g, algorithm)
-        }
+    readfromJson = false;
+
+  let sandboxOptions = {
+    maxNodesPerRank : 4,
+    maxDepth : 5,
+    bendiness_reduction_active: true,
+    crossing_reduction_active: true,
+    children_prob: 0.7,
+    random_edge_prob: 0.3,
+    same_rank_edge_prob: 0.05,
+    seed: "aae",
+    autogroups: false
+  }
+
+  document.getElementById("checkboxbendinessreduction").checked = true;
+  document.getElementById("checkboxcrossingreduction").checked = true;
+  document.getElementById("checkboxfindgroups").checked = false;
+  document.getElementById("maxNodesPerDepth").value = 4
+
+  let genSandbox = () => {
+
+    let grsandbox;
+
+    document.getElementById("resultpre").innerHTML = "";
+    document.getElementById("modelpre").innerHTML = "";
+
+    if (!readfromJson) {
+      document.getElementById("maxdval").innerHTML = document.getElementById("maxDepth").value
+      document.getElementById("maxrval").innerHTML = document.getElementById("maxNodesPerDepth").value
+      document.getElementById("ndval").innerHTML = document.getElementById("nodeDistribution").value
+      document.getElementById("aeval").innerHTML = document.getElementById("randomEdgeDistribution").value
+      document.getElementById("seval").innerHTML = document.getElementById("sameRankEdgeDistribution").value
+      sandboxOptions.maxNodesPerRank = document.getElementById("maxNodesPerDepth").value
+      sandboxOptions.maxDepth = document.getElementById("maxDepth").value
+      sandboxOptions.children_prob = document.getElementById("nodeDistribution").value
+      sandboxOptions.random_edge_prob = document.getElementById("randomEdgeDistribution").value
+      sandboxOptions.same_rank_edge_prob = document.getElementById("sameRankEdgeDistribution").value
+
+      grsandbox = testGenerator.genRandomGraph(sandboxOptions.seed, sandboxOptions.maxNodesPerRank, sandboxOptions.maxDepth, sandboxOptions.children_prob, sandboxOptions.random_edge_prob, sandboxOptions.same_rank_edge_prob)
+
+    } else {
+      let t = document.getElementById("jsonDescription").innerHTML.replace("'", '"')
+      grsandbox = readFromJson(JSON.parse(t));
     }
 
-    let form = document.createElement("div")
-    let label1 = document.createElement("label")
-    let input = document.createElement("input")
-    let input2 = document.createElement("button")
-    input.id = "fseed"
-    input.type = "text"
-    input.name = "fseed"
-    label1.innerHTML = "seed: "
-    label1.for = "fseed"
-    form.append(label1)
-    form.append(input)
-    input2.innerHTML = "Generate"
-    form.append(input2) 
-    document.body.append(form)
-    form.style.margin = "10px"
-    form.style.fontFamily = "Arial"
-    input2.onclick = () => {
-        makeAllGraphs(input.value)
+    if (sandboxOptions.autogroups){
+      addGroups(grsandbox);
     }
-
-    makeAllGraphs = (seed) => {
-        d3.selectAll(".vis-svg").remove()
-        d3.selectAll(".crossing_count").remove()
-        d3.selectAll('.algorithm_header').remove()
-        d3.selectAll('.algorithm_explanation').remove()
-        d3.selectAll('.rowDiv').remove()
-
-        d3.select('body').append('div')
-            .text("Original")
-            .attr('class', 'algorithm_header')
-
-        rowDiv = d3.select('body').append('div')
-            .style('width', '200%')
-            .style('height', svg_height)
-            .style('display', 'flex')
-            .attr('class', 'rowDiv')
-
-        makeGraphWithAlgorithm(rowDiv, seed, 's')
-        makeGraphWithAlgorithm(rowDiv, seed, 'sm')
-        makeGraphWithAlgorithm(rowDiv, seed, 'm')
-        makeGraphWithAlgorithm(rowDiv, seed, 'ml')
-        makeGraphWithAlgorithm(rowDiv, seed, 'l')
-
-        // ***
-        // SWEEP
-        // ***
-
-        d3.select('body').append('div')
-            .text("Sweep")
-            .attr('class', 'algorithm_header')
-
-        d3.select('body').append('tspan')
-            .attr('class', 'algorithm_explanation')
-            .html("Simple one-pass sweep, first starting from the left, then from the right. <br>"
-                + "Tries swapping each element with the next in the same column, then checks if the number of crossings is lower. If it is, it keeps going, if not, it reverses the swap and keeps going.")
-
-        rowDiv = d3.select('body').append('div')
-            .style('width', '200%')
-            .style('height', svg_height)
-            .style('display', 'flex')
-            .attr('class', 'rowDiv')
-
-        makeGraphWithAlgorithm(rowDiv, seed, 's', 'sweep')
-        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'sweep')
-        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'sweep')
-        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'sweep')
-        makeGraphWithAlgorithm(rowDiv, seed, 'l', 'sweep')
-
-        // ***
-        // GANSNER
-        // ***
-
-        d3.select('body').append('div')
-            .text("Modified Gansner [1993] (GraphViz's dot)")
-            .attr('class', 'algorithm_header')
-
-        d3.select('body').append('tspan')
-            .attr('class', 'algorithm_explanation')
-            .html("This should be the implementation that is closest to what GraphViz was doing to queryvis graphs. <br>"
-                + "Each node is assigned a weight that is the median of the weights of the linked tables. <br>"
-                + "Differently from Gansner (1993), this implementation manages groups of nodes that should be kept adjacent (attributes in a table). "
-                + "I believe GraphViz does this as well, by treating the groups of nodes as subproblems. <br> <br>"
-                + "Note: this implementation does not deal with same-rank edges, as they are not mentioned in Gansner's paper. GraphViz does not manage same-rank edges as well.")
-
-        rowDiv = d3.select('body').append('div')
-            .style('width', '200%')
-            .style('height', svg_height)
-            .style('display', 'flex')
-            .attr('class', 'rowDiv')
-
-        makeGraphWithAlgorithm(rowDiv, seed, 's', 'modified gansner')
-        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'modified gansner')
-        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'modified gansner')
-        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'modified gansner')
-        makeGraphWithAlgorithm(rowDiv, seed, 'l', 'modified gansner')
-
-        // ***
-        // LINEAR PROGRAMMING
-        // ***
-
-        d3.select('body').append('div')
-            .text("New LP formulation")
-            .attr('class', 'algorithm_header')
-
-        rowDiv = d3.select('body').append('div')
-            .style('width', '200%')
-            .style('height', svg_height)
-            .style('display', 'flex')
-            .attr('class', 'rowDiv')
-
-        makeGraphWithAlgorithm(rowDiv, seed, 's', 'lp_new')
-        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'lp_new')
-        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'lp_new')
-        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'lp_new')
-        makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp_new')
-
-
-        d3.select('body').append('div')
-            .text("Linear programming formulation")
-            .attr('class', 'algorithm_header')
-
-        rowDiv = d3.select('body').append('div')
-            .style('width', '200%')
-            .style('height', svg_height)
-            .style('display', 'flex')
-            .attr('class', 'rowDiv')
-
-        makeGraphWithAlgorithm(rowDiv, seed, 's', 'lp')
-        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'lp')
-        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'lp')
-        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'lp')
-        makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp')
         
+    let sandboxsvg = d3.select("#graphsandbox")
+          .attr("width", "50%")
+          .attr("height", "300px")
+
+    algorithm = new SimpleLp(grsandbox);
+    algorithm.options.bendiness_reduction_active = sandboxOptions.bendiness_reduction_active;
+    algorithm.options.crossings_reduction_active = sandboxOptions.crossing_reduction_active;
+    if (algorithm.options.bendiness_reduction_active) algorithm.options.simplify_for_groups_enabled = true;
+    else algorithm.options.simplify_for_groups_enabled = false;
+    
+    if (sandboxOptions.bendiness_reduction_active || sandboxOptions.crossing_reduction_active || sandboxOptions.autogroups) {
+      algorithm.arrange();
+      algorithm.apply_solution();
+      document.getElementById("modelpre").innerHTML = algorithm.modelString;
+      for (let val in algorithm.result){
+        document.getElementById("resultpre").innerHTML += val + ": " + Math.round(algorithm.result[val]) + "\n";
+      }
     }
 
-    async function runLpWorker(g, rowDiv, cur_svg_width, cur_svg_height) {
-        let myWorker = new Worker('./js/worker.js')
-        myWorker.postMessage({'cmd': 'lp', 'graph': g});
-        let finished = false;
+    d3.select("#graphsandbox").selectAll("*").remove();
+    grsandbox.draw(sandboxsvg)
+  }
 
-        let algorithm;
-
-        myWorker.addEventListener('message', (msg) => {
-            finished = true;
-            algorithm = msg.data.algorithm;
-            for (table of msg.data.graph.tables){
-                t1 = g.tables.find(t => t.name == table.name)
-                t1.weight = table.weight
-
-                for (attribute of table.attributes){
-                    a1 = t1.attributes.find(a => a.name == attribute.name)
-                    a1.weight = attribute.weight
-                }
-            }
-
-            g.setExactWeights()
-            g.sortGraph()
-            g.adjustAttrOffset()
-
-            svg = rowDiv
-                    .append('div')
-                    .style('width', '20%')
-                    .append('svg')
-                    .attr('class', 'vis-svg')
-                    .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                    .attr("preserveAspectRatio", "xMinYMin meet")
-                    .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
-
-            drawGraph(svg, g, algorithm)
-        });
-
-        setTimeout(() => {
-            myWorker.terminate()
-            if (!finished) console.log('worker terminated')
-        }, 1000000);
-    }
-
-    async function runSimpleLpWorker(g, rowDiv, cur_svg_width, cur_svg_height) {
-        let myWorker = new Worker('./js/worker.js')
-        myWorker.postMessage({'cmd': 'lp_simple', 'graph': g});
-        let finished = false;
-
-        let algorithm;
-
-        myWorker.addEventListener('message', (msg) => {
-            finished = true;
-            algorithm = msg.data.algorithm;
-
-            let g = msg.data.graph
-
-            svg = rowDiv
-                    .append('div')
-                    .style('width', '20%')
-                    .append('svg')
-                    .attr('class', 'vis-svg')
-                    .attr('easypz', '{"applyTransformTo":"svg > *"}')
-                    .attr("preserveAspectRatio", "xMinYMin meet")
-                    .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
-
-            drawGraphSimple(svg, g, algorithm)
-        });
-
-        setTimeout(() => {
-            myWorker.terminate()
-            if (!finished) console.log('worker terminated')
-        }, 1000000);
-    }
-
-    makeAllGraphs("hello.")
+  genSandbox();
 
 </script>
 

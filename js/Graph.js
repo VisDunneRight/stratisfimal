@@ -106,7 +106,7 @@ class Graph {
         for (let i in this.tableIndex){
             let layerTables = this.tableIndex[i];
             layerTables = layerTables.sort((a, b) => {
-                return a.weight > b.weight? 1 : -1
+                return parseFloat(a.weight) > parseFloat(b.weight)? 1 : -1
             })
             
             for (let j in layerTables){
@@ -115,8 +115,10 @@ class Graph {
 
                 let attrs = table.attributes;
                 attrs = attrs.sort((a, b) => {
-                    return a.weight > b.weight? 1 : -1
+                    return parseFloat(a.weight) > parseFloat(b.weight)? 1 : -1
                 })
+
+                if (table.id == "T6y0") console.log(attrs)
                 
                 for (let k in attrs){
                     attrs[k].weight = parseFloat(k)
@@ -146,48 +148,6 @@ class Graph {
 
     adjustTableYPosition(){
         let improved = true;
-        
-        // while (improved){
-        //     improved = false;     
-
-        //     for (let i=1; i<this.tableIndex.length; i++){
-        //         let tableCol = this.tableIndex[i];
-        //         let initColLength = tableCol.length;
-
-        //         let bestPosition = undefined;
-        //         let bestNumOfStraightEdges = this.getNumStraightEdges();
-    
-        //         let curStraightEdges = this.getNumStraightEdges();
-                
-        //         for (let j=0; j<initColLength; j++){
-        //             let temptable = new Table('blank_' + i + "_" + j, 'blank_' + i + "_" + j, false, i);
-        //             temptable.weight = j - 0.5;
-    
-        //             this.addTable(temptable);
-        //             this.setExactWeights();
-
-        //             if (this.getNumStraightEdges() > bestNumOfStraightEdges){
-        //                 bestPosition = j;
-        //                 bestNumOfStraightEdges = this.getNumStraightEdges();
-        //                 improved = true;
-        //             }
-
-        //             this.tables.splice(this.tables.indexOf(temptable), 1);
-        //             tableCol.splice(tableCol.indexOf(temptable), 1);
-        //             this.setExactWeights();
-        //         }
-
-        //         if (bestPosition != undefined){
-        //             let temptable = new Table('blank_' + i + "_" + bestPosition, 'blank_' + i + "_" + bestPosition, false, i);
-        //             temptable.weight = bestPosition - 0.5;
-        //             temptable.visibility = 'hidden';
-
-        //             this.addTable(temptable);
-        //             this.setExactWeights();
-        //             this.updateGroupCoords();
-        //         }  
-        //     }
-        // }
 
         this.adjustAttrOffset()
     }
@@ -234,6 +194,8 @@ class Graph {
             let upperBound = -2;
             if (k == 0) upperBound = 0;
             else upperBound = tableCol[k-1].verticalAttrOffset - this.baseRowDistance + tableCol[k-1].attributes.length + 2; 
+            upperBound = Math.max(upperBound, -this.baseRowDistance + 6);
+            // if (tableCol[k].id == "T1y0") console.log(upperBound, tableCol[k-1].verticalAttrOffset, tableCol[k-2].verticalAttrOffset, tableCol[k-3].verticalAttrOffset)
             return upperBound;
         }
 
@@ -241,7 +203,7 @@ class Graph {
             let lowerBound = 2;
             if (tableCol.length == 1 || tableCol[k+1] == undefined) lowerBound = 20; // random big number
             else lowerBound = tableCol[k+1].verticalAttrOffset + this.baseRowDistance - tableCol[k].attributes.length - 2; 
-            //if (tableCol[k+1] != undefined) console.log(tableCol[k+1], tableCol[k+1].verticalAttrOffset, this.baseRowDistance, table.attributes.length)
+            lowerBound = Math.min(lowerBound, this.baseRowDistance - 6)
             return lowerBound
         }
 
@@ -310,10 +272,8 @@ class Graph {
             }
         }
 
-        while (cycleIndex < 10){
-            //console.log(cycleIndex, (cycleIndex % 2 == 0? 'right' : 'left'), this.getGraphTotalEdgeBendiness());
+        while (cycleIndex < 2){
             cycleIndex++;
-
             if (cycleIndex % 2 == 0) swipeRight()
             else swipeLeft()
         }

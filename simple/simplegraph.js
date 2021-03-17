@@ -233,7 +233,7 @@ class SimpleGraph {
                 g.append('text')
                     .text(node.name)
                     .attr('text-anchor', 'middle')
-                    // .attr('font-size', 'small')
+                    .style("font-family", "Arial")
                     .attr('y', -10)
                     .attr('fill', colors[0])
                     .style('font-size', '0.7em')

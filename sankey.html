@@ -11,10 +11,6 @@
   <script src="./simple/simpleLp.js"></script>
   <script src="./simple/testCaseGenerator.js"></script>
 
-  <script type="text/javascript"
-    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
-  </script>
-
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs=" crossorigin="anonymous"></script>
 </head>
 
@@ -52,7 +48,7 @@
 
 <script>
 
-let drawSankey = (svg, graph, nodeXDistance = 50, nodeYDistance = 50) => {
+let drawSankey = (svg, graph, nodeXDistance = 100, nodeYDistance = 20) => {
 
     let getNodeCoordX = (node) => (80 + nodeXDistance * (node.depth));
     let getNodeCoordY = (node) => {
@@ -63,8 +59,10 @@ let drawSankey = (svg, graph, nodeXDistance = 50, nodeYDistance = 50) => {
     let getNodeVal = (node) => gnv(node.value)
     let line = d3.line().curve(d3.curveBasis);
 
+    let scontainer = svg.append('g').attr('transform', 'translate(100, 0)')
+
     for (let edge of graph.edges){
-        svg.append('path')
+        scontainer.append('path')
             .attr('fill', 'none')
             .attr('stroke', "url(#linear-gradient-" + edge.nodes[0].id + "-" + edge.nodes[1].id + ")")
             .attr('stroke-width', getNodeVal(edge))
@@ -113,7 +111,7 @@ let drawSankey = (svg, graph, nodeXDistance = 50, nodeYDistance = 50) => {
 
     for (let depth in graph.nodeIndex){
         for (let node of graph.nodeIndex[depth]){
-            let g = svg.append('g')
+            let g = scontainer.append('g')
                 .attr('transform', 'translate(' + (getNodeCoordX(node)) + ',' + getNodeCoordY(node) +')')
                 .attr('opacity', () => {return node.type == "fake"? 0.1 : 1})
 
@@ -128,11 +126,13 @@ let drawSankey = (svg, graph, nodeXDistance = 50, nodeYDistance = 50) => {
                     return getNodeVal(n);
                 })
 
-            g.append('text')
-                .text(node.name)
-                .attr('text-anchor', 'middle')
-                .attr('font-size', 'small')
-                .attr('y', -10)
+            if (node.type != 'fake')
+                g.append('text')
+                    .text(node.name)
+                    .attr('text-anchor', () => depth != 0? 'middle' : 'end')
+                    .attr('font-size', '0.6em')
+                    .attr('y', () => depth != 0? -5 : 5)
+                    .attr('x', () => depth != 0? 0 : - 10)
         }
     }
 
@@ -163,10 +163,10 @@ let drawSankey = (svg, graph, nodeXDistance = 50, nodeYDistance = 50) => {
 
     d3.json("https://gist.githubusercontent.com/mbostock/ca9a0bb7ba204d12974bca90acc507c0/raw/398136b7db83d7d7fd89181b080924eb76041692/energy.json")
         .then(data => {
-            // data.nodes = data.nodes.slice(0, 15);
+            data.nodes = data.nodes.slice(0, 10);
 
             let svg = d3.select("body").append("svg")
-                .attr("width", 1500)
+                .attr("width", 2000)
                 .attr("height", 2000)
 
             let g = new SimpleGraph();
@@ -246,19 +246,21 @@ let drawSankey = (svg, graph, nodeXDistance = 50, nodeYDistance = 50) => {
 
             let algorithm = new SimpleLp(g);
             algorithm.options.bendiness_reduction_active = true;
-            // algorithm.arrange();
-            // algorithm.apply_solution();
+            algorithm.arrange();
+            algorithm.apply_solution();
 
-            algorithm.makeModel();
-            algorithm.readFromGurobi();
+            drawSankey(svg, g);
 
-            d3.select("body").append("div")
-                .attr("class", "modelDivClass")
-                .html(algorithm.writeForGurobi())
+            // algorithm.makeModel();
+            // algorithm.readFromGurobi();
 
-            document.addEventListener('gurobi_reading_complete', function (e) {
-                drawSankey(svg, g, 200, 50);
-            }, false);
+            // d3.select("body").append("div")
+            //     .attr("class", "modelDivClass")
+            //     .html(algorithm.writeForGurobi())
+
+            // document.addEventListener('gurobi_reading_complete', function (e) {
+            //     drawSankey(svg, g, 200, 50);
+            // }, false);
         })
 </script>
 

@@ -290,7 +290,7 @@ function printResults(){
     }
 
     console.log("No groups, min crossing")
-    let d1 = fs.readFileSync('result_times_nogroups_mincrossing_big.json', 'utf-8')
+    let d1 = fs.readFileSync('result_times_nogroups_mincrossing_big2.json', 'utf-8')
     d1 = JSON.parse(d1);
     printData(d1)
 
@@ -366,6 +366,6 @@ function printOneModel(nodenum, modelnum){
 }
 
 // printOneModel(80, 0);
-mainRomeLib();
-// printResults();
+// mainRomeLib();
+printResults();
   

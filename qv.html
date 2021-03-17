@@ -1,0 +1,405 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+
+<script
+    src="https://code.easypz.io/easypz.latest.min.js">
+</script>
+<script src="./lib/glpk.min.js"></script>
+<script src="./lib/jquery-3.js"></script>
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 5%;
+        background-color: beige;
+    }
+
+    svg {
+        margin: 1%;
+        background-color: white;
+    }
+
+    .algorithm_header {
+        font-size: 2em;
+        font-weight: bold;
+        margin-top: 100px;
+        margin-bottom: 20px;
+    }
+
+    .rowDiv {
+        margin-top: 20px;
+    }
+
+</style>
+
+<body>
+</body>
+
+<script src="./dist/dist.js"></script>
+<script>
+    const svg_height = 300
+    const svg_width = 600
+
+    const svg_height_s = 300
+    const svg_width_s = 600
+    const svg_height_m = 800
+    const svg_width_m = 1600
+    const svg_height_l = 1600
+    const svg_width_l = 3200
+
+    const attr_height = 15
+    const table_width = 70
+    const depth_distance = 150
+    const header_height = 20
+    var table_vert_space = 100
+
+    lpTest = () => {
+        g = new Graph()
+        t = new Table("a", "a", true, 0)
+        b = new Table("b", "b", true, 1)
+        c = new Table("c", "c", true, 1)
+
+        g.addTable(t)
+        g.addTable(b)
+        g.addTable(c)
+
+        a1 = new Attribute(t, "a1")
+        t.attributes.push(a1)
+        a2 = new Attribute(t, "a2")
+        t.attributes.push(a2)
+        b1 = new Attribute(b, "b1")
+        b.attributes.push(b1)
+        b2 = new Attribute(b, "b2")
+        b.attributes.push(b2)
+        b21 = new Attribute(b, "b3")
+        b.attributes.push(b21)
+        b4 = new Attribute(b, "b4")
+        b.attributes.push(b4)
+
+        c1 = new Attribute(c, "c1")
+        c.attributes.push(c1)
+
+        g.setExactWeights()
+        g.sortGraph()
+
+        e = new Edge(t, a1, b, b2)
+        g.addEdge(e)
+        e = new Edge(t, a2, b, b1)
+        g.addEdge(e)
+        e = new Edge(t, a1, b, b4)
+        g.addEdge(e)
+
+        e = new Edge(t, a1, c, c1)
+        g.addEdge(e)
+
+        let algorithm = new LPFormulation(g)
+        algorithm.arrange()
+
+        return g
+    }
+
+    async function makeGraphWithAlgorithm(rowDiv, seed, size, algorithmName = undefined) {
+        let depth, tableDistribution, cur_svg_width, cur_svg_height, algorithm;
+
+        switch (size) {
+            case 's':
+                depth = 4;
+                tableDistribution = [2, 3];
+                cur_svg_width = svg_width_s;
+                cur_svg_height = svg_height_s;
+                break;
+            case 'sm':
+                depth = 7;
+                tableDistribution = [3, 5];
+                cur_svg_width = svg_width_m*0.7;
+                cur_svg_height = svg_height_m*0.7;
+                break;
+            case 'm':
+                depth = 10;
+                tableDistribution = [3, 6];
+                cur_svg_width = svg_width_m;
+                cur_svg_height = svg_height_m;
+                break;
+            case 'ml':
+                depth = 12;
+                tableDistribution = [4, 7];
+                cur_svg_width = svg_width_l*0.6;
+                cur_svg_height = svg_height_l*0.6;
+                break;
+            case 'l':
+                depth = 14;
+                tableDistribution = [5, 7];
+                cur_svg_width = svg_width_l;
+                cur_svg_height = svg_height_l;
+                break;
+        }
+
+        g = new GraphGenerator(depth, seed, tableDistribution)
+        g = g.generate()
+        
+        g.setExactWeights()
+        g.sortGraph()
+
+        switch (algorithmName) {
+            case 'sweep':
+                algorithm = new Sweep(g)
+                algorithm.arrange()
+                break;
+            case 'modified gansner':
+                algorithm = new Gansner(g)
+                algorithm.arrange()
+                g.adjustAttrOffset();
+                break;
+            case 'gansner same rank':
+                algorithm = new GansnerSameRank(g)
+                algorithm.arrange()
+                break;
+            case 'lp':
+                //algorithm = new LPFormulation(g)
+                //algorithm.arrange()
+                //g = lpTest()
+                runLpWorker(g, rowDiv, cur_svg_width, cur_svg_height)
+                break;
+            case 'lp_new':
+                runSimpleLpWorker(g, rowDiv, cur_svg_width, cur_svg_height)
+                break;
+            default:
+                break;
+        }
+
+        if (algorithmName != 'lp' && algorithmName != 'lp_new'){
+            g.setExactWeights()
+            g.sortGraph()
+
+            svg = rowDiv
+                    .append('div')
+                    .style('width', '20%')
+                    .append('svg')
+                    .attr('class', 'vis-svg')
+                    .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                    .attr("preserveAspectRatio", "xMinYMin meet")
+                    .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
+
+            drawGraph(svg, g, algorithm)
+        }
+    }
+
+    let form = document.createElement("div")
+    let label1 = document.createElement("label")
+    let input = document.createElement("input")
+    let input2 = document.createElement("button")
+    input.id = "fseed"
+    input.type = "text"
+    input.name = "fseed"
+    label1.innerHTML = "seed: "
+    label1.for = "fseed"
+    form.append(label1)
+    form.append(input)
+    input2.innerHTML = "Generate"
+    form.append(input2) 
+    document.body.append(form)
+    form.style.margin = "10px"
+    form.style.fontFamily = "Arial"
+    input2.onclick = () => {
+        makeAllGraphs(input.value)
+    }
+
+    makeAllGraphs = (seed) => {
+        d3.selectAll(".vis-svg").remove()
+        d3.selectAll(".crossing_count").remove()
+        d3.selectAll('.algorithm_header').remove()
+        d3.selectAll('.algorithm_explanation').remove()
+        d3.selectAll('.rowDiv').remove()
+
+        d3.select('body').append('div')
+            .text("Original")
+            .attr('class', 'algorithm_header')
+
+        rowDiv = d3.select('body').append('div')
+            .style('width', '200%')
+            .style('height', svg_height)
+            .style('display', 'flex')
+            .attr('class', 'rowDiv')
+
+        makeGraphWithAlgorithm(rowDiv, seed, 's')
+        makeGraphWithAlgorithm(rowDiv, seed, 'sm')
+        makeGraphWithAlgorithm(rowDiv, seed, 'm')
+        makeGraphWithAlgorithm(rowDiv, seed, 'ml')
+        // makeGraphWithAlgorithm(rowDiv, seed, 'l')
+
+        // ***
+        // SWEEP
+        // ***
+
+        d3.select('body').append('div')
+            .text("Sweep")
+            .attr('class', 'algorithm_header')
+
+        d3.select('body').append('tspan')
+            .attr('class', 'algorithm_explanation')
+            .html("Simple one-pass sweep, first starting from the left, then from the right. <br>"
+                + "Tries swapping each element with the next in the same column, then checks if the number of crossings is lower. If it is, it keeps going, if not, it reverses the swap and keeps going.")
+
+        rowDiv = d3.select('body').append('div')
+            .style('width', '200%')
+            .style('height', svg_height)
+            .style('display', 'flex')
+            .attr('class', 'rowDiv')
+
+        makeGraphWithAlgorithm(rowDiv, seed, 's', 'sweep')
+        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'sweep')
+        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'sweep')
+        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'sweep')
+        // makeGraphWithAlgorithm(rowDiv, seed, 'l', 'sweep')
+
+        // ***
+        // GANSNER
+        // ***
+
+        d3.select('body').append('div')
+            .text("Modified Gansner [1993] (GraphViz's dot)")
+            .attr('class', 'algorithm_header')
+
+        d3.select('body').append('tspan')
+            .attr('class', 'algorithm_explanation')
+            .html("This should be the implementation that is closest to what GraphViz was doing to queryvis graphs. <br>"
+                + "Each node is assigned a weight that is the median of the weights of the linked tables. <br>"
+                + "Differently from Gansner (1993), this implementation manages groups of nodes that should be kept adjacent (attributes in a table). "
+                + "I believe GraphViz does this as well, by treating the groups of nodes as subproblems. <br> <br>"
+                + "Note: this implementation does not deal with same-rank edges, as they are not mentioned in Gansner's paper. GraphViz does not manage same-rank edges as well.")
+
+        rowDiv = d3.select('body').append('div')
+            .style('width', '200%')
+            .style('height', svg_height)
+            .style('display', 'flex')
+            .attr('class', 'rowDiv')
+
+        makeGraphWithAlgorithm(rowDiv, seed, 's', 'modified gansner')
+        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'modified gansner')
+        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'modified gansner')
+        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'modified gansner')
+        // makeGraphWithAlgorithm(rowDiv, seed, 'l', 'modified gansner')
+
+        // ***
+        // LINEAR PROGRAMMING
+        // ***
+
+        d3.select('body').append('div')
+            .text("New LP formulation")
+            .attr('class', 'algorithm_header')
+
+        rowDiv = d3.select('body').append('div')
+            .style('width', '200%')
+            .style('height', svg_height)
+            .style('display', 'flex')
+            .attr('class', 'rowDiv')
+
+        makeGraphWithAlgorithm(rowDiv, seed, 's', 'lp_new')
+        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'lp_new')
+        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'lp_new')
+        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'lp_new')
+        // makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp_new')
+
+
+        d3.select('body').append('div')
+            .text("Linear programming formulation")
+            .attr('class', 'algorithm_header')
+
+        rowDiv = d3.select('body').append('div')
+            .style('width', '200%')
+            .style('height', svg_height)
+            .style('display', 'flex')
+            .attr('class', 'rowDiv')
+
+        makeGraphWithAlgorithm(rowDiv, seed, 's', 'lp')
+        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'lp')
+        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'lp')
+        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'lp')
+        // makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp')
+        
+    }
+
+    async function runLpWorker(g, rowDiv, cur_svg_width, cur_svg_height) {
+        let myWorker = new Worker('./js/worker.js')
+        myWorker.postMessage({'cmd': 'lp', 'graph': g});
+        let finished = false;
+
+        let algorithm;
+
+        myWorker.addEventListener('message', (msg) => {
+            finished = true;
+            algorithm = msg.data.algorithm;
+            for (table of msg.data.graph.tables){
+                t1 = g.tables.find(t => t.name == table.name)
+                t1.weight = table.weight
+
+                for (attribute of table.attributes){
+                    a1 = t1.attributes.find(a => a.name == attribute.name)
+                    a1.weight = attribute.weight
+                }
+            }
+
+            g.setExactWeights()
+            g.sortGraph()
+            g.adjustAttrOffset()
+
+            svg = rowDiv
+                    .append('div')
+                    .style('width', '20%')
+                    .append('svg')
+                    .attr('class', 'vis-svg')
+                    .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                    .attr("preserveAspectRatio", "xMinYMin meet")
+                    .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
+
+            drawGraph(svg, g, algorithm)
+        });
+
+        setTimeout(() => {
+            myWorker.terminate()
+            if (!finished) console.log('worker terminated')
+        }, 1000000);
+    }
+
+    async function runSimpleLpWorker(g, rowDiv, cur_svg_width, cur_svg_height) {
+        let myWorker = new Worker('./js/worker.js')
+        myWorker.postMessage({'cmd': 'lp_simple', 'graph': g});
+        let finished = false;
+
+        let algorithm;
+
+        myWorker.addEventListener('message', (msg) => {
+            finished = true;
+            algorithm = msg.data.algorithm;
+
+            let g = msg.data.graph
+
+            svg = rowDiv
+                    .append('div')
+                    .style('width', '20%')
+                    .append('svg')
+                    .attr('class', 'vis-svg')
+                    .attr('easypz', '{"applyTransformTo":"svg > *"}')
+                    .attr("preserveAspectRatio", "xMinYMin meet")
+                    .attr("viewBox", "0 0 " + cur_svg_width + " " + cur_svg_height)
+
+            drawGraphSimple(svg, g, algorithm)
+        });
+
+        setTimeout(() => {
+            myWorker.terminate()
+            if (!finished) console.log('worker terminated')
+        }, 1000000);
+    }
+
+    makeAllGraphs("babb")
+
+</script>
+
+</html>
