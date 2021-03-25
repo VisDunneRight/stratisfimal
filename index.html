@@ -61,43 +61,69 @@
       text-align: left;
       max-height: 400px;
     }
+
+    .loader,
+    .loader:before,
+    .loader:after {
+      border-radius: 50%;
+      width: 2.5em;
+      height: 2.5em;
+      -webkit-animation-fill-mode: both;
+      animation-fill-mode: both;
+      -webkit-animation: load7 1.8s infinite ease-in-out;
+      animation: load7 1.8s infinite ease-in-out;
+    }
+    .loader {
+      color: #3b3b3b;
+      font-size: 10px;
+      margin: 80px auto;
+      position: relative;
+      text-indent: -9999em;
+      -webkit-transform: translateZ(0);
+      -ms-transform: translateZ(0);
+      transform: translateZ(0);
+      -webkit-animation-delay: -0.16s;
+      animation-delay: -0.16s;
+    }
+    .loader:before,
+    .loader:after {
+      content: '';
+      position: absolute;
+      top: 0;
+    }
+    .loader:before {
+      left: -3.5em;
+      -webkit-animation-delay: -0.32s;
+      animation-delay: -0.32s;
+    }
+    .loader:after {
+      left: 3.5em;
+    }
+    @-webkit-keyframes load7 {
+      0%,
+      80%,
+      100% {
+        box-shadow: 0 2.5em 0 -1.3em;
+      }
+      40% {
+        box-shadow: 0 2.5em 0 0;
+      }
+    }
+    @keyframes load7 {
+      0%,
+      80%,
+      100% {
+        box-shadow: 0 2.5em 0 -1.3em;
+      }
+      40% {
+        box-shadow: 0 2.5em 0 0;
+      }
+    }
+
     </style>
   </head>
 
   <body>
-
-    <!-- <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-      <a class="navbar-brand" href="#">Navbar</a>
-      <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="navbar-collapse collapse" id="navbarsExampleDefault" style="">
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item active">
-            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
-          
-          <li class="nav-item">
-            <a class="nav-link" href="#">Link</a>
-          
-          <li class="nav-item">
-            <a class="nav-link disabled" href="#">Disabled</a>
-          
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="http://example.com/" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown</a>
-            <div class="dropdown-menu" aria-labelledby="dropdown01">
-              <a class="dropdown-item" href="#">Action</a>
-              <a class="dropdown-item" href="#">Another action</a>
-              <a class="dropdown-item" href="#">Something else here</a>
-            </div>
-          
-        </ul>
-        form class="form-inline my-2 my-lg-0">
-          <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search">
-          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-        </form> 
-      </div>
-    </nav> -->
 
     <main role="main" class="container">
 
@@ -122,7 +148,7 @@
         
           <h1 style="margin-top: 2em;">Resources</h1>
         <div class="row"><img src="./images/screenshot1.png" class="col-sm np-element roundedCornerImg"><img src="./images/screenshot2.png" class="col-sm np-element roundedCornerImg"></div>
-        <a href="./simple.html">All formulas explained</a>, with examples, full formulations and edge cases.<br>
+        <a href="./proofs.html">All formulas explained</a>, with examples, full formulations and edge cases.<br>
         <div class="row"><img src="./images/screenshot3.png" class="col-sm np-element roundedCornerImg"><img src="./images/screenshot4.png" class="col-sm np-element roundedCornerImg"></div>
         <a href="./benchmark.html">The method applied to the first 79 graphs in Rome-Lib</a>, comparing various configurations. <br>
         <div class="row"><img src="./images/screenshot5.png" class="col-sm np-element roundedCornerImg"><img src="./images/screenshot6.png" class="col-sm np-element roundedCornerImg"></div>
@@ -131,6 +157,7 @@
         <h1 style="margin-top: 2em">Try it yourself</h1>
         <p><i>Note: the result is computed in your browser, so it might take some time.</i></p><br>
 
+        <div class="card border-primary mb-3" style="padding: 20px">
         <div id="accordion">
           <div id="randomGroupGenDiv" class="card">
             <div class="card-header" id="headingOne">
@@ -147,7 +174,7 @@
                   <div class="input-group-prepend">
                     <span class="input-group-text" id="basic-addon1">Seed</span>
                   </div>
-                  <input type="text" class="form-control" placeholder="seed" aria-label="seed" aria-describedby="basic-addon1" onchange="sandboxOptions.seed = this.value">
+                  <input type="text" class="form-control" placeholder="random seed" aria-label="seed" aria-describedby="basic-addon1" onchange="console.log('seed changed'); sandboxOptions.seed = this.value">
                 </div>
       
                 <div style="display: inline-flex; width:100%">
@@ -194,6 +221,7 @@
               <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
                 <div class="card-body">
                   Edit this JSON graph description or paste a new one: <br>
+                  <button type="button" class="btn btn-primary btn-block" id="jsonerrorbutton" style="background-color:#ff000088; border:none; display:none">Error reading json file (check browser console)</button>
                   <pre contenteditable="true" id="jsonDescription", style="text-align: left">
 {
   "nodes": [
@@ -215,8 +243,7 @@
           </div>
         </div>
         
-        <br><br>
-        <div class="form-check">
+        <div class="form-check" style="margin-top: 1em;">
           <input class="form-check-input" type="checkbox" value="" id="checkboxbendinessreduction" onclick="sandboxOptions.crossing_reduction_active = this.checked">
           <label class="form-check-label" for="flexCheckDefault">
             Enable crossing reduction
@@ -237,13 +264,21 @@
           </label>
         </div>
 
-        <button type="button" class="btn btn-primary btn-block" style="margin-top: 2em" onclick="genSandbox()">Generate and solve</button> <br>
+        <button type="button" class="btn btn-primary btn-block" style="margin-top: 2em" onclick="genSandbox()">Generate a new graph and solve</button>
+        <button type="button" class="btn btn-primary btn-block" id="grapherrorbutton" style="background-color:#ff000088; border:none; display:none">Something went wrong (check browser console)</button>
+        </div>
 
-        <svg id="graphsandbox" style="margin-top: 2em" viewBox="0 0 300 300"></svg>
+        Result: <br>
+        <div class="card text-center align-items-center">
+          <div style="width: 10%" id="loadingspinner" style="display: none;"><div class="loader">Loading...</div></div>
+          <button type="button" class="btn btn-primary btn-block" id="singlenodeerror" style="background-color:#ff000088; border:none; display:none">This combination of parameters created a graph with a single node. Change the parameters and try again.</button>
+          <svg id="graphsandbox" style="margin-top: 2em" viewBox="0 0 300 300"></svg>
+        
 
-        <div class="row">
-          <div class="col-md"><b>Model:</b><pre class="premodel" id="modelpre"></pre></div>
-          <div class="col-md"><b>Result:</b><pre class="premodel" id="resultpre"></pre></div>
+          <div class="row" style="margin-top: 1em;">
+            <div class="col-md"><b>Model:</b><pre class="premodel" id="modelpre"></pre></div>
+            <div class="col-md"><b>Result:</b><pre class="premodel" id="resultpre"></pre></div>
+          </div>
         </div>
 
         <h1 style="margin-top: 2em">Usage</h1>
@@ -347,6 +382,8 @@ algorithm.options = options;</code></pre>
 
     document.getElementById("resultpre").innerHTML = "";
     document.getElementById("modelpre").innerHTML = "";
+    document.getElementById("jsonerrorbutton").style.display = "none";
+    document.getElementById("grapherrorbutton").style.display = "none";
 
     if (!readfromJson) {
       document.getElementById("maxdval").innerHTML = document.getElementById("maxDepth").value
@@ -363,35 +400,61 @@ algorithm.options = options;</code></pre>
       grsandbox = testGenerator.genRandomGraph(sandboxOptions.seed, sandboxOptions.maxNodesPerRank, sandboxOptions.maxDepth, sandboxOptions.children_prob, sandboxOptions.random_edge_prob, sandboxOptions.same_rank_edge_prob)
 
     } else {
-      let t = document.getElementById("jsonDescription").innerHTML.replace("'", '"')
-      grsandbox = readFromJson(JSON.parse(t));
+      try { 
+        let t = document.getElementById("jsonDescription").innerHTML.replace("'", '"')
+        grsandbox = readFromJson(JSON.parse(t));
+      } catch (e) {
+        document.getElementById("jsonerrorbutton").style.display = "block";
+        console.log(e);
+      }
     }
 
     if (sandboxOptions.autogroups){
       addGroups(grsandbox);
     }
+
+    d3.select("#graphsandbox").style('display', 'none')
+    d3.select("#singlenodeerror").style('display', 'none')
+    d3.select("#loadingspinner").style('display', 'block')
         
     let sandboxsvg = d3.select("#graphsandbox")
-          .attr("width", "50%")
-          .attr("height", "300px")
+          .attr("width", "60%")
+          .attr("height", "350px")
 
-    algorithm = new SimpleLp(grsandbox);
-    algorithm.options.bendiness_reduction_active = sandboxOptions.bendiness_reduction_active;
-    algorithm.options.crossings_reduction_active = sandboxOptions.crossing_reduction_active;
-    if (algorithm.options.bendiness_reduction_active) algorithm.options.simplify_for_groups_enabled = true;
-    else algorithm.options.simplify_for_groups_enabled = false;
-    
-    if (sandboxOptions.bendiness_reduction_active || sandboxOptions.crossing_reduction_active || sandboxOptions.autogroups) {
-      algorithm.arrange();
-      algorithm.apply_solution();
-      document.getElementById("modelpre").innerHTML = algorithm.modelString;
-      for (let val in algorithm.result){
-        document.getElementById("resultpre").innerHTML += val + ": " + Math.round(algorithm.result[val]) + "\n";
+    try {
+      algorithm = new SimpleLp(grsandbox);
+      algorithm.options.bendiness_reduction_active = sandboxOptions.bendiness_reduction_active;
+      algorithm.options.crossings_reduction_active = sandboxOptions.crossing_reduction_active;
+      algorithm.options.keep_groups_rect = false;
+      if (algorithm.options.bendiness_reduction_active) algorithm.options.simplify_for_groups_enabled = true;
+      else algorithm.options.simplify_for_groups_enabled = false;
+      
+      if (sandboxOptions.bendiness_reduction_active || sandboxOptions.crossing_reduction_active || sandboxOptions.autogroups) {
+        algorithm.arrange();
+        algorithm.apply_solution();
+        document.getElementById("modelpre").innerHTML = algorithm.modelString;
+        for (let val in algorithm.result){
+          document.getElementById("resultpre").innerHTML += val + ": " + Math.round(algorithm.result[val]) + "\n";
+        }
       }
-    }
 
-    d3.select("#graphsandbox").selectAll("*").remove();
-    grsandbox.draw(sandboxsvg)
+      d3.select("#graphsandbox").attr("viewBox", "0 0 " + Math.max.apply(0, grsandbox.nodes.map(n => n.depth*50 + 40)) + " " + Math.max.apply(0, grsandbox.nodes.map(n => n.y*40 + 40)))
+      // console.log()viewBox="0 0 300 300"
+
+      d3.select("#graphsandbox").selectAll("*").remove();
+      grsandbox.draw(sandboxsvg, 50, 40)
+
+      setTimeout(function(){
+        if (grsandbox.nodes.length > 1) d3.select("#graphsandbox").style('display', 'block')
+        else {
+          d3.select("#singlenodeerror").style('display', 'block')
+        }
+        d3.select("#loadingspinner").style('display', 'none')
+      }, 500);
+    } catch (e) {
+      document.getElementById("grapherrorbutton").style.display = "block";
+      console.log(e);
+    }
   }
 
   genSandbox();

@@ -114,9 +114,9 @@ class TestCaseGenerator {
 
     * gen2x2CrossingTest(){
         let u1 = {depth: 0, name: 'u1'};
-        let v1 = {depth: 1, name: 'v1'};
+        let v1 = {depth: 1, name: 'w1'};
         let u2 = {depth: 0, name: 'u2'};
-        let v2 = {depth: 1, name: 'v2'};
+        let v2 = {depth: 1, name: 'w2'};
 
         for (let perm1 of this.permutator([u1, u2])){
             for (let perm2 of this.permutator([v1, v2])){
@@ -201,8 +201,8 @@ class TestCaseGenerator {
     * genSameRankEdgesTest(){
         let u1 = {depth: 0, name: 'u1'};
         let u2 = {depth: 0, name: 'u2'};
-        let v1 = {depth: 0, name: 'v1'};
-        let v2 = {depth: 0, name: 'v2'};
+        let v1 = {depth: 0, name: 'w1'};
+        let v2 = {depth: 0, name: 'w2'};
 
         for (let perm of this.permutator([u1, u2, v1, v2])){
             let g = new SimpleGraph();
@@ -237,8 +237,8 @@ class TestCaseGenerator {
             if (i == 0){
                 let u1 = {depth: 0, name: 'u1'};
                 let u2 = {depth: 0, name: 'u2'};
-                let v1 = {depth: 0, name: 'v1'};
-                let v2 = {depth: 1, name: 'v2'};
+                let v1 = {depth: 0, name: 'w1'};
+                let v2 = {depth: 1, name: 'w2'};
 
                 for (let perm of this.permutator([u1, u2, v1])){
                     let g = new SimpleGraph();
@@ -267,8 +267,8 @@ class TestCaseGenerator {
             else {
                 let u1 = {depth: 0, name: 'u1'};
                 let u2 = {depth: 0, name: 'u2'};
-                let v1 = {depth: 1, name: 'v1'};
-                let v2 = {depth: 0, name: 'v2'};
+                let v1 = {depth: 1, name: 'w1'};
+                let v2 = {depth: 0, name: 'w2'};
 
                 for (let perm of this.permutator([u1, u2, v2])){
                     let g = new SimpleGraph();
@@ -299,9 +299,9 @@ class TestCaseGenerator {
 
     * genSimpleAnchorTest(){
         let u1 = {depth: 0, name: 'u1'}
-        let v1 = {depth: 2, name: 'v1'}
+        let v1 = {depth: 2, name: 'w1'}
 
-        for (let i=0; i<5; i++){
+        for (let i=0; i<7; i++){
             let g = new SimpleGraph();
 
             if (i == 0){
@@ -314,7 +314,7 @@ class TestCaseGenerator {
             if (i == 2) {
                 g.addNodes([u1, v1]);
                 let u2 = {depth: 1, name: 'u2'};
-                let v2 = {depth: 3, name: 'v2'}
+                let v2 = {depth: 3, name: 'w2'}
                 g.addNodes([u2, v2])
                 g.addEdge({nodes: [u2, v2]})
             }
@@ -325,17 +325,36 @@ class TestCaseGenerator {
             if (i == 4) {
                 v1.depth = 3;
                 let u2 = {depth: 1, name: 'u2'};
-                let v2 = {depth: 2, name: 'v2'}
+                let v2 = {depth: 2, name: 'w2'}
                 g.addNodes([u2, v2]);
                 g.addNodes([u1, v1]);
                 g.addEdge({nodes: [u2, v2]});
+            } if (i == 5){
+                v1.depth = 2;
+                g.addNodes([u1, v1]);
+                let u2 = {depth: 0, name: 'u2'};
+                let v2 = {depth: 2, name: 'w2'}
+                g.addNodes([v2, u2])
+                g.nodeIndex[2].sort((a, b) => a.id == "w1"? 1 : -1)
+                g.addEdge({nodes: [u2, v2]})
+            } if (i == 6) {
+                v1.depth = 2;
+                g.addNodes([u1, v1]);
+                let u2 = {depth: 0, name: 'u2'};
+                let v2 = {depth: 2, name: 'w2'}
+                g.addNodes([v2, u2])
+                g.nodeIndex[2].sort((a, b) => a.id == "w1"? 1 : -1)
+                g.addEdge({nodes: [u2, v2]})
             }
             g.addEdge({nodes:[u1, v1]});
             g.addAnchors();
 
             let algorithm = new SimpleLp(g);
             algorithm.arrange();
-            algorithm.apply_solution();
+
+            if (i != 5){
+                algorithm.apply_solution();
+            } 
 
             yield {graph: g, algorithm: algorithm};  
         }
@@ -413,7 +432,7 @@ class TestCaseGenerator {
     }
 
     * genSimpleBendinessReductionTest(bendiness_active=true){
-        for (let i=0; i<4; i++){
+        for (let i=0; i<6; i++){
             if (i == 0){
                 let g = new SimpleGraph();
             
@@ -481,6 +500,32 @@ class TestCaseGenerator {
 
                 yield {graph: g, algorithm: algorithm}; 
             }
+            if (i == 4){
+                let maxNodesPerRank = 4;
+                let maxDepth = 4;
+
+                let g = this.genRandomGraph("aat", maxNodesPerRank, maxDepth, 0.8, 0.2, 0.05)
+
+                let algorithm = new SimpleLp(g);
+                algorithm.options.bendiness_reduction_active = bendiness_active;
+                algorithm.arrange();
+                algorithm.apply_solution();
+
+                yield {graph: g, algorithm: algorithm}; 
+            }
+            if (i == 5){
+                let maxNodesPerRank = 5;
+                let maxDepth = 5;
+
+                let g = this.genRandomGraph("tjkbkji", maxNodesPerRank, maxDepth, 0.8, 0.2, 0.05)
+
+                let algorithm = new SimpleLp(g);
+                algorithm.options.bendiness_reduction_active = bendiness_active;
+                algorithm.arrange();
+                algorithm.apply_solution();
+
+                yield {graph: g, algorithm: algorithm}; 
+            }
         }
     }
 
@@ -494,7 +539,7 @@ class TestCaseGenerator {
                 let u1 = {name: 'u1', depth: 1}
                 let u2 = {name: 'u2', depth: 1}
                 let u3 = {name: 'u3', depth: 1}
-                let v1 = {name: 'v1', depth: 2}
+                let v1 = {name: 'w1', depth: 2}
     
                 g.addNodes([u1, u2, u3, s, v1])
                 g.addEdge({nodes:[s, u1]})
@@ -560,9 +605,9 @@ class TestCaseGenerator {
                 let u2 = {name: 'u2', depth: 1}
                 let u3 = {name: 'u3', depth: 1}
                 let u4 = {name: 'u4', depth: 1}
-                let v1 = {name: 'v1', depth: 2}
-                let v2 = {name: 'v2', depth: 2}
-                let v3 = {name: 'v3', depth: 2}
+                let v1 = {name: 'w1', depth: 2}
+                let v2 = {name: 'w2', depth: 2}
+                let v3 = {name: 'w3', depth: 2}
     
                 g.addNodes([u1, u2, u3, s, u4, v1, v2, v3])
                 g.addEdge({nodes:[s, u1]})
@@ -920,12 +965,12 @@ class TestCaseGenerator {
                 g.addEdge({nodes:[u6, u8]})
                 g.addEdge({nodes:[u8, u9]})
 
-                let group = {nodes: [u2, u4, u5, u3]}
+                let group = {nodes: [u2, u4, u5, u3], color: "#4e79a7"}
                 g.addGroup(group);
 
-                group = {nodes: [u8, u7, u9]}
+                group = {nodes: [u8, u7, u9], color: "#f28e2c"}
                 g.addGroup(group);
-                group = {nodes: [u7, u9]}
+                group = {nodes: [u7, u9], color: "#e15759"}
                 g.addGroup(group);
     
                 let algorithm = new SimpleLp(g);
@@ -961,10 +1006,10 @@ class TestCaseGenerator {
                 let u7 = {name: 'u7', depth: 3}
                 let u9 = {name: 'u9', depth: 3}
 
-                let g1 = {name: 'g1', depth: 1}
-                let g2 = {name: 'g2', depth: 1}
+                let g1 = {name: 'g1', depth: 1, color: "#4e79a7"}
+                let g2 = {name: 'g2', depth: 1, color: "#f28e2c"}
 
-                let g3 = {name: 'g3', depth: 2}
+                let g3 = {name: 'g3', depth: 2, color: "#e15759"}
     
                 g.addNodes([s, u1, u6, g1, g2, u2, u3, u4, u5, u8, g3, u7, u9])
                 g.addEdge({nodes:[s, u1]})

@@ -190,6 +190,7 @@
         let algorithm = new SimpleLp(test.graph);
         algorithm.options.bendiness_reduction_active = true;
         algorithm.options.simplify_for_groups_enabled = false;
+        algorithm.keep_groups_rect = true;
         algorithm.arrange();
         algorithm.apply_solution();
         test.algorithm = algorithm;
@@ -197,6 +198,7 @@
 
         algorithm = new SimpleLp(test.graph);
         algorithm.options.bendiness_reduction_active = true;
+        algorithm.keep_groups_rect = true;
         algorithm.options.simplify_for_groups_enabled = true;
         algorithm.arrange();
         algorithm.apply_solution();

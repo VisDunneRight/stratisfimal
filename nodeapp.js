@@ -346,6 +346,47 @@ function printResults(){
     }
 }
 
+function convertRomeLib(){
+    let bounds=[10, 101]
+    let maxfilesPerNum = 25;
+
+    for (let num=bounds[0]; num<bounds[1]; num+=1){
+        let basepath = "benchmarks/Rome-Lib/graficon" + num + "nodi/"
+        let writepath = "benchmarks/Rome-Lib-New/"
+        var files = fs.readdirSync(basepath);
+    
+        for (let i=0; i<files.length; i++){
+            // if (i>maxfilesPerNum) break;
+            let addGroups = true;
+            let text = fs.readFileSync(basepath + files[i], 'utf-8')
+            let g = buildGraphFromTextFile(text, addGroups, true);
+
+            let nres = {"nodes":[], "edges":[]}
+            for (let node of g.nodes){
+                nres["nodes"].push({"id": node.id, "depth": parseFloat(node.depth)})
+            }
+            for (let edge of g.edges){
+                nres["edges"].push({"nodes": [edge.nodes[0].id, edge.nodes[1].id]})
+            }
+            if (addGroups){
+                nres["groups"] = []
+                for (let group of g.groups){
+                    nres["groups"].push({"id": group.id, "nodes": group.nodes.map(n => n.id)})
+                }
+            }
+            
+            let rr = JSON.stringify(nres, null, 4);
+
+            fs.mkdirSync(writepath + "full_set/" + num + "nodes/", { recursive: true })
+
+            let fname = writepath + "full_set/" + num + "nodes/" + files[i] + ".json"
+            fs.writeFileSync(fname, rr, {encoding:'utf8',flag:'w'}, function(err){
+                if (err) return console.log(err);
+            });
+        }
+    }
+}
+
 function printOneModel(nodenum, modelnum){
     let basepath = "benchmarks/Rome-Lib/graficon" + nodenum + "nodi/"
     var files = fs.readdirSync(basepath);
@@ -367,5 +408,6 @@ function printOneModel(nodenum, modelnum){
 
 // printOneModel(80, 0);
 // mainRomeLib();
-printResults();
+// printResults();
+convertRomeLib();
   

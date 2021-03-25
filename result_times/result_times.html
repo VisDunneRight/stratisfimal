@@ -57,7 +57,7 @@
         .attr("text-anchor", "middle")
         .style("font-family", "Arial")
         .style("font-size", "x-small")
-        .text("time (seconds)")
+        .text("median time (seconds)")
 
         svg.append("text")
         .attr("transform", "translate(" + (width/2) + "," + (height + 30) + ")")
@@ -114,7 +114,7 @@
         .attr("text-anchor", "middle")
         .style("font-family", "Arial")
         .style("font-size", "x-small")
-        .text("time (seconds)")
+        .text("median time (seconds)")
 
         svg2.append("text")
         .attr("transform", "translate(" + (width/2) + "," + (height + 30) + ")")
@@ -151,6 +151,7 @@
       drawtitle = false
       let axiscolor = "#888"
       let linear = false
+      let domain = [10, 80]
 
       //Read the data
       d3.json(dataname1, function(data) {
@@ -159,7 +160,7 @@
           const line = d3.line().curve(d3.curveBasis)
 
           var x = d3.scaleLinear()
-            .domain([10, 100])
+            .domain(domain)
             .range([ 0, width ]);
 
           if (linear){
@@ -182,11 +183,10 @@
             .style("font-size", "16px")
             .call(d3.axisLeft(y).ticks(4, linear? undefined : formatPower));
 
-
           let bottomaxis = svg3.append("g")
             .attr("transform", "translate(0," + height + ")")
             .style("font-size", "16px")
-            .call(d3.axisBottom(x));
+            .call(d3.axisBottom(x).ticks(5));
 
           bottomaxis.selectAll("path")
             .style("stroke", axiscolor)
@@ -225,7 +225,7 @@
             .style("font-family", "Arial")
             .style("font-size", "1em")
             .style("fill", axiscolor)
-            .text("time (seconds)")
+            .text("median time (seconds)")
 
           svg3.append("text")
             .attr("transform", "translate(" + (width/2) + "," + (height + 40) + ")")
@@ -246,7 +246,7 @@
               .attr("d", line([[0, y(ax)], [width, y(ax)]]));
           }
 
-          let ayarr = [30, 50, 70, 90]
+          let ayarr = [30, 50, 70]
           // let axarr = [0.1, 1, 10, 100]
           for (let ay of ayarr){
             svg3.append("path")
@@ -292,9 +292,10 @@
           }
 
           for (let nodenum in data){
+            if (nodenum > domain[1]) continue;
               el = data[nodenum]
 
-              if (calcCount(data, nodenum) > .5) continue;
+              if (calcCount(data, nodenum) > .25) continue;
 
               if (data[nodenum] == undefined || data[nodenum].length == 0) continue;
               if (!isNaN(median(el))) arr1.push([x(nodenum), y(median(el) + 0.01)])
@@ -303,9 +304,10 @@
 
               for (let el2 of el) if (el2 <= limit) {points.push([x(nodenum), y(el2 + 0.01)]);}
 
-              if (calcCount(data, parseInt(nodenum) + 10) != undefined 
-              && 1 - calcCount(data, parseInt(nodenum) + 10) <= .5
-              && 1 - calcCount(data, nodenum) > .5 && limit < 1000){
+              if (calcCount(data, parseInt(nodenum) + 5) != undefined 
+              && 1 - calcCount(data, parseInt(nodenum) + 5) <= .75
+              && 1 - calcCount(data, nodenum) > .75 && limit < 10000
+              && nodenum != domain[1]){
               svg3.append("path")
                 .attr("stroke", "#aaa")
                 .attr("stroke-width", 3)
@@ -321,9 +323,11 @@
           arr2.push(arr3[arr3.length-1])
 
           for (let nodenum in data2){
+            if (nodenum > domain[1]) continue;
+              if (parseFloat(nodenum)%5 != 0) continue;
               el = data2[nodenum]
 
-              if (calcCount(data2, nodenum) > .5) continue;
+              if (calcCount(data2, nodenum) > .25) continue;
 
               if (data2[nodenum] == undefined || data2[nodenum].length == 0) continue;
               // if (data2[nodenum].filter(n => n <= limit).length <= data2[nodenum].length*.5) continue;
@@ -334,9 +338,10 @@
 
               for (let el2 of el) if (el2 <= limit) {points2.push([x(nodenum), y(el2 + 0.01)]);}
 
-              if (calcCount(data2, parseInt(nodenum) + 10) != undefined 
-              && 1 - calcCount(data2, parseInt(nodenum) + 10) <= .5
-              && 1 - calcCount(data2, nodenum) > .5 && limit < 1000){
+              if (calcCount(data2, parseInt(nodenum) + 5) != undefined 
+              && 1 - calcCount(data2, parseInt(nodenum) + 5) < .75
+              && 1 - calcCount(data2, nodenum) >= .75 && limit < 10000
+              && nodenum != domain[1]){
               svg3.append("path")
                 .attr("stroke", "#aaa")
                 .attr("stroke-width", 3)
@@ -441,6 +446,7 @@
       let axiscolor = "#888"
       let drawtitle = false
       let drawlegend = true
+      let domain = [10, 80]
       
       //Read the data
       d3.json(dataname1, function(data) {
@@ -449,7 +455,7 @@
           const line = d3.line().curve(d3.curveBasis)
 
           var x = d3.scaleLinear()
-            .domain([10, 100])
+            .domain(domain)
             .range([ 0, width ]);
 
           var y = d3.scaleLinear()
@@ -464,7 +470,7 @@
           let bottomaxis = svg3.append("g")
             .attr("transform", "translate(0," + height + ")")
             .style("font-size", "16px")
-            .call(d3.axisBottom(x));
+            .call(d3.axisBottom(x).ticks(5));
 
           bottomaxis.selectAll("path")
             .style("stroke", axiscolor)
@@ -524,7 +530,7 @@
               .attr("d", line([[0, y(ax)], [width, y(ax)]]));
           }
 
-          let ayarr = [30, 50, 70, 90]
+          let ayarr = [30, 50, 70]
           // let axarr = [0.1, 1, 10, 100]
           for (let ay of ayarr){
             svg3.append("path")
@@ -552,12 +558,14 @@
           }
 
           for (let nodenum in data){
+            if (nodenum > domain[1]) continue;
             count = calcCount(data, nodenum)
             arr1.push([x(nodenum), y(count)])
 
-            if (calcCount(data, parseInt(nodenum) + 10) != undefined 
-              && 1 - calcCount(data, parseInt(nodenum) + 10) <= .5
-              && 1 - calcCount(data, nodenum) > .5){
+            if (calcCount(data, parseInt(nodenum) + 5) != undefined 
+              && 1 - calcCount(data, parseInt(nodenum) +5) <= .75
+              && 1 - calcCount(data, nodenum) > .75
+              && nodenum != domain[1]){
               svg3.append("path")
                 .attr("stroke", "#aaa")
                 .attr("stroke-width", 3)
@@ -575,12 +583,15 @@
           }
 
           for (let nodenum in data2){
+            if (nodenum > domain[1]) continue;
+            if (parseFloat(nodenum)%5 != 0) continue;
             count = calcCount(data2, nodenum)
             arr12.push([x(nodenum), y(count)])
 
-            if (calcCount(data2, parseInt(nodenum) + 10) != undefined 
-              && 1 - calcCount(data2, parseInt(nodenum) + 10) <= .5
-              && 1 - calcCount(data2, nodenum) > .5){
+            if (calcCount(data2, parseInt(nodenum) + 5) != undefined 
+              && 1 - calcCount(data2, parseInt(nodenum) + 5) <= .75
+              && 1 - calcCount(data2, nodenum) > .75
+              && nodenum != domain[1]){
               svg3.append("path")
                 .attr("stroke", "#aaa")
                 .attr("stroke-width", 3)
@@ -757,28 +768,96 @@
 
     drawlinecharts(svg8, "groups, collapse", "result_times_groups_collapse_mincrossing_big_notimeout.json", "result_times_groups_collapse_minbendiness_big_notimeout.json", 1000)
 
+    d3.select("#my_dataviz")
+      .append("div")
+      .html("<br>")
 
+    svg9 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
 
-    // svg9 = d3.select("#my_dataviz")
-    //   .append("svg")
-    //     .attr("width", width + margin.left + margin.right)
-    //     .attr("height", height + margin.top + margin.bottom)
-    //   .append("g")
-    //     .attr("transform",
-    //           "translate(" + margin.left + "," + margin.top + ")");
+    drawlinecharts(svg9, "no groups", "result_times_gurobi_solutions_nogroups_mincrossing_big_notimeout.json", "result_times_gurobi_solutions_nogroups_minbendiness_big_notimeout.json", 1000)
 
-    // drawlinecharts(svg9, "no collapse vs collapse (crossings)", "result_times_groups_nocollapse_mincrossing_big.json", "result_times_groups_collapse_mincrossing_big.json", 180, ["collapse", "no collapse"], ["green", "blue"])
+    svg9 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
 
-    // svg9 = d3.select("#my_dataviz")
-    //   .append("svg")
-    //     .attr("width", width + margin.left + margin.right)
-    //     .attr("height", height + margin.top + margin.bottom)
-    //   .append("g")
-    //     .attr("transform",
-    //           "translate(" + margin.left + "," + margin.top + ")");
+    drawlinecharts(svg9, "no groups", "result_times_gurobi_solutions_groups_nocollapse_mincrossing_big_notimeout.json", "result_times_gurobi_solutions_groups_nocollapse_minbendiness_big_notimeout.json", 1000)
 
-    // drawlinecharts(svg9, "no collapse vs collapse (bendiness)", "result_times_groups_nocollapse_minbendiness_big.json", "result_times_groups_collapse_minbendiness_big.json", 180, ["collapse", "no collapse"], ["green", "blue"])
+    svg9 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
 
-    // drawEverythingTogether()
+    drawlinecharts(svg9, "no groups", "result_times_gurobi_solutions_groups_collapse_mincrossing_big_notimeout.json", "result_times_gurobi_solutions_groups_collapse_minbendiness_big_notimeout.json", 1000)
+
+    d3.select("#my_dataviz")
+      .append("div")
+      .html("<br>")
+
+    svg8 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawTimeoutRate(svg8, "groups, collapse", "result_times_gurobi_solutions_nogroups_mincrossing_big_notimeout.json", "result_times_gurobi_solutions_nogroups_minbendiness_big_notimeout.json", 1000)
+
+    svg8 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawTimeoutRate(svg8, "groups, collapse", "result_times_gurobi_solutions_groups_nocollapse_mincrossing_big_notimeout.json", "result_times_gurobi_solutions_groups_nocollapse_minbendiness_big_notimeout.json", 1000)
+
+    svg8 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawTimeoutRate(svg8, "groups, collapse", "result_times_gurobi_solutions_groups_collapse_mincrossing_big_notimeout.json", "result_times_gurobi_solutions_groups_collapse_minbendiness_big_notimeout.json", 1000)
+
+    d3.select("#my_dataviz")
+      .append("div")
+      .html("<br>")
+
+    svg9 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawlinecharts(svg9, "no collapse vs collapse (crossings)", "result_times_gurobi_solutions_groups_nocollapse_mincrossing_big_notimeout.json", "result_times_gurobi_solutions_groups_collapse_mincrossing_big_notimeout.json", 1000, ["collapse", "no collapse"], ["green", "blue"])
+
+    svg9 = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+    drawlinecharts(svg9, "no collapse vs collapse (bendiness)", "result_times_gurobi_solutions_groups_nocollapse_minbendiness_big_notimeout.json", "result_times_gurobi_solutions_groups_collapse_minbendiness_big_notimeout.json", 1000, ["collapse", "no collapse"], ["green", "blue"])
     
     </script>
