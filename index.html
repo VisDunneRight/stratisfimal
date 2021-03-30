@@ -7,7 +7,7 @@
     <meta name="author" content="">
     <link rel="icon" href="https://getbootstrap.com/docs/4.0/assets/img/favicons/favicon.ico">
 
-    <title>Placeholder title</title>
+    <title>Stratisfimal Layout</title>
 
     <link href="./css/neumorph.min.css" rel="stylesheet">
 
@@ -37,13 +37,7 @@
       }
 
       .roundedCornerImg{
-      /* width:350px;height:200px; */
-      /* border: solid 1px #555; */
       background-color: #eed;
-      /* box-shadow: 10px -10px 5px  rgba(0,0,0,0.6);
-      -moz-box-shadow: 10px -10px 5px  rgba(0,0,0,0.6);
-      -webkit-box-shadow: 10px -10px 5px  rgba(0,0,0,0.6);
-      -o-box-shadow: 10px -10px 5px  rgba(0,0,0,0.6); */
       border-radius:25px;
       margin: 20px;
     }
@@ -128,31 +122,31 @@
     <main role="main" class="container">
 
       <div class="starter-template">
-        <h1>Placeholder project name!</h1>
-        <p>The layout of a graph deeply influences how readable a graph is to humans. 
-          When trying to find a suitable algorithm for graph layout, one can decide to either focus on scalability or optimality. 
+        <h1>Stratisfimal Layout!</h1>
+        <p>The layout of a node-link network visualization deeply influences how readable the network topology is. 
+          When trying to find a suitable algorithm for network layout, one can decide to either focus on scalability or optimality. 
           In this paper, we focus on the latter, which is especially important as optimal solutions are not only the best attainable result, but they can also be used as a baseline to test the effectiveness of methods which do not guarantee optimality (such as methods based on heuristics, which instead focus on scalability). 
-          In the past, efforts towards optimal graph layout algorithms have been centered on crossing reduction, but graphs can have a wide number of properties which may need to be taken into account, and there are more readability criteria other than having the smallest possible number of crossings.
-          We make an important step towards achieving this goal by proposing a modular integer linear programming formulation for layered graphs that can take into account a number of readability criteria suggested in the past (e.g. crossing reduction, edge bendiness, nested and multi-rank grouping) that can all be solved simultaneously. 
+          In the past, efforts towards optimal layout algorithms have been centered on crossing reduction, but networks can have a wide number of properties which may need to be taken into account, and there are more readability criteria other than having the smallest possible number of crossings.
+          We make an important step towards achieving this goal by proposing a modular integer linear programming formulation for layered network layout that can take into account a number of readability criteria suggested in the past (e.g., crossing reduction, edge bendiness, nested and multi-rank grouping) that can all be solved simultaneously. 
           Our method can be adapted to numerous, different use cases due to its modularity, which allows for modules to be cherry-picked according to which features are needed.</p>
         <br><br>
           <svg id="graph1" viewBox="0 0 350 250"></svg>
 
-          <h1>Features:</h1>
-
-            Crossing reduction in layered graphs <br>
-            Bendiness reduction <br>
-            Manages single-rank, multi-rank and nested groups <br>
-            Always finds the optimal solution <br>
-
+          <h1>Features</h1>
+          <ul>
+            <li>Crossing reduction in layered node-link network visualizations</li>
+            <li>Bendiness reduction</li>
+            <li>Manages single-rank, multi-rank and nested groups</li>
+            <li>Always finds the optimal solution</li>
+          </ul>
         
           <h1 style="margin-top: 2em;">Resources</h1>
         <div class="row"><img src="./images/screenshot1.png" class="col-sm np-element roundedCornerImg"><img src="./images/screenshot2.png" class="col-sm np-element roundedCornerImg"></div>
         <a href="./proofs.html">All formulas explained</a>, with examples, full formulations and edge cases.<br>
         <div class="row"><img src="./images/screenshot3.png" class="col-sm np-element roundedCornerImg"><img src="./images/screenshot4.png" class="col-sm np-element roundedCornerImg"></div>
-        <a href="./benchmark.html">The method applied to the first 79 graphs in Rome-Lib</a>, comparing various configurations. <br>
+        <a href="./benchmark.html">The method applied to the first 79 networks in Rome-Lib</a>, comparing various configurations. <br>
         <div class="row"><img src="./images/screenshot5.png" class="col-sm np-element roundedCornerImg"><img src="./images/screenshot6.png" class="col-sm np-element roundedCornerImg"></div>
-        <a href="./qv.html">Comparison against other layout algorithms applied to queryvis</a><br>
+        <a href="./qv.html">Comparison against other layout algorithms applied to QueryVis</a><br>
 
         <h1 style="margin-top: 2em">Try it yourself</h1>
         <p><i>Note: the result is computed in your browser, so it might take some time.</i></p><br>
@@ -163,7 +157,7 @@
             <div class="card-header" id="headingOne">
               <h5 class="mb-0">
                 <button class="btn btn-link" data-toggle="collapse" onclick="readfromJson=!readfromJson" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                  Generate a random graph
+                  Generate a random network
                 </button>
               </h5>
             </div>
@@ -220,8 +214,11 @@
               </div>
               <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
                 <div class="card-body">
-                  Edit this JSON graph description or paste a new one: <br>
+
+                  Edit this JSON network description or paste a new one: <br>
+
                   <button type="button" class="btn btn-primary btn-block" id="jsonerrorbutton" style="background-color:#ff000088; border:none; display:none">Error reading json file (check browser console)</button>
+
                   <pre contenteditable="true" id="jsonDescription", style="text-align: left">
 {
   "nodes": [
@@ -283,7 +280,7 @@
 
         <h1 style="margin-top: 2em">Usage</h1>
 
-        <div style="text-align: left;">Start by reading a graph from a JSON file:
+        <div style="text-align: left;">Start by reading a network from a JSON file:
           <pre><code>let g = readFromJson(file);</code></pre>
 
           Automatically find groups of nodes (optional):
@@ -313,8 +310,16 @@ algorithm.options = options;</code></pre>
         <pre><code>g.draw(svg);</code></pre>
         <div>
 
+        <h1>Authors</h1>
+        <p>
+          <a href="https://picorana.github.io/">Sara Di Bartolomeo</a>, <a href="http://www.ccs.neu.edu/home/mirek/">Mirek Riedewald</a>, <a href="">Wolfgang Gatterbauer</a>, and <a href="https://cody.khoury.northeastern.edu/">Cody Dunne</a><br>
+          A product of <a href="https://visualization.khoury.northeastern.edu/">Data Visualization &#64; Khoury</a> and the <a href="https://db.khoury.northeastern.edu/">DATA Lab</a> &#64; Northeastern University
+        </p>
+        <div class="row"><img src="./images/lab_logo_husky.jpg" class="col-sm"></div>
+
+
         <h1 style="margin-top: 2em">Acknowledgements</h1> 
-        <p><a href="https://d3js.org/">d3</a>, svg management library used for drawing the graphs.</p>
+        <p><a href="https://d3js.org/">d3</a>, svg management library used for drawing the networks.</p>
         <p><a href="https://github.com/hgourvest/glpk.js">glpk.js</a>, GNU Linear Programming Kit for Javascript.</p>
 
 
