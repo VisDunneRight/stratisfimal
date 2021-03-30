@@ -263,15 +263,15 @@
         // ***
 
         d3.select('body').append('div')
-            .text("Modified Gansner [1993] (GraphViz's dot)")
+            .text("Gansner [1993] (GraphViz's dot)")
             .attr('class', 'algorithm_header')
 
         d3.select('body').append('tspan')
             .attr('class', 'algorithm_explanation')
             .html("This should be the implementation that is closest to what GraphViz was doing to queryvis graphs. <br>"
                 + "Each node is assigned a weight that is the median of the weights of the linked tables. <br>"
-                + "Differently from Gansner (1993), this implementation manages groups of nodes that should be kept adjacent (attributes in a table). "
-                + "I believe GraphViz does this as well, by treating the groups of nodes as subproblems. <br> <br>"
+                + "Slightly ifferently from Gansner (1993), this implementation manages groups of nodes that should be kept adjacent (attributes in a table). "
+                // + "I believe GraphViz does this as well, by treating the groups of nodes as subproblems. <br> <br>"
                 + "Note: this implementation does not deal with same-rank edges, as they are not mentioned in Gansner's paper. GraphViz does not manage same-rank edges as well.")
 
         rowDiv = d3.select('body').append('div')
@@ -291,24 +291,7 @@
         // ***
 
         d3.select('body').append('div')
-            .text("New LP formulation")
-            .attr('class', 'algorithm_header')
-
-        rowDiv = d3.select('body').append('div')
-            .style('width', '200%')
-            .style('height', svg_height)
-            .style('display', 'flex')
-            .attr('class', 'rowDiv')
-
-        makeGraphWithAlgorithm(rowDiv, seed, 's', 'lp_new')
-        makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'lp_new')
-        makeGraphWithAlgorithm(rowDiv, seed, 'm', 'lp_new')
-        makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'lp_new')
-        // makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp_new')
-
-
-        d3.select('body').append('div')
-            .text("Linear programming formulation")
+            .text("Linear programming formulation (crossing reduction only)")
             .attr('class', 'algorithm_header')
 
         rowDiv = d3.select('body').append('div')
@@ -322,6 +305,23 @@
         makeGraphWithAlgorithm(rowDiv, seed, 'm', 'lp')
         makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'lp')
         // makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp')
+
+        
+        // d3.select('body').append('div')
+        //     .text("Linear programming formulation (crossing + bendiness + collapse)")
+        //     .attr('class', 'algorithm_header')
+
+        // rowDiv = d3.select('body').append('div')
+        //     .style('width', '200%')
+        //     .style('height', svg_height)
+        //     .style('display', 'flex')
+        //     .attr('class', 'rowDiv')
+
+        // makeGraphWithAlgorithm(rowDiv, seed, 's', 'lp_new')
+        // makeGraphWithAlgorithm(rowDiv, seed, 'sm', 'lp_new')
+        // makeGraphWithAlgorithm(rowDiv, seed, 'm', 'lp_new')
+        // makeGraphWithAlgorithm(rowDiv, seed, 'ml', 'lp_new')
+        // makeGraphWithAlgorithm(rowDiv, seed, 'l', 'lp_new')
         
     }
 

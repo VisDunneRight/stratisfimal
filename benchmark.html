@@ -495,7 +495,7 @@ let drawTest = (test, testRow, title = "", svgheight = 300) => {
             for (elem in test.algorithm.result){
                 if (elem == "empty") continue;
                 let r = rt.append('text')
-                    .html(elem + ": " + test.algorithm.result[elem] + '\n')
+                    .html(elem + ": " + Math.round(test.algorithm.result[elem]) + '\n')
 
                 if (test.forceOrder != undefined){
                     let found = true;
@@ -593,7 +593,7 @@ let processFile = (filename, foldername, count=0) => {
         //     .attr("width", 1500)
         //     .attr("height", 200)
 
-        g.keep_groups_rect = true;
+        g.keep_groups_rect = false;
 
         let algorithm = new SimpleLp(g);
         algorithm.arrange();

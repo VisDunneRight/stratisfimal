@@ -130,7 +130,7 @@
             for (elem in test.algorithm.result){
                 if (elem == "empty") continue;
                 let r = rt.append('text')
-                    .html(elem + ": " + test.algorithm.result[elem] + '\n')
+                    .html(elem + ": " + Math.round(test.algorithm.result[elem]) + '\n')
 
                 if (test.forceOrder != undefined){
                     let found = true;
@@ -139,7 +139,7 @@
                             found = false;
                         }
                     }
-                    if (found) r.html("<b>" + elem + ": " + test.algorithm.result[elem] + '</b>\n')
+                    if (found) r.html("<b>" + elem + ": " + Math.round(test.algorithm.result[elem]) + '</b>\n')
                 }
             }
         }
@@ -298,9 +298,6 @@
             $c_{u_1v_1, u_2v_2} + x_{u_2, u_1} + x_{v_1,v_2} \\geq 1 \\quad \\forall u_1, u_2 \\in E_k, \\forall k \\in \\ell$ <br>
             $c_{u_1v_1, u_2v_2} + x_{u_1, u_2} + x_{v_2,v_1} \\geq 1$ <br>
             <br>
-            <b>Complexity:</b> <br>
-            O(2 * num_edges * log(num_edges)) => $O(|E| log(|E|))$ <br>
-            <br>
             <b>Intuition:</b> <br>
             There's a crossing ($c_{u_1v_1, u_2v_2} = 1$) if the ends of an edge have opposite positions in the two adjacent ranks: 
             either $u_1$ is above $u_2$ but $v_1$ is below $v_2$, or viceversa.`)
@@ -336,13 +333,9 @@
             u_1 \\neq u_2 \\neq u_3, u_1 \\neq u_3$ <br>
             $- x_{u_1, u_2} - x_{u_2, u_3} + x_{u_1, u_3} \\geq -1$ <br>
             <br>
-            <b>Complexity:</b> <br>
-            O(2 * num_nodes * log(num_nodes * log(num_nodes))) => $O(|N| log(|N| log(|N|)))$ <br>
-            <br>
             <b>Intuition:</b> <br>
             If $u_1$ is above $u_2$, and $u_2$ is above $u_3$, then $u_1$ must be above $u_3$. <br>
-            <br>
-            <b>Todo</b>: not all meaningful combinations are shown here`)
+            `)
 
     testRow = d3.select('body')
         .append('div')
@@ -364,9 +357,7 @@
         d3.select('body')
         .append('div')
         .style('margin-bottom', '20px')
-        .html(`This is one of the most problematic formulas I have. It's just complicated to visualize. It needs to be applied to 
-            every pair of same-rank edges in a rank, but it needs 8 different constraints to catch all cases. Overall, the complexity
-            doesn't scale that much, but it's ugly.<br> 
+        .html(`
             <br>
             <b>Formula:</b> <br> 
             $c_{u_1v_1, u_2v_2} + x_{u_2, u_1} + x_{v_1, u_2} + x_{v_2, v_1} \\geq 1 \\quad \\forall u_1v_1, u_2v_2 \\in E^*_k, u_1v_1 \\neq u_2v_2, k \\in \\ell$<br>
@@ -378,17 +369,11 @@
             $c_{u_1v_1, u_2v_2} + x_{v_1, v_2} + x_{u_2, v_1} + x_{u_1, u_2} \\geq 1$<br>
             $c_{u_1v_1, u_2v_2} + x_{u_1, v_2} + x_{u_2, u_1} + x_{v_1, u_2} \\geq 1$<br>
             <br>
-            <b>Complexity:</b> <br>
-            $O(|E|^2)$ <br>
-            <br>
             <b>Intuition:</b> <br>
             There's a crossing between two-same rank edges if nodes are in specific configurations. One example is: if $u_1$ is above $u_2$, $u_2$ is above $v_1$ and $v_1$ is above $v_2$, there's a crossing.<br>
             <br>
             <b>Requirements: </b> Simple Transitivity <br>
-            <br>
-            <b>Doubts:</b> These formulas are ridiculous, they are too many and just not elegant. 
-            Unfortunately, this is the only configuration I have been able to find which captures all the cases. I would need a clever intuition that can catch more cases with less constraints.
-            This works, but I'm mostly concerned about presenting this in a paper.`)
+            `)
 
     testRow = d3.select('body')
         .append('div')
@@ -416,19 +401,12 @@
             $c_{u_1v_1, u_2v_2} + x_{u_1, u_2} + x_{v_2, u_1} \\geq 1 \\quad \\forall u_1v_1 \\in E^*_k, u_2v_2 \\in E^{**}_k, k \\in \\ell$ <br>
             $c_{u_1v_1, u_2v_2} + x_{u_1, v_2} + x_{u_2, u_1} \\geq 1$ <br>
             <br>
-            <b>Complexity:</b> <br>
-            O(num_two_rank_edges * num_same_rank_edges)<br>
-            <br>
             <b>Intuition:</b> <br>
             There's a crossing between a same-rank edge and a non-same-rank edge iff the source of the non-same-rank edge 
             is exactly in-between the two ends of the same-rank edge.<br>
             <br>
             <b>Requirements</b>: Simple Transitivity<br>
-            <br>
-            <b>Doubts:</b> The formulas above uses $E^{*}_k$ to indicate the set of same-rank edges in a rank, $E^{**}_K$ to indicate the set of
-            non-same rank edges. How do I indicate this in a more understandable way? <br>
-            How to write the complexity for this? $E^{*}_k$ and $E^{**}_k$ are, together, the full set of edges in a rank. 
-            If we just write it as going through all the edges in a rank, the complexity would just be $O(|E| log (|E|))$.`)
+            `)
 
     testRow = d3.select('body')
         .append('div')
@@ -450,12 +428,10 @@
         d3.select('body')
         .append('div')
         .style('margin-bottom', '20px')
-        .html(`Adding anchors is part of the preprocessing and isn't included in the LP formulation. 
+        .html(`Adding anchors is just a preprocessing step.
             Anchors are represented by semi-transparent nodes.<br> 
             In edges that go over more than one rank, one anchor is added for every jumped rank.
-            <br>
-            <br>
-            <b>Todo:</b> remove results and subject to here.`)
+            `)
 
     testRow = d3.select('body')
         .append('div')
@@ -465,6 +441,8 @@
     for (test of testGenerator.genSimpleAnchorTest()){
         drawTest(test, testRow);
     }
+
+    testRow.selectAll(".modelDivClass").remove()
 
     // *********
     // SINGLE RANK GROUPING
@@ -485,14 +463,10 @@
             <b>Formula:</b> <br> 
             $x_{u_1, u_3} - x_{u_2, u_3} = 0 \\quad \\forall u_1, u_2 \\in g_1, \\forall u_3 \\not\\in g_1, \\forall g_1 \\in G$<br>
             <br>
-            <b>Complexity:</b> <br>
-            $O(|N| log(|N| log(|N|)))$<br>
-            <br>
             <b>Intuition:</b> <br>
             If nodes $u_1$ and $u_2$ are in group $g_1$, and node $u_3$ is outside $g_1$, then either $u_3$ is above both $u_1$ and $u_2$, 
             or below both of them.<br>
-            <br>
-            <b>Todo:</b> Not all meaningful combinations are shown here and below`)
+            `)
 
     testRow = d3.select('body')
         .append('div')
@@ -536,17 +510,13 @@
             $\\sum_{\\substack{{u_1} \\in g_1, {u_2} \\not\\in g_1 \\ u_1, u_2 \\in k}} x_{u_1, u_2} = 
             \\sum_{\\substack{{u_3} \\in g_1, {u_4} \\not\\in g_1 \\ u_3, u_4 \\in k+1}} x_{u_3, u_4}$<br>
             <br>
-            <b>Complexity:</b> <br>
-            <br>
-            <br>
             <b>Intuition:</b> <br>
             The distance of a node from the top of the visualization is computed by counting the nodes above it (through the $x$ variables). 
             The sum of the distance of all the nodes in a given rank in a group should be consistent across all the ranks (in which the group has nodes).
             In this way, the group keeps all nodes at the same general height across all ranks.<br>
             <br>
             <b>Requirements:</b> Simple Transitivity, Single-rank groups.<br>
-            <br>
-            <b>Todo:</b> Not all meaningful combinations are shown here and below. Compute complexity.`)
+            `)
 
     testRow = d3.select('body')
         .append('div')
@@ -627,11 +597,7 @@
             $y_{u_2} - z_i - (\\text{buffer}) * x_{u_1, u_2} \\geq 0$ <br>
             <br>
             <b>Intuition (2):</b> If $u_1$ is above $u_2$, then the vertical position of $u_2$ can't be above the one of $u_1$, and viceversa. The buffer
-            is needed just in case some distance is needed between the two nodes.<br>
-            <br>
-            <b>Complexity:</b> <br>
-            <br>
-            <b>Todo:</b> Better discuss buffer. Calculate complexity.`)
+            is needed just in case some distance is needed between the two nodes.<br>`)
 
     testRow = d3.select('body')
         .append('div')
@@ -691,12 +657,8 @@
             <br>
             <b>Intuition:</b> Nodes outside the group (in the same ranks) should be either above or below the group.<br>
             <br>
-            <b>Complexity:</b> <br>
-            <br>
             <b>Requirements:</b> Bendiness reduction.<br>
-            <br>
-            <b>Todo:</b> Not all meaningful combinations are shown here and below. Compute complexity. Not sure if formulas are written correctly here. Write 
-            how the formulas are distributed ($\\forall u_1$...)`)
+            `)
 
     testRow = d3.select('body')
         .append('div')
@@ -728,18 +690,18 @@
     // ISSUES TEST
     // *********
 
-    d3.select('body')
-        .append('div')
-        .html('<h1>Issue!</h1>')
+    // d3.select('body')
+    //     .append('div')
+    //     .html('<h1>Issue!</h1>')
 
-    testRow = d3.select('body')
-        .append('div')
-        .style('display', 'flex')
-        .style('margin-top', '20px')
+    // testRow = d3.select('body')
+    //     .append('div')
+    //     .style('display', 'flex')
+    //     .style('margin-top', '20px')
 
-    for (test of testGenerator.genTestIssue1()){
-        drawTest(test, testRow, 300);
-    }
+    // for (test of testGenerator.genTestIssue1()){
+    //     drawTest(test, testRow, 300);
+    // }
     
 </script>
 

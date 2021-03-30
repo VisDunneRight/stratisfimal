@@ -10,7 +10,7 @@ class SimpleGraph {
         this.groupIdCounter = 0;
 
         this.inclusion_graph = this.build_inclusion_graph();
-        this.keep_groups_rect = false;
+        this.keep_groups_rect = true;
     }
 
     addNode(node){

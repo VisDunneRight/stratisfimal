@@ -1115,4 +1115,74 @@ class TestCaseGenerator {
             }
         }
     }
+
+    * qv(){
+        for (let i=0; i<1; i++){
+            if (i == 0){
+    
+                let g = new SimpleGraph()
+
+                let d1 = {name: "drinker1", depth: 0}
+                let d2 = {name: "drinker2", depth: 1}
+                let d3 = {name: "drinker3", depth: 2}
+                let d4 = {name: "drinker4", depth: 2}
+                let b1 = {name: "beer1", depth: 2}
+                let d5 = {name: "drinker5", depth: 2}
+                let b2 = {name: "beer2", depth: 2}
+                let d6 = {name: "drinker6", depth: 3}
+                let b3 = {name: "beer3", depth: 3}
+                let d7 = {name: "drinker7", depth: 3}
+                let b4 = {name: "beer4", depth: 3}
+
+                g.addNodes([d1, d2, d3, b1, d4, d5, b2, d6, b3, d7, b4])
+
+                let e1 = {nodes: [d1, d2]}
+                g.addEdge(e1)
+                let e2 = {nodes: [d2, d3]}
+                g.addEdge(e2)
+                let e3 = {nodes: [d2, d4]}
+                g.addEdge(e3)
+                let e4 = {nodes: [d2, d5]}
+                g.addEdge(e4)
+                let e5 = {nodes: [b2, b3]}
+                g.addEdge(e5)
+                let e6 = {nodes: [d4, d6]}
+                g.addEdge(e6)
+                let e7 = {nodes: [d4, d7]}
+                g.addEdge(e7)
+                let e8 = {nodes: [b1, b4]}
+                g.addEdge(e8)
+
+                let g1 = {nodes: [d3, b1]}
+                g.addGroup(g1)
+                let g2 = {nodes: [d5, b2]}
+                g.addGroup(g2)
+                let g3 = {nodes: [d6, b3]}
+                g.addGroup(g3)
+                let g4 = {nodes: [d7, b4]}
+                g.addGroup(g4)
+                let g5 = {nodes: [b2, d5, b3, d6]}
+                g.addGroup(g5)
+                let g6 = {nodes: [b1, d3, b4, d7]}
+                g.addGroup(g6)
+                let g7 = {nodes: [b1, d3, b4, d7, d4, d5, b2, b3, d6]}
+                g.addGroup(g7)
+                let g8 = {nodes: [d1]}
+                g.addGroup(g8)
+                let g9 = {nodes: [d2]}
+                g.addGroup(g9)
+
+                let algorithm = new SimpleLp(g);
+                algorithm.options.bendiness_reduction_active = true;
+                algorithm.options.keep_groups_rect = true;
+                algorithm.options.simplify_for_groups_enabled = false;
+                algorithm.arrange();
+                algorithm.apply_solution();
+
+                g.keep_groups_rect = true;
+    
+                yield {graph: g}; 
+            }
+        }
+    }
 }

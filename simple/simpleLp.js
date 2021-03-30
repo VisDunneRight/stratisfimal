@@ -18,8 +18,8 @@ class SimpleLp {
             crossings_reduction_active: true,
             bendiness_reduction_weight: 0.1,
             bendiness_reduction_active: false,
-            simplify_for_groups_enabled: false,
-            keep_groups_rect: false
+            simplify_for_groups_enabled: true,
+            keep_groups_rect: true
         };
 
         if (this.options.keep_groups_rect) this.g.keep_groups_rect = true;

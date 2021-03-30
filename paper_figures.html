@@ -301,6 +301,18 @@
     for (test of testGenerator.collapseVis()){
         drawTest(test, testRow, 300);
     }
+
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+
+    testRow = d3.select('body')
+        .append('div')
+        .style('display', 'flex')
+
+    for (test of testGenerator.qv()){
+        drawTest(test, testRow, 400, 400, 80, 60);
+    }
     
 </script>
 
