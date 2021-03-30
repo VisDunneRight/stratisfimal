@@ -593,6 +593,8 @@ let processFile = (filename, foldername, count=0) => {
         //     .attr("width", 1500)
         //     .attr("height", 200)
 
+        g.keep_groups_rect = true;
+
         let algorithm = new SimpleLp(g);
         algorithm.arrange();
         let test = {algorithm: algorithm, graph: g}
@@ -618,7 +620,7 @@ let processFile = (filename, foldername, count=0) => {
         algorithm = new SimpleLp(g);
         algorithm.options.bendiness_reduction_active = true;
         algorithm.options.simplify_for_groups_enabled = false;
-        algorithm.options.keep_groups_rect = false;
+        algorithm.options.keep_groups_rect = true;
         algorithm.arrange();
         algorithm.apply_solution();
 
@@ -628,7 +630,7 @@ let processFile = (filename, foldername, count=0) => {
         algorithm = new SimpleLp(g);
         algorithm.options.bendiness_reduction_active = true;
         algorithm.options.simplify_for_groups_enabled = true;
-        algorithm.options.keep_groups_rect = false;
+        algorithm.options.keep_groups_rect = true;
         algorithm.arrange();
         algorithm.apply_solution();
 

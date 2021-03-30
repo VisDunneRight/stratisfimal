@@ -10,6 +10,7 @@ class SimpleGraph {
         this.groupIdCounter = 0;
 
         this.inclusion_graph = this.build_inclusion_graph();
+        this.keep_groups_rect = false;
     }
 
     addNode(node){
@@ -77,7 +78,7 @@ class SimpleGraph {
         this.edges = this.edges.filter(e => Math.abs(e.nodes[0].depth - e.nodes[1].depth) <= 1);
 
         // note: this is important
-        this.groups = this.groups.sort((a, b) => a.nodes.length > b.nodes.length)
+        this.groups = this.groups.sort((a, b) => a.nodes.length > b.nodes.length? 1 : -1)
 
         for (let g of this.groups){
             let minRank = Math.min.apply(0, g.nodes.map(n => n.depth))
@@ -112,77 +113,89 @@ class SimpleGraph {
         let getNodeCoordX = (node) => (20 + nodeXDistance * (node.depth));
         let getNodeCoordY = (node) => {
             if (node.y != undefined) return 20 + node.y * nodeYDistance;
-            else return 20 + this.nodeIndex[node.depth].indexOf(node) * nodeYDistance
+            else return parseFloat(20 + this.nodeIndex[node.depth].indexOf(node) * nodeYDistance)
         };
         let line = d3.line().curve(d3.curveBasis);
         let colors = ['#303E3F', '#A3B9B6'];
 
         for (let group of this.groups){
-            if (group.nodes == undefined || group.nodes.length == 0) continue;
-            let ranksInGroup = [...new Set(group.nodes.map(n => n.depth).sort())]
-            let includes_groups = this.inclusion_graph_flat.find(n => n.id == group.id).children.some(c => c.type == 'group')
-            let vmargin = includes_groups? nodeYDistance*.5 : nodeYDistance*.4;
-            let hmargin = includes_groups? nodeXDistance*.5 : nodeXDistance*.4;
-            
-            let arr1 = []
-            let arr2 = []
-            
-            for (let i in ranksInGroup){
-                let rank = ranksInGroup[i];
-                let nodesInRank = group.nodes.filter(n => n.depth == rank).sort((a, b) => getNodeCoordY(a) < getNodeCoordY(b))
+            if (!this.keep_groups_rect){
+                if (group.nodes == undefined || group.nodes.length == 0) continue;
+                let ranksInGroup = [...new Set(group.nodes.map(n => n.depth).sort())]
+                let includes_groups = this.inclusion_graph_flat.find(n => n.id == group.id).children.some(c => c.type == 'group')
+                let vmargin = includes_groups? nodeYDistance*.5 : nodeYDistance*.4;
+                let hmargin = includes_groups? nodeXDistance*.5 : nodeXDistance*.4;
+                
+                let arr1 = []
+                let arr2 = []
+                
+                for (let i in ranksInGroup){
+                    let rank = ranksInGroup[i];
+                    let nodesInRank = group.nodes.filter(n => n.depth == rank)
+                    nodesInRank.sort((a, b) => {
+                        return getNodeCoordY(a) < getNodeCoordY(b)? 1 : -1
+                    })
 
-                if (i == 0) {
-                    for (let j in nodesInRank){
-                        let node = nodesInRank[j];
-                        arr1.push([20 + nodeXDistance * (rank) - hmargin, getNodeCoordY(node)]);
+                    if (i == 0) {
+                        for (let j in nodesInRank){
+                            let node = nodesInRank[j];
+                            arr1.push([20 + nodeXDistance * (rank) - hmargin, getNodeCoordY(node)]);
+                        }
+                    }
+
+                    let top = Math.min.apply(0, nodesInRank.map(n => getNodeCoordY(n)));
+                    let bottom = Math.max.apply(0, nodesInRank.map(n => getNodeCoordY(n)));
+
+                    arr1.push([20 + nodeXDistance * (rank) - 5, top - vmargin]);
+                    arr1.push([20 + nodeXDistance * (rank) + 5, top - vmargin]);
+                    arr2.push([20 + nodeXDistance * (rank) - 5, bottom + vmargin])
+                    arr2.push([20 + nodeXDistance * (rank) + 5, bottom + vmargin])
+
+                    if (i == ranksInGroup.length - 1) {
+                        for (let j in nodesInRank.reverse()){
+                            let node = nodesInRank[j];
+                            arr1.push([20 + nodeXDistance * (rank) + hmargin, getNodeCoordY(node)]);
+                        }
                     }
                 }
 
-                let top = Math.min.apply(0, nodesInRank.map(n => getNodeCoordY(n)));
-                let bottom = Math.max.apply(0, nodesInRank.map(n => getNodeCoordY(n)));
+                arr1 = arr1.concat(arr2.reverse())
 
-                arr1.push([20 + nodeXDistance * (rank) - 5, top - vmargin]);
-                arr1.push([20 + nodeXDistance * (rank) + 5, top - vmargin]);
-                arr2.push([20 + nodeXDistance * (rank) - 5, bottom + vmargin])
-                arr2.push([20 + nodeXDistance * (rank) + 5, bottom + vmargin])
+                let line2 = d3.line().curve(d3.curveBasisClosed)//.curve(d3.curveCatmullRomClosed.alpha(0.1))
 
-                if (i == ranksInGroup.length - 1) {
-                    for (let j in nodesInRank.reverse()){
-                        let node = nodesInRank[j];
-                        arr1.push([20 + nodeXDistance * (rank) + hmargin, getNodeCoordY(node)]);
-                    }
+                svg.append('path')
+                    .attr('fill',  d3.schemeTableau10[group.id%d3.schemeTableau10.length])
+                    .attr('fill-opacity', 0.2)
+                    .attr('stroke-opacity', 0.4)
+                    .attr('d', line2(arr1))
+                    .attr('stroke-width', 2)
+                    .attr('stroke-dasharray', '3 3')
+                    .attr('stroke', group.color? group.color : d3.schemeTableau10[group.id%d3.schemeTableau10.length])
+            } else {
+                let top = Math.min.apply(0, group.nodes.map(n => getNodeCoordY(n)));
+                let bottom = Math.max.apply(0, group.nodes.map(n => getNodeCoordY(n)));
+                let left = Math.min.apply(0, group.nodes.map(n => getNodeCoordX(n)));
+                let right = Math.max.apply(0, group.nodes.map(n => getNodeCoordX(n)));
+
+                let groupMargin = 5;
+                for (let gr of this.groups){
+                    if (group.nodes.every(n => gr.nodes.includes(n)) && gr != group) groupMargin -= 3;
                 }
+
+                svg.append('rect')
+                    .attr('stroke', group.color? group.color : d3.schemeTableau10[group.id%d3.schemeTableau10.length])
+                    .attr('x', left - 10 - groupMargin)
+                    .attr('y', top - 8 - groupMargin)
+                    .attr('fill-opacity', 0.2)
+                    .attr('stroke-opacity', 0.4)
+                    .attr('width', right - left + 20 + groupMargin*2)
+                    .attr('height', bottom - top + 16 + groupMargin*2)
+                    .attr('fill',  group.color? group.color : d3.schemePaired[group.id*4%d3.schemePaired.length])
+                    .attr("rx", 12)
+                    .attr("ry", 12)
+                    .attr('stroke-width', 2)
+                    .attr('stroke-dasharray', '3 3')
             }
-
-            arr1 = arr1.concat(arr2.reverse())
-
-            let line2 = d3.line().curve(d3.curveBasisClosed)//.curve(d3.curveCatmullRomClosed.alpha(0.1))
-
-            svg.append('path')
-                .attr('fill', d3.schemeTableau10[group.id])
-                .attr('opacity', 0.2)
-                .attr('d', line2(arr1))
-
-            // let top = Math.min.apply(0, group.nodes.map(n => getNodeCoordY(n)));
-            // let bottom = Math.max.apply(0, group.nodes.map(n => getNodeCoordY(n)));
-            // let left = Math.min.apply(0, group.nodes.map(n => getNodeCoordX(n)));
-            // let right = Math.max.apply(0, group.nodes.map(n => getNodeCoordX(n)));
-
-            // let groupMargin = 5;
-            // for (let gr of this.groups){
-            //     if (group.nodes.every(n => gr.nodes.includes(n)) && gr != group) groupMargin -= 3;
-            // }
-
-            // svg.append('rect')
-            //     .attr('stroke', 'black')
-            //     .attr('x', left - 10 - groupMargin)
-            //     .attr('y', top - 8 - groupMargin)
-            //     .attr('opacity', 0.2)
-            //     .attr('width', right - left + 20 + groupMargin*2)
-            //     .attr('height', bottom - top + 16 + groupMargin*2)
-            //     .attr('fill', 'none')
-            //     .attr('stroke-width', 2)
-            //     .attr('stroke-dasharray', '3 3')
         }
 
         for (let edge of this.edges){
@@ -228,7 +241,7 @@ class SimpleGraph {
                     .attr('cy', 0)
                     // .attr('stroke', '#303E3F')
                     .attr('stroke-width', 0)
-                    .attr('fill', colors[0])
+                    .attr('fill', node.color? node.color : colors[0])
 
                 g.append('text')
                     .text(node.name)
@@ -252,7 +265,7 @@ class SimpleGraph {
         }
 
         let nodes = [];
-        this.groups = this.groups.sort((a, b) => a.nodes.length < b.nodes.length)
+        this.groups = this.groups.sort((a, b) => a.nodes.length < b.nodes.length? 1 : -1)
 
         for (let group of this.groups){
             let newnode;

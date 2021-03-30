@@ -38,7 +38,7 @@ let readFromJson = (data) => {
             }
         }
         curIndex++;
-        if (curIndex == 10) break;
+        if (curIndex == 100) break;
     }
 
     for (let edge of g.edges){

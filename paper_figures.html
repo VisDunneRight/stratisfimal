@@ -82,6 +82,7 @@
         test.graph.draw(svg, nodeXdist, nodeYdist);
 
         let colors = ['#303E3F', '#A3B9B6']
+        // #617573
 
         svg.selectAll('.edgepath')
             .attr('stroke', colors[1])
@@ -90,7 +91,7 @@
         svg.selectAll('circle')
             .attr('stroke', '#303E3F')
             .attr('stroke-width', 0)
-            .attr('fill', colors[0])
+            // .attr('fill', colors[0])
 
         svg.selectAll('text')
             .attr('fill', colors[0])
@@ -182,7 +183,7 @@
         .style('display', 'flex')
 
     for (test of testGenerator.genGroupTest(2, 1)){
-        drawTest(test, testRow, 150, 100, 50, 40);
+        drawTest(test, testRow, 160, 100, 50, 40);
     }
 
     // testRow = d3.select('body')
@@ -191,7 +192,7 @@
     //     .style('margin-top', '20px')
 
     for (test of testGenerator.genGroupTest(3, 1)){
-        drawTest(test, testRow, 150, 100, 50, 40);
+        drawTest(test, testRow, 160, 100, 50, 40);
     }
 
     // // *********

@@ -54,6 +54,7 @@
         background-color: white;
         border-radius: 10px;
         padding: 10px;
+        box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
     }
 
     .definitionDiv td {
@@ -234,23 +235,52 @@
     }
 
     d3.select('body').append('div')
-        .attr('class', 'definitionDiv')
+        .attr('id', 'accordion')
+        .append('div')
+        .attr('class', 'card definitionDiv')
         .html(() => {
-            let r = `<b>Definitions: </b><br><table>`
+            let header = `<div class="card-header" id="headingOne">
+            <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                Definitions (click to toggle)
+                </button>
+            </h5>
+            </div>`
+
+            let body = `<div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+                <div class="card-body">`
+                
+
+            body+= `<table>`
             for (let elem in properDefinitions){
-                r += "<tr>"
+                body += "<tr>"
                 for (let field in properDefinitions[elem]){
-                    r += "<td>" + properDefinitions[elem][field] + "</td>"
+                    body += "<td>" + properDefinitions[elem][field] + "</td>"
                 }
-                r += "</tr>"
+                body += "</tr>"
             }
-            r += "</table>"
+            body += "</table>"
+
+            body+= `</div>
+                </div>
+            </div>`
+
+            let r = header + body;
             return r;
         })
-    
+
     let testGenerator = new TestCaseGenerator();
 
     MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+
+    d3.select('body')
+        .append('div')
+        .html('<h1>How to read this page</h1>')
+
+    d3.select('body')
+        .append('div')
+        .style('margin-bottom', '20px')
+        .html(``)
 
     // *********
     // SIMPLE INTERSECTION
@@ -258,12 +288,12 @@
 
     d3.select('body')
         .append('div')
-        .html('<h1>✓ Simple Intersection</h1>')
+        .html('<h1>Simple Intersection</h1>')
 
     d3.select('body')
         .append('div')
         .style('margin-bottom', '20px')
-        .html(`Crossings are computed by comparing each pair of edges in a rank, excluding (for now) same rank edges. <br>
+        .html(`Crossings are computed by comparing each pair of edges in a rank, excluding (for now, but treated in a later section) same rank edges. <br>
             <b>Formula:</b> <br> 
             $c_{u_1v_1, u_2v_2} + x_{u_2, u_1} + x_{v_1,v_2} \\geq 1 \\quad \\forall u_1, u_2 \\in E_k, \\forall k \\in \\ell$ <br>
             $c_{u_1v_1, u_2v_2} + x_{u_1, u_2} + x_{v_2,v_1} \\geq 1$ <br>
