@@ -380,6 +380,16 @@ algorithm.options = options;</code></pre>
   document.getElementById("checkboxcrossingreduction").checked = true;
   document.getElementById("checkboxfindgroups").checked = false;
   document.getElementById("maxNodesPerDepth").value = 4
+  document.getElementById("jsonDescription").addEventListener("keydown", (e) => {
+    if (e.key == "Enter") {
+      const newLine = document.createTextNode("\n");
+      const range = window.getSelection().getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(newLine);
+      range.setStartAfter(newLine);
+      e.preventDefault();
+    }
+  })
 
   let genSandbox = () => {
 
